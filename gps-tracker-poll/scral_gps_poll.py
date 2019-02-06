@@ -65,10 +65,10 @@ resource_catalog = {}
 
 def main():
     """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
+
     args = parse_command_line()
 
     global verbose
-
     if args.verbose:
         verbose = True
     else:
@@ -102,13 +102,14 @@ def parse_command_line():
                         help='the path of the connection configuration')
     parser.add_argument('-p', '--pilot', default=DEFAULT_CONFIG, type=str, help='the name of the desired pilot')
     args = parser.parse_args()
+
     return args
 
 
 def init(connection_file):
-    """ Setup for server, mqtt and cloud configuration """
+    """ Setup for server, mqtt and OGC configuration """
 
-    # ##### load connection configuration files ##########
+    # ##### Load connection configuration file ##########
     logging.info("[PHASE-INIT] The connection type is: " + connection_file)
     connection_config_file = scral_util.load_from_file(connection_file)
 
@@ -117,9 +118,8 @@ def init(connection_file):
     broker_ip = connection_config_file["mqtt"]["broker"]
     global broker_port
     broker_port = connection_config_file["mqtt"]["broker_port"]
-    ####################################
 
-    # ##### MQTT Broker Connection ##########
+    # MQTT Broker Connection
     global mqtt_client
     mqtt_client = mqtt.Client()
 
@@ -130,7 +130,6 @@ def init(connection_file):
     logging.info("Try to connect to broker: %s:%s" % (broker_ip, broker_port))
     mqtt_client.connect(broker_ip, broker_port, mqtt_util.DEFAULT_KEEPALIVE)
     mqtt_client.loop_start()
-    ###################################
 
     # Store OGC server addresses
     global ogc_server_address
@@ -140,10 +139,12 @@ def init(connection_file):
     if os.path.exists(CATALOG_FILENAME):
         global resource_catalog
         resource_catalog = scral_util.load_from_file(CATALOG_FILENAME)
-        logging.ingo('[PHASE-INIT] Resource Catalog: ', json.dumps(resource_catalog))
+        logging.info('[PHASE-INIT] Resource Catalog: ', json.dumps(resource_catalog))
     else:
-        logging.info("Resource catalog does not exist, it will be created later")
+        logging.info("Resource catalog does not exist, it will be created at integration phase")
+    ####################################
 
+    #Todo Load OGC configuration file
 
 def boot():
     pass
