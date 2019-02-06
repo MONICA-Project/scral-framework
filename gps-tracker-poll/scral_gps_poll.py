@@ -66,13 +66,19 @@ resource_catalog = {}
 def main():
     """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
     args = parse_command_line()
+
     global verbose
+
     if args.verbose:
         verbose = True
     else:
         verbose = False
 
-    init(args.connection_file)
+    if args.connection_file:
+        init(args.connection_file)
+    else:
+        logging.critical("Connection file is missing")
+        exit(1)
 
     global pilot_mqtt_topic
     pilot_mqtt_topic = args.pilot
