@@ -1,0 +1,10 @@
+{
+  "mqtt": {
+    "broker": "monappdwp3.monica-cloud.eu",
+    "broker_port": 1883,
+    "broker_keepalive": 60
+  },
+  "REST": {
+    "ogc_server_address": "http://bgw-http-proxy:5050/gost_dom/v1.0"
+  }
+}
