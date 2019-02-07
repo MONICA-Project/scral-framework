@@ -10,10 +10,10 @@ class OGCObservedProperty:
         self.definition = definition
 
     def set_id(self, property_id):
-        self["id"] = property_id
+        self.id = property_id
 
     def get_id(self):
-        return self["id"]
+        return self.id
 
     def get_rest_payload(self):
-        return {"name": self.name, "description": self.description, "definition": self.property_type}
+        return {"name": self.name, "description": self.description, "definition": self.definition}
