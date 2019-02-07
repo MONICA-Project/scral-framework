@@ -1,14 +1,15 @@
-##########################################################################
-#        _____ __________  ___    __                                     #
-#       / ___// ____/ __ \/   |  / /                                     #
-#       \__ \/ /   / /_/ / /| | / /                                      #
-#      ___/ / /___/ _, _/ ___ |/ /___                                    #
-#     /____/\____/_/ |_/_/  |_/_____/  v.2.0 - enhanced by Python 3      #
-#                                                                        #
-# (c) 2019 by Jacopo Foglietti & Luca Mannella                           #
-# SCRAL is distributed under a BSD-style license -- See file LICENSE.md  #
-#                                                                        #
-##########################################################################
+##############################################################################
+#      _____ __________  ___    __                                           #
+#     / ___// ____/ __ \/   |  / /                                           #
+#     \__ \/ /   / /_/ / /| | / /                                            #
+#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Abstraction Layer  #
+#   /____/\____/_/ |_/_/  |_/_____/   v.2.0 - enhanced by Python 3           #
+#                                                                            #
+# LINKS Foundation, (c) 2019                                                 #
+# developed by Jacopo Foglietti & Luca Mannella                              #
+# SCRAL is distributed under a BSD-style license -- See file LICENSE.md      #
+#                                                                            #
+##############################################################################
 import time
 import logging
 from scral_gps_poll import verbose, mqtt_client
@@ -25,7 +26,5 @@ def on_connect(mqttc, userdata, flags, rc):
 
 def on_disconnect(client, userdata, rc):
     time.sleep(10)
-    if verbose:
-        logging.info("Try to re-connecting...")
-
+    logging.info("Connection lost! Try to re-connecting...")
     mqtt_client.connect(BROKER_DEFAULT_IP, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)

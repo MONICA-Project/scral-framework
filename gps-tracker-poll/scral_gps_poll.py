@@ -1,14 +1,15 @@
-##########################################################################
-#        _____ __________  ___    __                                     #
-#       / ___// ____/ __ \/   |  / /                                     #
-#       \__ \/ /   / /_/ / /| | / /                                      #
-#      ___/ / /___/ _, _/ ___ |/ /___                                    #
-#     /____/\____/_/ |_/_/  |_/_____/  v.2.0 - enhanced by Python 3      #
-#                                                                        #
-# (c) 2019 by Jacopo Foglietti & Luca Mannella                           #
-# SCRAL is distributed under a BSD-style license -- See file LICENSE.md  #
-#                                                                        #
-##########################################################################
+##############################################################################
+#      _____ __________  ___    __                                           #
+#     / ___// ____/ __ \/   |  / /                                           #
+#     \__ \/ /   / /_/ / /| | / /                                            #
+#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Abstraction Layer  #
+#   /____/\____/_/ |_/_/  |_/_____/   v.2.0 - enhanced by Python 3           #
+#                                                                            #
+# LINKS Foundation, (c) 2019                                                 #
+# developed by Jacopo Foglietti & Luca Mannella                              #
+# SCRAL is distributed under a BSD-style license -- See file LICENSE.md      #
+#                                                                            #
+##############################################################################
 #
 # ROADMAP: these are main steps in which the module processing is divided.
 #
@@ -39,15 +40,6 @@ import scral_util
 import mqtt_util
 from scral_constants import *
 
-banner = """
-        _____ __________  ___    __                                     
-       / ___// ____/ __ \/   |  / /                                     
-       \__ \/ /   / /_/ / /| | / /                                      
-      ___/ / /___/ _, _/ ___ |/ /___                                    
-     /____/\____/_/ |_/_/  |_/_____/  v.2.0 - enhanced by Python 3
-
-"""
-
 # configuration flags
 can_run = True
 verbose = True
@@ -65,16 +57,16 @@ resource_catalog = {}
 
 def main():
     """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
-
-    args = parse_command_line()
-
-    global verbose
+    args = parse_command_line()     # parsing command line parameters, it has to be the first instruction
+    global verbose                  # overwrite verbose flag from command line
     if args.verbose:
         verbose = True
     else:
         verbose = False
 
-    if args.connection_file:
+    init_logger()                   # logging initialization, it is suggested to call it after command line parsing
+
+    if args.connection_file:        # does the connection_file exists?
         init(args.connection_file)
     else:
         logging.critical("Connection file is missing")
@@ -91,6 +83,9 @@ def main():
 
 
 def parse_command_line():
+    """ This function parses the command line.
+    :return: a dictionary with all the parsed parameters.
+    """
     example_text = "example: scral_gps_poll.py -v -f ./my_conf.conf -c external -p hamburg"
 
     parser = argparse.ArgumentParser(prog='SCRAL GPS Poll', epilog=example_text,
@@ -104,6 +99,17 @@ def parse_command_line():
     args = parser.parse_args()
 
     return args
+
+
+def init_logger():
+    """ This function configure the logger according to verbose flag. """
+    logging.basicConfig(format="%(message)s")
+    if verbose:
+        logging.getLogger().setLevel(level=logging.DEBUG)
+    else:
+        logging.getLogger().setLevel(level=logging.INFO)
+    logging.getLogger().handlers[0].setFormatter(logging.Formatter(
+        "%(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S"))
 
 
 def init(connection_file):
@@ -144,7 +150,8 @@ def init(connection_file):
         logging.info("Resource catalog does not exist, it will be created at integration phase")
     ####################################
 
-    #Todo Load OGC configuration file
+    # Todo Load OGC configuration file
+
 
 def boot():
     pass
@@ -158,21 +165,10 @@ def runtime():
     pass
 
 
-def init_logger():
-    logging.basicConfig(format="%(message)s")
-    if verbose:
-        logging.getLogger().setLevel(level=logging.DEBUG)
-    else:
-        logging.getLogger().setLevel(level=logging.INFO)
-    logging.getLogger().handlers[0].setFormatter(logging.Formatter(
-        "%(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S"))
-
-
 if __name__ == '__main__':
     # set default string encoding  # reload(sys)
     # sys.setdefaultencoding('utf-8')
 
-    print(banner)
+    print(BANNER % VERSION)
     sys.stdout.flush()
-    init_logger()
     main()
