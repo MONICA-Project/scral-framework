@@ -3,11 +3,11 @@ class OGCLocation:
         For more info: http://developers.sensorup.com/docs/#locations_post
     """
 
-    def __init__(self, name, description, x, y, location_type="Point"):
+    def __init__(self, name, description, x, y, location_type="Point", encoding_type="application/vnd.geo+json"):
         self.id = None  # the id is assigned by the OGC Server
         self.name = name
         self.description = description
-        self.encodingType = "application/vnd.geo+json"
+        self.encodingType = encoding_type
         self.location = {"coordinates": [x, y], "type": location_type}
 
     def set_id(self, location_id):

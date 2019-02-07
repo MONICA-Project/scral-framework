@@ -26,7 +26,7 @@
 #
 # #ToDo: PHASE: INTEGRATION
 #
-################################################################################################################
+####################################################################################################
 import argparse
 import json
 import logging
@@ -35,7 +35,7 @@ import sys
 from queue import Queue
 from threading import Semaphore
 import paho.mqtt.client as mqtt
-
+from ogc_configuration import OGCConfiguration
 import scral_util
 import mqtt_util
 from scral_constants import *
@@ -66,11 +66,16 @@ def main():
 
     init_logger()                   # logging initialization, it is suggested to call it after command line parsing
 
-    if args.connection_file:        # does the connection_file exists?
-        init(args.connection_file)
-    else:
-        logging.critical("Connection file is missing")
+    if not args.connection_file:        # does the connection_file exists?
+        logging.critical("Connection file is missing!")  # ToDo: changing connection to network
         exit(1)
+    if not args.ogc_file:
+        logging.critical("OGC configuration file is missing!")
+        exit(2)
+
+    parse_connection_file(args.connection_file)
+    ogc_config = OGCConfiguration(args.ogc_file)
+
 
     global pilot_mqtt_topic
     pilot_mqtt_topic = args.pilot
@@ -92,8 +97,8 @@ def parse_command_line():
                                      description='Implementation of SCRAL GPS tracker in polling approach',
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='enable verbose mode')
-    parser.add_argument('-f', '--file', dest='ogc_file', type=str, help='the path of the OGC configuration file')
-    parser.add_argument('-c', '--conn', dest='connection_file', type=str,
+    parser.add_argument('-o', '--ogc', dest='ogc_file', type=str, help='the path of the OGC configuration file')
+    parser.add_argument('-c', '--conn', dest='connection_file', type=str,  # choices=[0, 1, 2], default=0
                         help='the path of the connection configuration')
     parser.add_argument('-p', '--pilot', default=DEFAULT_CONFIG, type=str, help='the name of the desired pilot')
     args = parser.parse_args()
@@ -112,10 +117,10 @@ def init_logger():
         "%(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S"))
 
 
-def init(connection_file):
-    """ Setup for server, mqtt and OGC configuration """
+def parse_connection_file(connection_file):
+    """ Parses the connection file and initialize the MQTT broker. """
 
-    # ##### Load connection configuration file ##########
+    # 1 Load connection configuration file ##########
     logging.info("[PHASE-INIT] The connection type is: " + connection_file)
     connection_config_file = scral_util.load_from_file(connection_file)
 
@@ -125,7 +130,7 @@ def init(connection_file):
     global broker_port
     broker_port = connection_config_file["mqtt"]["broker_port"]
 
-    # MQTT Broker Connection
+    # 2 MQTT Broker Connection ##########
     global mqtt_client
     mqtt_client = mqtt.Client()
 
@@ -137,20 +142,17 @@ def init(connection_file):
     mqtt_client.connect(broker_ip, broker_port, mqtt_util.DEFAULT_KEEPALIVE)
     mqtt_client.loop_start()
 
-    # Store OGC server addresses
-    global ogc_server_address
-    ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
-
-    # Load local resource catalog
+    # 3 Load local resource catalog ##########
     if os.path.exists(CATALOG_FILENAME):
         global resource_catalog
         resource_catalog = scral_util.load_from_file(CATALOG_FILENAME)
         logging.info('[PHASE-INIT] Resource Catalog: ', json.dumps(resource_catalog))
     else:
         logging.info("Resource catalog does not exist, it will be created at integration phase")
-    ####################################
 
-    # Todo Load OGC configuration file
+    # 4 Store OGC server addresses ##########
+    global ogc_server_address
+    ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
 
 
 def boot():
