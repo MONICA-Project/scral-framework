@@ -1,7 +1,10 @@
 class OGCLocation:
+    """ This class represents the LOCATION entity of the OCG Sensor Things model.
+        For more info: http://developers.sensorup.com/docs/#locations_post
+    """
 
     def __init__(self, name, description, x, y, location_type="Point"):
-        self.id = None
+        self.id = None  # the id is assigned by the OGC Server
         self.name = name
         self.description = description
         self.encodingType = "application/vnd.geo+json"

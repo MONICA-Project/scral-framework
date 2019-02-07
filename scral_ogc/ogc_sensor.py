@@ -1,7 +1,10 @@
 class OGCSensor:
+    """ This class represents the SENSOR entity of the OCG Sensor Things model.
+        For more info: http://developers.sensorup.com/docs/#sensors_post
+    """
 
-    def __init__(self, name, description, property_type, metadata, encoding="application/pdf"):
-        self.id = None
+    def __init__(self, name, description, metadata, encoding="application/pdf"):
+        self.id = None  # the id is assigned by the OGC Server
         self.name = name
         self.description = description
         self.encoding = encoding
