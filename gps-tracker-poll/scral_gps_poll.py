@@ -13,10 +13,8 @@
 #
 # ROADMAP: these are main steps in which the module processing is divided.
 #
-# #ToDo: PHASE: INIT + SETUP
+# PHASE: INIT + SETUP + BOOT
 #   1. Init variables and setup server and MQTT connections
-#
-# #ToDo: PHASE: BOOT
 #   2. Read configuration File and load predefined OGC scheme (exit if integrity not satisfied)
 #   3. Load OGC entities
 #
@@ -73,12 +71,18 @@ def main():
         logging.critical("OGC configuration file is missing!")
         exit(2)
 
-    parse_connection_file(args.connection_file)
-    ogc_config = OGCConfiguration(args.ogc_file)
+    ogc_server_address = parse_connection_file(args.connection_file)
+    ogc_config = OGCConfiguration(args.ogc_file, ogc_server_address)
 
+    # ToDo: continue from here!
 
     global pilot_mqtt_topic
-    pilot_mqtt_topic = args.pilot
+    pilot_mqtt_topic = mqtt_util.get_mqtt_topic(args.pilot)
+    if not pilot_mqtt_topic:
+        logging.critical('Wrong pilot name: "' + args.pilot + '"!')
+        exit(3)
+    else:
+        logging.debug("MQTT topic: " + pilot_mqtt_topic)
 
     boot()
     discovery()
@@ -150,9 +154,8 @@ def parse_connection_file(connection_file):
     else:
         logging.info("Resource catalog does not exist, it will be created at integration phase")
 
-    # 4 Store OGC server addresses ##########
-    global ogc_server_address
-    ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
+    # 4 Return the OGC server addresses ##########
+    return connection_config_file["REST"]["ogc_server_address"]
 
 
 def boot():
