@@ -18,7 +18,7 @@
 #   2. Read configuration File and load predefined OGC scheme (exit if integrity not satisfied)
 #   3. Load OGC entities
 #
-# #ToDo: PHASE: DISCOVERY
+# #PHASE: DISCOVERY
 #   4. Check via discovery if loaded entities are already registered
 #   5. Register new entities if needed, otherwise stored corresponding @iot.id's
 #
@@ -29,11 +29,11 @@ import argparse
 import json
 import logging
 import os
+import requests
 import sys
 from queue import Queue
 from threading import Semaphore
 import paho.mqtt.client as mqtt
-import requests
 
 from ogc_configuration import OGCConfiguration
 import scral_util
@@ -181,7 +181,7 @@ def discovery(ogc_config):
     location = ogc_config.get_location()
     logging.info('LOCATION "'+location.get_name()+'" discovery')
     location_id = entity_discovery(location, ogc_config.URL_LOCATIONS, ogc_config.FILTER_NAME)
-    logging.debug('Entity Name: "' + location.get_name() + '" with id: ' + str(location_id))
+    logging.debug('Location name: "' + location.get_name() + '" with id: ' + str(location_id))
     location.set_id(location_id)  # temporary useless
 
     # THING discovery
@@ -189,7 +189,24 @@ def discovery(ogc_config):
     thing.set_location_id(location_id)
     logging.info('THING "' + thing.get_name() + '" discovery')
     thing_id = entity_discovery(thing, ogc_config.URL_THINGS, ogc_config.FILTER_NAME)
-    logging.debug('Entity Name: "' + thing.get_name() + '" with id: ' + str(thing_id))
+    logging.debug('Thing name: "' + thing.get_name() + '" with id: ' + str(thing_id))
+    thing.set_id(thing_id)
+
+    # SENSORS discovery
+    sensors = ogc_config.get_sensors()
+    logging.info("SENSORS discovery")
+    for s in sensors:
+        sensor_id = entity_discovery(s, ogc_config.URL_SENSORS, ogc_config.FILTER_NAME)
+        s.set_id(sensor_id)
+        logging.debug('Sensor name: "' + s.get_name() + '" with id: ' + str(sensor_id))
+
+    # PROPERTIES discovery
+    properties = ogc_config.get_observed_properties()
+    logging.info("OBSERVEDPROPERTIES discovery")
+    for op in properties:
+        op_id = entity_discovery(op, ogc_config.URL_PROPERTIES, ogc_config.FILTER_NAME)
+        op.set_id(op_id)
+        logging.debug('OBSERVED PROPERTY: "' + op.get_name() + '" with id: ' + str(op_id))
 
 
 def entity_discovery(ogc_entity, url_entity, url_filter):
