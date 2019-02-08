@@ -11,10 +11,13 @@ class OGCLocation:
         self.location = {"coordinates": [x, y], "type": location_type}
 
     def set_id(self, location_id):
-        self["id"] = location_id
+        self.id = location_id
 
     def get_id(self):
-        return self["id"]
+        return self.id
+
+    def get_name(self):
+        return self.name
 
     def get_rest_payload(self):
         return {"name": self.name, "description": self.description,

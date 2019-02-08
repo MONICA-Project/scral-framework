@@ -23,6 +23,9 @@ class OGCDatastream:
     def get_id(self):
         return self.id
 
+    def get_name(self):
+        return self.name
+
     def get_rest_payload(self):
         return {
             "name": self.name, "description": self.description, "observationType": self.observation_type,
