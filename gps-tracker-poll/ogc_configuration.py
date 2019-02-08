@@ -17,25 +17,38 @@ import scral_ogc
 class OGCConfiguration:
 
     def __init__(self, ogc_file_name, ogc_server_address):
+        # OGC server urls according to the given address
+        self.URL_RESOURCES = ogc_server_address                           # All resources
+        self.URL_THINGS = ogc_server_address + "/Things"                  # All things
+        self.URL_LOCATIONS = ogc_server_address + "/Locations"            # All Locations
+        self.URL_SENSORS = ogc_server_address + "/Sensors"                # All Sensors
+        self.URL_PROPERTIES = ogc_server_address + "/ObservedProperties"  # All Observed Properties
+        self.URL_DATASTREAMS = ogc_server_address + "/DataStreams"        # All DataStreams
+        self.FILTER_NAME = "?$filter=name eq "
+        # Filter example: /ObservedProperties?$filter=name eq 'Area Temperature'
+
         parser = configparser.ConfigParser()
         parser.read(ogc_file_name)
         parser.sections()
 
+        # LOCATION
         name = parser['LOCATION']['NAME']  # only one LOCATION for each configuration file
         description = parser['LOCATION']['DESCRIPTION']
         x = parser['LOCATION']['COORDINATES_X']
         y = parser['LOCATION']['COORDINATES_Y']
         self.ogc_location = scral_ogc.OGCLocation(name, description, float(x), float(y))
 
+        # THING
         name = parser['THING']['NAME']  # only one THING for each configuration file
         description = parser['THING']['DESCRIPTION']
         props_type = {"type": parser['THING']['PROPERTY_TYPE']}
         self.ogc_thing = scral_ogc.OGCThing(name, description, props_type)
 
+        # COUNTABLE
         self.num_sensors = int(parser['THING']['NUM_OF_SENSORS'])
         self.num_properties = int(parser['THING']['NUM_OF_PROPERTIES'])
 
-        i = 0
+        i = 0  # SENSORS
         self.sensors = []
         while i < self.num_sensors:
             section = "SENSOR_" + str(i)
@@ -47,7 +60,7 @@ class OGCConfiguration:
 
             self.sensors.append(scral_ogc.OGCSensor(sensor_name, sensor_description, sensor_metadata, sensor_encoding))
 
-        i = 0
+        i = 0  # OBSERVED PROPERTIES
         self.observed_properties = []
         while i < self.num_properties:
             section = "PROPERTY_" + str(i)
@@ -58,17 +71,6 @@ class OGCConfiguration:
 
             self.observed_properties.append(
                 scral_ogc.OGCObservedProperty(property_name, property_description, property_definition))
-
-        """ This method build the OGC server urls according to the given address
-            example: /ObservedProperties?$filter=name eq 'Area Temperature'
-        """
-        self.URL_RESOURCES = ogc_server_address                           # All resources
-        self.URL_THINGS = ogc_server_address + "/Things"                  # All things
-        self.URL_LOCATIONS = ogc_server_address + "/Locations"            # All Locations
-        self.URL_SENSORS = ogc_server_address + "/Sensors"                # All Sensors
-        self.URL_PROPERTIES = ogc_server_address + "/ObservedProperties"  # All Observed Properties
-        self.URL_DATASTREAMS = ogc_server_address + "/DataStreams"        # All DataStreams
-        self.FILTER = "?$filter=name eq "                                 # Filters:
 
     def get_thing(self):
         return self.ogc_thing
