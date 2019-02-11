@@ -12,12 +12,15 @@
 ##############################################################################
 import time
 import logging
-from scral_gps_poll import verbose, mqtt_client
+from scral_gps_poll import verbose, mqtt_publisher
 
 # IP configuration
 BROKER_DEFAULT_IP = "test.mosquitto.org"
 BROKER_DEFAULT_PORT = "1883"
 DEFAULT_KEEPALIVE = 60
+
+# Hamburg default MQTT Topic
+THINGS_SUBSCRIBE_TOPIC = "v1.0/Things"
 
 
 def on_connect(mqttc, userdata, flags, rc):
@@ -27,10 +30,10 @@ def on_connect(mqttc, userdata, flags, rc):
 def on_disconnect(client, userdata, rc):
     time.sleep(10)
     logging.info("Connection lost! Try to re-connecting...")
-    mqtt_client.connect(BROKER_DEFAULT_IP, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
+    mqtt_publisher.connect(BROKER_DEFAULT_IP, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
 
 
-def get_mqtt_topic(pilot_name):
+def get_publish_mqtt_topic(pilot_name):
     """ This function retrieves the appropriate MQTT topic according to the pilot name
 
     :param pilot_name: the name of the desired pilot

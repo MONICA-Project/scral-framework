@@ -37,3 +37,13 @@ OGC_SERVER_USERNAME = "scral"
 OGC_SERVER_PASSWORD = "A5_xYY#HqNiao_12#b"
 
 OGC_ID = "@iot.id"
+
+# HAMBURG OGC SERVER
+OGC_HAMBURG_URL = "https://51.5.242.162/itsLGVhackathon/v1.0/"
+# OGC_HAMBURG_URL = "https://test.geoportal-hamburg.de/itsLGVhackathon/v1.0/"
+OGC_HAMBURG_THING_URL = OGC_HAMBURG_URL+"Things"
+OGC_HAMBURG_FILTER = "?$filter=startswith(name,'MONICA_HAMBURG_GPS')"
+
+# Hamburg Datastream constant
+HAMBURG_UNIT_OF_MEASURE = {"name": "position", "symbol": "",
+                           "definition": "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#DegreeAngle"}

@@ -23,7 +23,7 @@ class OGCConfiguration:
         self.URL_LOCATIONS = ogc_server_address + "/Locations"            # All Locations
         self.URL_SENSORS = ogc_server_address + "/Sensors"                # All Sensors
         self.URL_PROPERTIES = ogc_server_address + "/ObservedProperties"  # All Observed Properties
-        self.URL_DATASTREAMS = ogc_server_address + "/DataStreams"        # All DataStreams
+        self.URL_DATASTREAMS = ogc_server_address + "/Datastreams"        # All DataStreams
         self.FILTER_NAME = "?$filter=name eq "
         # Filter example: /ObservedProperties?$filter=name eq 'Area Temperature'
 
@@ -36,21 +36,21 @@ class OGCConfiguration:
         description = parser['LOCATION']['DESCRIPTION']
         x = parser['LOCATION']['COORDINATES_X']
         y = parser['LOCATION']['COORDINATES_Y']
-        self.ogc_location = scral_ogc.OGCLocation(name, description, float(x), float(y))
+        self._ogc_location = scral_ogc.OGCLocation(name, description, float(x), float(y))
 
         # THING
         name = parser['THING']['NAME']  # only one THING for each configuration file
         description = parser['THING']['DESCRIPTION']
         props_type = {"type": parser['THING']['PROPERTY_TYPE']}
-        self.ogc_thing = scral_ogc.OGCThing(name, description, props_type)
+        self._ogc_thing = scral_ogc.OGCThing(name, description, props_type)
 
         # COUNTABLE
-        self.num_sensors = int(parser['THING']['NUM_OF_SENSORS'])
-        self.num_properties = int(parser['THING']['NUM_OF_PROPERTIES'])
+        self._num_sensors = int(parser['THING']['NUM_OF_SENSORS'])
+        self._num_properties = int(parser['THING']['NUM_OF_PROPERTIES'])
 
         i = 0  # SENSORS
-        self.sensors = []
-        while i < self.num_sensors:
+        self._sensors = []
+        while i < self._num_sensors:
             section = "SENSOR_" + str(i)
             i += 1
             sensor_name = parser[section]['NAME']
@@ -58,34 +58,45 @@ class OGCConfiguration:
             sensor_encoding = parser[section]['ENCODING']
             sensor_metadata = parser[section]['METADATA']
 
-            self.sensors.append(scral_ogc.OGCSensor(sensor_name, sensor_description, sensor_metadata, sensor_encoding))
+            self._sensors.append(scral_ogc.OGCSensor(sensor_name, sensor_description, sensor_metadata, sensor_encoding))
 
         i = 0  # OBSERVED PROPERTIES
-        self.observed_properties = []
-        while i < self.num_properties:
+        self._observed_properties = []
+        while i < self._num_properties:
             section = "PROPERTY_" + str(i)
             i += 1
             property_name = parser[section]['NAME']
             property_description = parser[section]['DESCRIPTION']
             property_definition = parser[section]['PROPERTY_TYPE']
 
-            self.observed_properties.append(
+            self._observed_properties.append(
                 scral_ogc.OGCObservedProperty(property_name, property_description, property_definition))
 
+        self._datastreams = []
+
     def get_thing(self):
-        return self.ogc_thing
+        return self._ogc_thing
 
     def get_location(self):
-        return self.ogc_location
+        return self._ogc_location
 
     def get_sensors(self):
-        return self.sensors
+        return self._sensors
 
     def get_observed_properties(self):
-        return self.observed_properties
+        return self._observed_properties
 
     def get_sensors_number(self):
-        return self.num_sensors
+        return self._num_sensors
 
     def get_properties_number(self):
-        return self.num_properties
+        return self._num_properties
+
+    def get_datastreams(self):
+        return self._datastreams
+
+    def get_datastream(self, datastream_id):
+        return self._datastreams[datastream_id]
+
+    def add_datastream(self, datastream):
+        self._datastreams.append(datastream)
