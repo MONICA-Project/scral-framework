@@ -20,7 +20,7 @@ class OGCThing:
 
     # getter ###
     def get_id(self):
-        return self.id
+        return self._id
 
     def get_name(self):
         return self._name
