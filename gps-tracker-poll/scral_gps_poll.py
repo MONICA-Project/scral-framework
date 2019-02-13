@@ -32,12 +32,9 @@ import argparse
 import json
 import logging
 import os
-import threading
 
 import requests
 import sys
-from queue import Queue
-from threading import Semaphore
 import paho.mqtt.client as mqtt
 from requests.exceptions import SSLError
 
@@ -46,18 +43,6 @@ from scral_ogc import OGCDatastream
 import scral_util
 import mqtt_util
 from scral_constants import *
-
-# configuration flags
-can_run = True
-verbose = True
-
-# the observation messages queue and its semaphore
-mqtt_publisher = None
-q = Queue()
-que_sem = Semaphore(1)
-
-# SCRAL local catalog
-resource_catalog = {}
 
 
 def main():
@@ -84,7 +69,7 @@ def main():
 
     logging.debug("Connection file: " + args.connection_file)
     logging.debug("OGC file: " + args.ogc_file)
-    logging.debug("MQTT topic: " + pilot_mqtt_topic)
+    logging.debug("MQTT publishing topic: " + pilot_mqtt_topic)
 
     ogc_server_address = parse_connection_file(args.connection_file)
     ogc_config = OGCConfiguration(args.ogc_file, ogc_server_address)
@@ -94,13 +79,7 @@ def main():
         exit(4)
     discovery(ogc_config)
 
-    publishing_thread = threading.Thread(target=publish_mqtt_messages, args=(mqtt_publisher, pilot_mqtt_topic),
-                                         name="Publishing thread")
-    publishing_thread.start()
-    threads = runtime(ogc_config, pilot_mqtt_topic)
-
-    threads.append(publishing_thread)
-    [t.join() for t in threads]  # waiting all the threads
+    runtime(ogc_config)
 
     logging.info("That's all folks!\n")
 
@@ -143,9 +122,9 @@ def parse_connection_file(connection_file):
     connection_config_file = scral_util.load_from_file(connection_file)
 
     # Store broker address/port
-    global broker_ip
+    # global broker_ip
     broker_ip = connection_config_file["mqtt"]["broker"]
-    global broker_port
+    # global broker_port
     broker_port = connection_config_file["mqtt"]["broker_port"]
 
     # 2 MQTT Broker Connection ##########
@@ -284,10 +263,10 @@ def consistency_check(discovery_result, name, filter_name):
     return True
 
 
-def runtime(ogc_config, queue):
+def runtime(ogc_config):
     r = None
     try:
-        r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER, verify="./hamburg_cert.cer")
+        r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER, verify="./config/hamburg/hamburg_cert.cer")
     except SSLError as tls_exception:
         logging.error("Error during TLS connection, the connection could be insecure or "
                       "the certificate could be self-signed...\n" + str(tls_exception))
@@ -311,9 +290,10 @@ def runtime(ogc_config, queue):
     property_id = ogc_config.get_observed_properties()[0].get_id()
     property_name = ogc_config.get_observed_properties()[0].get_name()
 
-    threads = []
+    global resource_catalog
     hamburg_devices = r.json()["value"]
     for hd in hamburg_devices:
+        iot_id = str(hd[OGC_ID])
         device_id = hd["name"]
         description = hd["description"]
 
@@ -324,22 +304,32 @@ def runtime(ogc_config, queue):
                                    unit_of_measurement=HAMBURG_UNIT_OF_MEASURE)
         datastream_id = entity_discovery(datastream, ogc_config.URL_DATASTREAMS, ogc_config.FILTER_NAME)
         datastream.set_id(datastream_id)
-        datastream.set_mqtt_topic(mqtt_util.THINGS_SUBSCRIBE_TOPIC+'('+str(hd[OGC_ID])+')/Locations')
+        datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC+"("+iot_id+")/Locations")
         ogc_config.add_datastream(datastream)
 
-        t = threading.Thread(target=thread_function, args=(datastream, queue), name=device_id)
-        threads.append(t)
-        t.start()
+        resource_catalog[iot_id] = datastream_id
 
-    return threads
+    mqtt_listening(ogc_config.get_datastreams())
 
 
-def publish_mqtt_messages(mqtt_publisher, pilot_mqtt_topic):
-    logging.debug("Thread " + threading.current_thread().getName() + " is starting...")
+def mqtt_listening(datastreams):
+    mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
 
+    # Map event handlers
+    mqtt_subscriber.on_connect = mqtt_util.on_connect
+    mqtt_subscriber.on_disconnect = mqtt_util.on_disconnect
+    mqtt_subscriber.on_message = mqtt_util.on_message_received
 
-def thread_function(datastream, queue):
-    logging.debug("Thread " + threading.current_thread().getName() + " is starting...")
+    logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
+    mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT,
+                            DEFAULT_KEEPALIVE)
+
+    for ds in datastreams:
+        top = ds.get_mqtt_topic()
+        logging.debug("Subscribing to MQTT topic: " + top)
+        mqtt_subscriber.subscribe(top, DEFAULT_MQTT_QOS)
+
+    mqtt_subscriber.loop_forever()
 
 
 if __name__ == '__main__':

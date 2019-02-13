@@ -10,27 +10,41 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md      #
 #                                                                            #
 ##############################################################################
+import json
 import time
 import logging
-from scral_gps_poll import verbose, mqtt_publisher
+import arrow as arrow
 
-# IP configuration
-BROKER_DEFAULT_IP = "test.mosquitto.org"
-BROKER_DEFAULT_PORT = "1883"
-DEFAULT_KEEPALIVE = 60
-
-# Hamburg default MQTT Topic
-THINGS_SUBSCRIBE_TOPIC = "v1.0/Things"
+from scral_constants import resource_catalog, mqtt_publisher, DEFAULT_MQTT_QOS
+from scral_ogc import OGCObservation
 
 
 def on_connect(mqttc, userdata, flags, rc):
-    logging.debug("rc = " + str(rc))
+    if rc != 0:
+        logging.critical("Connection failed, error code: "+str(rc))
+    else:
+        logging.info("Connection with MQTT broker successfully established|")
 
 
 def on_disconnect(client, userdata, rc):
     time.sleep(10)
-    logging.info("Connection lost! Try to re-connecting...")
-    mqtt_publisher.connect(BROKER_DEFAULT_IP, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
+    logging.info("Broker connection lost! Try to re-connecting to " + str(client._host) + "...")
+    client.reconnect()
+
+
+def on_message_received(client, userdata, msg):
+    # global resource_catalog
+    # global mqtt_publisher
+
+    logging.debug(msg.topic+": "+str(msg.payload))
+    observation_result = json.loads(msg.payload)["location"]["geometry"]
+    logging.debug("Data to be sent: " + str(observation_result))
+    observation_timestamp = arrow.utcnow()
+    thing_id = str(msg.topic.split('(')[1].split(')')[0])
+    logging.debug(thing_id)
+    datastream_id = resource_catalog[thing_id]
+    ogc_observation = OGCObservation(datastream_id, observation_timestamp, observation_result, observation_timestamp)
+    mqtt_publisher.publish("GOST/Datastreams("+str(datastream_id)+")/Observations", ogc_observation, DEFAULT_MQTT_QOS)
 
 
 def get_publish_mqtt_topic(pilot_name):

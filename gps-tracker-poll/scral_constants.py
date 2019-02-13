@@ -47,3 +47,19 @@ OGC_HAMBURG_FILTER = "?$filter=startswith(name,'MONICA_HAMBURG_GPS')"
 # Hamburg Datastream constant
 HAMBURG_UNIT_OF_MEASURE = {"name": "position", "symbol": "",
                            "definition": "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#DegreeAngle"}
+
+BROKER_DEFAULT_PORT = 1883
+DEFAULT_KEEPALIVE = 60
+DEFAULT_MQTT_QOS = 2
+
+# BROKER_HAMBURG_ADDRESS = "test.geoportal-hamburg.de"
+BROKER_HAMBURG_ADDRESS = "130.192.85.32"
+BROKER_HAMBURG_CLIENT_ID = "MONICA_GPS"
+
+# Hamburg default MQTT Topic
+THINGS_SUBSCRIBE_TOPIC = "v1.0/Things"
+
+# global variables
+verbose = True
+mqtt_publisher = None
+resource_catalog = {}
