@@ -22,10 +22,12 @@
 #   4. If needed, register new entities to OGC Server
 #   5. Retrieve corresponding @iot.id's
 #
-# #ToDo: PHASE: INTEGRATION
+# #PHASE: INTEGRATION
 #   6. Discovery of physical devices through external platform
 #   7. Start threads and upload DATASTREAM entities to OGC Server
 #   8. Subscribe to MQTT topics, listen to incoming data and publish OBSERVATIONS to OGC Broker
+#
+# #ToDo: Rendere dinamico il processo di discovery
 #
 ####################################################################################################
 import argparse
@@ -71,7 +73,7 @@ def main():
     logging.debug("OGC file: " + args.ogc_file)
     logging.debug("MQTT publishing topic: " + pilot_mqtt_topic)
 
-    ogc_server_address = parse_connection_file(args.connection_file)
+    ogc_server_address, broker_conn_info = parse_connection_file(args.connection_file)
     ogc_config = OGCConfiguration(args.ogc_file, ogc_server_address)
 
     if not test_connectivity(ogc_config):
@@ -79,7 +81,7 @@ def main():
         exit(4)
     discovery(ogc_config)
 
-    runtime(ogc_config)
+    runtime(ogc_config, broker_conn_info[0], broker_conn_info[1])
 
     logging.info("That's all folks!\n")
 
@@ -122,24 +124,10 @@ def parse_connection_file(connection_file):
     connection_config_file = scral_util.load_from_file(connection_file)
 
     # Store broker address/port
-    # global broker_ip
     broker_ip = connection_config_file["mqtt"]["broker"]
-    # global broker_port
     broker_port = connection_config_file["mqtt"]["broker_port"]
 
-    # 2 MQTT Broker Connection ##########
-    global mqtt_publisher
-    mqtt_publisher = mqtt.Client()
-
-    # Map event handlers
-    mqtt_publisher.on_connect = mqtt_util.on_connect
-    mqtt_publisher.on_disconnect = mqtt_util.on_disconnect
-
-    logging.info("Try to connect to broker: %s:%s" % (broker_ip, broker_port))
-    mqtt_publisher.connect(broker_ip, broker_port, DEFAULT_KEEPALIVE)
-    mqtt_publisher.loop_start()
-
-    # 3 Load local resource catalog ##########
+    # 2 Load local resource catalog ##########
     if os.path.exists(CATALOG_FILENAME):
         global resource_catalog
         resource_catalog = scral_util.load_from_file(CATALOG_FILENAME)
@@ -147,8 +135,8 @@ def parse_connection_file(connection_file):
     else:
         logging.info("Resource catalog does not exist, it will be created at integration phase")
 
-    # 4 Return the OGC server addresses ##########
-    return connection_config_file["REST"]["ogc_server_address"]
+    # 3 Return the OGC server addresses ##########
+    return connection_config_file["REST"]["ogc_server_address"], (broker_ip, broker_port)
 
 
 def test_connectivity(ogc_config):
@@ -263,7 +251,14 @@ def consistency_check(discovery_result, name, filter_name):
     return True
 
 
-def runtime(ogc_config):
+def runtime(ogc_config, broker_pub_address, broker_pub_port):
+    """ This function retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
+        These DATASTREAMS are published on MONICA OGC server.
+
+    :param ogc_config: An instance of OGCConfiguration, it contains a representation of an OGC Sensor Things model.
+    :param broker_pub_address: The address of the MQTT broker on which you want to publish.
+    :param broker_pub_port: The port of the MQTT broker
+    """
     r = None
     try:
         r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER, verify="./config/hamburg/hamburg_cert.cer")
@@ -290,7 +285,8 @@ def runtime(ogc_config):
     property_id = ogc_config.get_observed_properties()[0].get_id()
     property_name = ogc_config.get_observed_properties()[0].get_name()
 
-    global resource_catalog
+    # global resource_catalog
+    res_cat = {}
     hamburg_devices = r.json()["value"]
     for hd in hamburg_devices:
         iot_id = str(hd[OGC_ID])
@@ -307,12 +303,17 @@ def runtime(ogc_config):
         datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC+"("+iot_id+")/Locations")
         ogc_config.add_datastream(datastream)
 
-        resource_catalog[iot_id] = datastream_id
+        res_cat[iot_id] = datastream_id
 
+    mqtt_util.init_connection_manager(broker_pub_address, broker_pub_port, res_cat)
     mqtt_listening(ogc_config.get_datastreams())
 
 
 def mqtt_listening(datastreams):
+    """ This function listens on MQTT topics of Hamburg Broker and forward them to the MONICA MQTT Broker.
+
+    :param datastreams: A List of OGCDatastream
+    """
     mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
 
     # Map event handlers

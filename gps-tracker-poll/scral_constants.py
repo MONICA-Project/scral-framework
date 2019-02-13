@@ -61,5 +61,3 @@ THINGS_SUBSCRIBE_TOPIC = "v1.0/Things"
 
 # global variables
 verbose = True
-mqtt_publisher = None
-resource_catalog = {}

@@ -15,8 +15,15 @@ import scral_ogc
 
 
 class OGCConfiguration:
+    """ This class is a representation of an OGC Sensor Things model. """
 
     def __init__(self, ogc_file_name, ogc_server_address):
+        """ This function reads an OGC Model file and creates a Python object representation of it.
+            Furthermore, it prepares all the appropriate REST URL to contact the OGC server.
+
+        :param ogc_file_name: The path of the file containing the OGC Sensor Things model.
+        :param ogc_server_address: The address of the OGC server to contact later on.
+        """
         # OGC server urls according to the given address
         self.URL_RESOURCES = ogc_server_address                           # All resources
         self.URL_THINGS = ogc_server_address + "/Things"                  # All things
