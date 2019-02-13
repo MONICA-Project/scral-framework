@@ -136,7 +136,7 @@ def parse_connection_file(connection_file):
     mqtt_publisher.on_disconnect = mqtt_util.on_disconnect
 
     logging.info("Try to connect to broker: %s:%s" % (broker_ip, broker_port))
-    mqtt_publisher.connect(broker_ip, broker_port, mqtt_util.DEFAULT_KEEPALIVE)
+    mqtt_publisher.connect(broker_ip, broker_port, DEFAULT_KEEPALIVE)
     mqtt_publisher.loop_start()
 
     # 3 Load local resource catalog ##########
@@ -321,8 +321,7 @@ def mqtt_listening(datastreams):
     mqtt_subscriber.on_message = mqtt_util.on_message_received
 
     logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
-    mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT,
-                            DEFAULT_KEEPALIVE)
+    mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
 
     for ds in datastreams:
         top = ds.get_mqtt_topic()
