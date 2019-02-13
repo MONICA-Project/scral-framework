@@ -4,21 +4,21 @@ class OGCLocation:
     """
 
     def __init__(self, name, description, x, y, location_type="Point", encoding_type="application/vnd.geo+json"):
-        self.id = None  # the id is assigned by the OGC Server
-        self.name = name
-        self.description = description
-        self.encodingType = encoding_type
-        self.location = {"coordinates": [x, y], "type": location_type}
+        self._id = None  # the id is assigned by the OGC Server
+        self._name = name
+        self._description = description
+        self._encodingType = encoding_type
+        self._location = {"coordinates": [x, y], "type": location_type}
 
     def set_id(self, location_id):
-        self.id = location_id
+        self._id = location_id
 
     def get_id(self):
-        return self.id
+        return self._id
 
     def get_name(self):
-        return self.name
+        return self._name
 
     def get_rest_payload(self):
-        return {"name": self.name, "description": self.description,
-                "encodingType": self.encodingType, "location": self.location}
+        return {"name": self._name, "description": self._description,
+                "encodingType": self._encodingType, "location": self._location}

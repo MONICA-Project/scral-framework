@@ -4,19 +4,19 @@ class OGCObservedProperty:
     """
 
     def __init__(self, name, description, definition):
-        self.id = None  # the id is assigned by the OGC Server
-        self.name = name
-        self.description = description
-        self.definition = definition
+        self._id = None  # the id is assigned by the OGC Server
+        self._name = name
+        self._description = description
+        self._definition = definition
 
     def set_id(self, property_id):
-        self.id = property_id
+        self._id = property_id
 
     def get_id(self):
-        return self.id
+        return self._id
 
     def get_name(self):
-        return self.name
+        return self._name
 
     def get_rest_payload(self):
-        return {"name": self.name, "description": self.description, "definition": self.definition}
+        return {"name": self._name, "description": self._description, "definition": self._definition}

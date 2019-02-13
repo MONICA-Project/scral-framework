@@ -4,18 +4,24 @@ class OGCObservation:
     """
 
     def __init__(self, ogc_datastream_id, phenomenon_time, result, result_time):
-        self.id = None  # the id is assigned by the OGC Server
-        self.ogc_datastream_id = ogc_datastream_id
-        self.phenomenon_time = phenomenon_time
-        self.result_time = result_time
-        self.result = result
+        self._id = None  # the id is assigned by the OGC Server
+        self._ogc_datastream_id = ogc_datastream_id
+        self._phenomenon_time = phenomenon_time
+        self._result_time = result_time
+        self._result = result
 
     def set_id(self, observation_id):
-        self["id"] = observation_id
+        self._id = observation_id
 
     def get_id(self):
-        return self["id"]
+        return self._id
 
     def get_rest_payload(self):
-        return {"phenomenonTime": self.phenomenon_time, "resultTime": self.result_time, "result": self.result,
-                "Datastream": {"@iot.id": self.ogc_datastream_id}}
+        return {
+            "phenomenonTime": self._phenomenon_time,
+            "resultTime": self._result_time,
+            "result": self._result,
+            "Datastream": {
+                "@iot.id": self._ogc_datastream_id
+            }
+        }
