@@ -27,7 +27,7 @@ connection_manager = None
 class _MQTTConnectionManager:
     """ This class manage an MQTT Publisher with the associated resource catalog. """
 
-    def __init__(self, address, port, keepalive, resource_catalog):
+    def __init__(self, address, port, keepalive, topic_prefix, resource_catalog):
         """ Initialize the MQTTConnectionManager
 
         :param address: The IP address (or alias) of the MQTT Broker on which the messages will be published.
@@ -47,7 +47,11 @@ class _MQTTConnectionManager:
         self._mqtt_publisher.connect(address, port, keepalive)
         self._mqtt_publisher.loop_start()
 
+        self._topic_prefix = topic_prefix
         self._resource_catalog = resource_catalog
+
+    def get_topic_prefix(self):
+        return self._topic_prefix
 
     def get_resource_catalog(self):
         return self._resource_catalog
@@ -56,28 +60,30 @@ class _MQTTConnectionManager:
         return self._mqtt_publisher
 
 
-def init_connection_manager(address, port, resource_catalog):
+def init_connection_manager(address, port, topic_prefix, resource_catalog):
     """ This function should be called to initialize the connection_manager. """
     global connection_manager
-    connection_manager = _MQTTConnectionManager(address, port, DEFAULT_KEEPALIVE, resource_catalog)
+    connection_manager = _MQTTConnectionManager(address, port, DEFAULT_KEEPALIVE, topic_prefix, resource_catalog)
 
 
 def on_message_received(client, userdata, msg):
     logging.debug(msg.topic+": "+str(msg.payload))
-    observation_result = json.loads(msg.payload)["location"]["geometry"]
+    observation_result = json.loads(msg.payload)["location"]["geometry"]  # Load the received message
     observation_timestamp = str(arrow.utcnow())
-    thing_id = str(msg.topic.split('(')[1].split(')')[0])
+    thing_id = str(msg.topic.split('(')[1].split(')')[0])  # Get the thing_id associated to the physical device
 
     catalog = connection_manager.get_resource_catalog()
-    datastream_id = catalog[thing_id]
-    topic = "GOST/Datastreams("+str(datastream_id)+")/Observations"
-    logging.debug("On topic '"+topic+"' will be send: "+ str(observation_result))
+    datastream_id = catalog[thing_id]                      # Get the datastream_id from the resource catalog
+    # topic = "GOST/Datastreams("+str(datastream_id)+")/Observations"
+    topic_prefix = connection_manager.get_topic_prefix()
+    topic = topic_prefix + "Datastreams("+str(datastream_id)+")/Observations"
 
+    # Create OGC Observation and publish
     ogc_observation = OGCObservation(datastream_id, observation_timestamp, observation_result, observation_timestamp)
-    ogc_obs_dict = ogc_observation.get_rest_payload()
-    payload = json.dumps(dict(ogc_obs_dict))
+    observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
+    logging.debug("On topic '"+topic+"' will be send the following Observation payload: " + str(observation_payload))
     publisher = connection_manager.get_mqtt_publisher()
-    publisher.publish(topic, payload, DEFAULT_MQTT_QOS)
+    publisher.publish(topic, observation_payload, DEFAULT_MQTT_QOS)
 
 
 def on_connect(mqttc, userdata, flags, rc):
@@ -94,7 +100,7 @@ def on_disconnect(client, userdata, rc):
 
 
 def get_publish_mqtt_topic(pilot_name):
-    """ This function retrieves the appropriate MQTT topic according to the pilot name
+    """ This function retrieves the appropriate MQTT topic according to the pilot name.
 
     :param pilot_name: the name of the desired pilot
     :return: An MQTT topic string if the pilot name exists otherwise a boolean value (False).
