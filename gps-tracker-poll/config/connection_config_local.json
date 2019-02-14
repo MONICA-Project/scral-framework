@@ -1,8 +1,8 @@
 {
   "mqtt": {
-    "broker": "localhost",
-    "broker_port": 1883,
-    "broker_keepalive": 60
+    "pub_broker": "localhost",
+    "pub_broker_port": 1883,
+    "pub_broker_keepalive": 60
   },
   "REST": {
     "ogc_server_address": "http://localhost:8080/v1.0"
