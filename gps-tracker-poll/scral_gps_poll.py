@@ -58,30 +58,31 @@ def main():
 
     init_logger()  # logging initialization, it is suggested to call it after command line parsing
 
-    if not args.connection_file:  # does the connection_file is set?
+    if not args.connection_file:  # has the connection_file been set?
         logging.critical("Connection file is missing!")
         exit(1)
-    if not args.ogc_file:  # does the ogc_file is set?
+    if not args.ogc_file:  # has the ogc_file been set?
         logging.critical("OGC configuration file is missing!")
         exit(2)
-    pilot_mqtt_topic = mqtt_util.get_publish_mqtt_topic(args.pilot)
-    if not pilot_mqtt_topic:
+    pilot_mqtt_topic_prefix = mqtt_util.get_publish_mqtt_topic(args.pilot)  # 'local' is the default configuration value
+    if not pilot_mqtt_topic_prefix:
         logging.critical('Wrong pilot name: "' + args.pilot + '"!')
         exit(3)
 
     logging.debug("Connection file: " + args.connection_file)
     logging.debug("OGC file: " + args.ogc_file)
-    logging.debug("MQTT publishing topic: " + pilot_mqtt_topic)
+    logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
 
-    ogc_server_address, broker_conn_info = parse_connection_file(args.connection_file)
-    ogc_config = OGCConfiguration(args.ogc_file, ogc_server_address)
-
-    if not test_connectivity(ogc_config):
+    ogc_server_address, pub_broker_conn_info = parse_connection_file(args.connection_file)
+    if not test_connectivity(ogc_server_address):
         logging.critical("Network connectivity to " + ogc_server_address + " not available!")
         exit(4)
+
+    ogc_config = OGCConfiguration(args.ogc_file, ogc_server_address)
+
     discovery(ogc_config)
 
-    runtime(ogc_config, broker_conn_info[0], broker_conn_info[1])
+    runtime(ogc_config, pub_broker_conn_info[0], pub_broker_conn_info[1], pilot_mqtt_topic_prefix)
 
     logging.info("That's all folks!\n")
 
@@ -117,36 +118,40 @@ def init_logger():
 
 
 def parse_connection_file(connection_file):
-    """ Parses the connection file and initialize the MQTT broker. """
+    """ Parses the connection file and initialize the MQTT broker.
 
-    # 1 Load connection configuration file ##########
+    @:param The path of the connection file
+    :return A tuple containing the OGC server address and broker ip/port information
+    """
+
+    # 1 Load connection configuration file
     logging.info("[PHASE-INIT] The connection type is: " + connection_file)
     connection_config_file = scral_util.load_from_file(connection_file)
 
     # Store broker address/port
-    broker_ip = connection_config_file["mqtt"]["broker"]
-    broker_port = connection_config_file["mqtt"]["broker_port"]
+    pub_broker_ip = connection_config_file["mqtt"]["pub_broker"]
+    pub_broker_port = connection_config_file["mqtt"]["pub_broker_port"]
 
-    # 2 Load local resource catalog ##########
-    if os.path.exists(CATALOG_FILENAME):
-        global resource_catalog
-        resource_catalog = scral_util.load_from_file(CATALOG_FILENAME)
-        logging.info('[PHASE-INIT] Resource Catalog: ', json.dumps(resource_catalog))
-    else:
-        logging.info("Resource catalog does not exist, it will be created at integration phase")
+    # # 2 Load local resource catalog / TEMPORARY USELESS
+    # if os.path.exists(CATALOG_FILENAME):
+    #     global resource_catalog
+    #     resource_catalog = scral_util.load_from_file(CATALOG_FILENAME)
+    #     logging.info('[PHASE-INIT] Resource Catalog: ', json.dumps(resource_catalog))
+    # else:
+    #     logging.info("Resource catalog does not exist, it will be created at integration phase")
 
-    # 3 Return the OGC server addresses ##########
-    return connection_config_file["REST"]["ogc_server_address"], (broker_ip, broker_port)
+    # 3 Return the OGC server addresses
+    return connection_config_file["REST"]["ogc_server_address"], (pub_broker_ip, pub_broker_port)
 
 
-def test_connectivity(ogc_config):
+def test_connectivity(server_address):
     """ This function checks if the connection is correctly configured.
 
-    :param ogc_config: An object containing all the data about the OGC model.
+    :param server_address: The address of the OGC server
     :return: True, if it is possible to establish a connection, False otherwise.
     """
     try:
-        r = requests.get(url=ogc_config.URL_RESOURCES, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
+        r = requests.get(url=server_address, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
         if r.ok:
             logging.info("Network connectivity: VERIFIED")
             return True
@@ -201,14 +206,14 @@ def discovery(ogc_config):
 
 def entity_discovery(ogc_entity, url_entity, url_filter):
     """ This function uploads an OGC entity on the OGC Server and retrieves its @iot.id assigned by the server.
-        If the entity was already registered, it is not overwritten (or registered twice)
+        If the entity is already registered, it is not overwritten (or registered twice)
         and only its @iot.id is retrieved.
 
     :param ogc_entity: An object containing the data of the entity.
     :param url_entity: The URL of the request.
     :param url_filter: The filter to apply.
     :return: Returns the @iot.id of the entity if it is correctly registered,
-             if something wrong during registration or id retrieving can throw an exception.
+             if something goes wrong during registration, an exception can be generated.
     """
     # Build URL for LOCATION discovery based on Location name
     ogc_entity_name = ogc_entity.get_name()
@@ -251,13 +256,14 @@ def consistency_check(discovery_result, name, filter_name):
     return True
 
 
-def runtime(ogc_config, broker_pub_address, broker_pub_port):
+def runtime(ogc_config, pub_broker_address, pub_broker_port, pub_topic_prefix):
     """ This function retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
         These DATASTREAMS are published on MONICA OGC server.
 
     :param ogc_config: An instance of OGCConfiguration, it contains a representation of an OGC Sensor Things model.
-    :param broker_pub_address: The address of the MQTT broker on which you want to publish.
-    :param broker_pub_port: The port of the MQTT broker
+    :param pub_broker_address: The address of the MQTT broker on which you want to publish.
+    :param pub_broker_port: The port of the MQTT broker
+    :param pub_topic_prefix: The prefix of the topic where you want to publish
     """
     r = None
     try:
@@ -274,11 +280,12 @@ def runtime(ogc_config, broker_pub_address, broker_pub_port):
     else:
         logging.debug("Connection status: " + str(r.status_code))
 
+    # Collect OGC information needed to build Datastreams payload
     thing = ogc_config.get_thing()
     thing_id = thing.get_id()
     thing_name = thing.get_name()
 
-    sensor = ogc_config.get_sensors()[0]  # it is supposed that only one type of sensor was loaded
+    sensor = ogc_config.get_sensors()[0]  # Assumption: only "GPS" Sensor is defined for this adapter
     sensor_id = sensor.get_id()
     sensor_name = sensor.get_name()
 
@@ -303,9 +310,9 @@ def runtime(ogc_config, broker_pub_address, broker_pub_port):
         datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC+"("+iot_id+")/Locations")
         ogc_config.add_datastream(datastream)
 
-        res_cat[iot_id] = datastream_id
+        res_cat[iot_id] = datastream_id  # Store Hamburg to MONICA coupled information
 
-    mqtt_util.init_connection_manager(broker_pub_address, broker_pub_port, res_cat)
+    mqtt_util.init_connection_manager(pub_broker_address, pub_broker_port, pub_topic_prefix, res_cat)
     mqtt_listening(ogc_config.get_datastreams())
 
 
@@ -324,6 +331,7 @@ def mqtt_listening(datastreams):
     logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
     mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
 
+    # Get the listening topics and run the subscriptions
     for ds in datastreams:
         top = ds.get_mqtt_topic()
         logging.debug("Subscribing to MQTT topic: " + top)
