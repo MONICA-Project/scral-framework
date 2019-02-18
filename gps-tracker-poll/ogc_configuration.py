@@ -79,7 +79,7 @@ class OGCConfiguration:
             self._observed_properties.append(
                 scral_ogc.OGCObservedProperty(property_name, property_description, property_definition))
 
-        self._datastreams = []
+        self._datastreams = {}
 
     def get_thing(self):
         return self._ogc_thing
@@ -106,4 +106,8 @@ class OGCConfiguration:
         return self._datastreams[datastream_id]
 
     def add_datastream(self, datastream):
-        self._datastreams.append(datastream)
+        datastream_id = datastream.get_id()
+        if datastream_id is None:
+            raise ValueError("The DATASTREAM does not have an ID")
+        else:
+            self._datastreams[datastream_id] = datastream

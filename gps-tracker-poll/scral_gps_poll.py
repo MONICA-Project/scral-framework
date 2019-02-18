@@ -27,24 +27,26 @@
 #   7. Start threads and upload DATASTREAM entities to OGC Server
 #   8. Subscribe to MQTT topics, listen to incoming data and publish OBSERVATIONS to OGC Broker
 #
-# #ToDo: Rendere dinamico il processo di discovery
+# #PHASE: DYNAMIC DISCOVERY
+#   9. A thread is detached and continues listening for new devices
 #
 ####################################################################################################
 import argparse
 import json
 import logging
-import os
+from threading import Thread
+from time import sleep
 
 import requests
 import sys
 import paho.mqtt.client as mqtt
 from requests.exceptions import SSLError
 
-from ogc_configuration import OGCConfiguration
-from scral_ogc import OGCDatastream
+from scral_constants import *
 import scral_util
 import mqtt_util
-from scral_constants import *
+from ogc_configuration import OGCConfiguration
+from scral_ogc import OGCDatastream
 
 
 def main():
@@ -154,7 +156,7 @@ def discovery(ogc_config):
     """
     # LOCATION discovery
     location = ogc_config.get_location()
-    logging.info('LOCATION "' + location.get_name() + '" discovery')
+    logging.info('LOCATION "' + location.get_name() + '" found')
     location_id = entity_discovery(location, ogc_config.URL_LOCATIONS, ogc_config.FILTER_NAME)
     logging.debug('Location name: "' + location.get_name() + '" with id: ' + str(location_id))
     location.set_id(location_id)  # temporary useless
@@ -162,7 +164,7 @@ def discovery(ogc_config):
     # THING discovery
     thing = ogc_config.get_thing()
     thing.set_location_id(location_id)
-    logging.info('THING "' + thing.get_name() + '" discovery')
+    logging.info('THING "' + thing.get_name() + '" found')
     thing_id = entity_discovery(thing, ogc_config.URL_THINGS, ogc_config.FILTER_NAME)
     logging.debug('Thing name: "' + thing.get_name() + '" with id: ' + str(thing_id))
     thing.set_id(thing_id)
@@ -214,26 +216,10 @@ def entity_discovery(ogc_entity, url_entity, url_filter):
         return json_string[OGC_ID]
 
     else:
-        if not consistency_check(discovery_result, ogc_entity_name, url_filter):
+        if not scral_util.consistency_check(discovery_result, ogc_entity_name, url_filter, verbose):
             raise ValueError("Multiple results for same Entity name: " + ogc_entity_name + "!")
         else:
             return discovery_result[0][OGC_ID]
-
-
-def consistency_check(discovery_result, name, filter_name):
-    """ This function checks if an OGC entity is already registered. """
-
-    if len(discovery_result) > 1:
-        logging.error("Duplicate found: please verigy OGC-naming!")
-        logging.info("Current Filter: " + filter_name + "'" + name + "'")
-        if verbose:
-            z = 0
-            while z < len(discovery_result):
-                logging.debug(discovery_result[z])
-                z += 1
-        return False
-
-    return True
 
 
 def runtime(ogc_config, pub_broker_address, pub_broker_port, pub_topic_prefix):
@@ -245,6 +231,17 @@ def runtime(ogc_config, pub_broker_address, pub_broker_port, pub_topic_prefix):
     :param pub_broker_port: The port of the MQTT broker
     :param pub_topic_prefix: The prefix of the topic where you want to publish
     """
+    res_cat = ogc_datastream_generation(ogc_config)  # res_cat = {}
+    mqtt_util.init_connection_manager(pub_broker_address, pub_broker_port, pub_topic_prefix, res_cat)
+    mqtt_subscriber = mqtt_listening(ogc_config.get_datastreams())
+
+    th = Thread(target=dynamic_discovery, args=(ogc_config, res_cat, mqtt_subscriber, ))
+    th.start()
+    mqtt_subscriber.loop_start()
+    th.join()
+
+
+def ogc_datastream_generation(ogc_config, res_cat=None):
     r = None
     try:
         r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER, verify="./config/hamburg/hamburg_cert.cer")
@@ -260,7 +257,7 @@ def runtime(ogc_config, pub_broker_address, pub_broker_port, pub_topic_prefix):
     else:
         logging.debug("Connection status: " + str(r.status_code))
 
-    # Collect OGC information needed to build Datastreams payload
+    # Collect OGC information needed to build DATASTREAMs payload
     thing = ogc_config.get_thing()
     thing_id = thing.get_id()
     thing_name = thing.get_name()
@@ -269,37 +266,40 @@ def runtime(ogc_config, pub_broker_address, pub_broker_port, pub_topic_prefix):
     sensor_id = sensor.get_id()
     sensor_name = sensor.get_name()
 
-    property_id = ogc_config.get_observed_properties()[0].get_id()
+    property_id = ogc_config.get_observed_properties()[0].get_id()  # Assumption: only an observed property registered
     property_name = ogc_config.get_observed_properties()[0].get_name()
 
     # global resource_catalog
-    res_cat = {}
+    if res_cat is None:
+        res_cat = {}
     hamburg_devices = r.json()["value"]
     for hd in hamburg_devices:
         iot_id = str(hd[OGC_ID])
         device_id = hd["name"]
-        description = hd["description"]
 
-        datastream_name = thing_name+"/"+sensor_name+"/"+property_name+"/"+device_id
+        if iot_id in res_cat:
+            logging.debug("Device: "+device_id+" already registered with id: "+iot_id)
+        else:
+            datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + device_id
+            description = hd["description"]
+            datastream = OGCDatastream(name=datastream_name, description=description, ogc_property_id=property_id,
+                                       ogc_sensor_id=sensor_id, ogc_thing_id=thing_id, x=0.0, y=0.0,
+                                       unit_of_measurement=HAMBURG_UNIT_OF_MEASURE)
+            datastream_id = entity_discovery(datastream, ogc_config.URL_DATASTREAMS, ogc_config.FILTER_NAME)
 
-        datastream = OGCDatastream(name=datastream_name, description=description, ogc_property_id=property_id,
-                                   ogc_sensor_id=sensor_id, ogc_thing_id=thing_id, x=0.0, y=0.0,
-                                   unit_of_measurement=HAMBURG_UNIT_OF_MEASURE)
-        datastream_id = entity_discovery(datastream, ogc_config.URL_DATASTREAMS, ogc_config.FILTER_NAME)
-        datastream.set_id(datastream_id)
-        datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC+"("+iot_id+")/Locations")
-        ogc_config.add_datastream(datastream)
+            datastream.set_id(datastream_id)
+            datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC + "(" + iot_id + ")/Locations")
+            ogc_config.add_datastream(datastream)
 
-        res_cat[iot_id] = datastream_id  # Store Hamburg to MONICA coupled information
+            res_cat[iot_id] = datastream_id  # Store Hamburg to MONICA coupled information
 
-    mqtt_util.init_connection_manager(pub_broker_address, pub_broker_port, pub_topic_prefix, res_cat)
-    mqtt_listening(ogc_config.get_datastreams())
+    return res_cat
 
 
 def mqtt_listening(datastreams):
     """ This function listens on MQTT topics of Hamburg Broker and forward them to the MONICA MQTT Broker.
 
-    :param datastreams: A List of OGCDatastream
+    :param datastreams: A Dictionary of OGCDatastream
     """
     mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
 
@@ -312,12 +312,27 @@ def mqtt_listening(datastreams):
     mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
 
     # Get the listening topics and run the subscriptions
-    for ds in datastreams:
+    for ds in datastreams.values():
         top = ds.get_mqtt_topic()
         logging.debug("Subscribing to MQTT topic: " + top)
         mqtt_subscriber.subscribe(top, DEFAULT_MQTT_QOS)
 
-    mqtt_subscriber.loop_forever()
+    return mqtt_subscriber
+
+
+def dynamic_discovery(ogc_config, res_cat, mqtt_subscriber):
+    hours = 8
+    catalog = res_cat
+    while True:
+        sleep(60*60*hours)
+        logging.debug("Good morning!")
+        catalog = ogc_datastream_generation(ogc_config, catalog)
+
+        # Get the listening topics and run the subscriptions
+        for ds in ogc_config.get_datastreams().values():
+            top = ds.get_mqtt_topic()
+            logging.debug("(Re)subscribing to MQTT topic: " + top)
+            mqtt_subscriber.subscribe(top, DEFAULT_MQTT_QOS)
 
 
 if __name__ == '__main__':

@@ -41,6 +41,22 @@ def write_to_file(filename, data):
         outfile.write('\n')
 
 
+def consistency_check(discovery_result, name, filter_name, verbose=False):
+    """ This function checks if an OGC entity is already registered. """
+
+    if len(discovery_result) > 1:
+        logging.error("Duplicate found: please verigy OGC-naming!")
+        logging.info("Current Filter: " + filter_name + "'" + name + "'")
+        if verbose:
+            z = 0
+            while z < len(discovery_result):
+                logging.debug(discovery_result[z])
+                z += 1
+        return False
+
+    return True
+
+
 def test_connectivity(server_address, server_username=None, server_password=None):
     """ This function checks if a REST connection is correctly configured.
 

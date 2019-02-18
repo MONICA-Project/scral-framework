@@ -63,7 +63,8 @@ class _MQTTConnectionManager:
 def init_connection_manager(address, port, topic_prefix, resource_catalog):
     """ This function should be called to initialize the connection_manager. """
     global connection_manager
-    connection_manager = _MQTTConnectionManager(address, port, DEFAULT_KEEPALIVE, topic_prefix, resource_catalog)
+    if connection_manager is None:
+        connection_manager = _MQTTConnectionManager(address, port, DEFAULT_KEEPALIVE, topic_prefix, resource_catalog)
 
 
 def on_message_received(client, userdata, msg):
