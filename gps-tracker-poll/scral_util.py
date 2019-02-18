@@ -11,6 +11,9 @@
 #                                                                            #
 ##############################################################################
 import json
+import logging
+
+import requests
 
 
 def load_from_file(filename):
@@ -36,3 +39,28 @@ def write_to_file(filename, data):
     with open(filename, 'w+') as outfile:
         json.dump(data, outfile)
         outfile.write('\n')
+
+
+def test_connectivity(server_address, server_username=None, server_password=None):
+    """ This function checks if a REST connection is correctly configured.
+
+    :param server_address: The address of the OGC server
+    :param server_username: The username necessary to be authenticated on the server
+    :param server_password: The password related to the given username
+    :return: True, if it is possible to establish a connection, False otherwise.
+    """
+    try:
+        if server_username is None and server_password is None:
+            r = requests.get(url=server_address)
+        else:
+            r = requests.get(url=server_address, auth=(server_username, server_password))
+        if r.ok:
+            logging.info("Network connectivity: VERIFIED")
+            return True
+        else:
+            logging.info("Something wrong during connection!")
+            return False
+
+    except Exception as e:
+        logging.debug(e)
+        return False

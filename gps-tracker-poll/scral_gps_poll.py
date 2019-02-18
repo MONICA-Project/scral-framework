@@ -74,7 +74,7 @@ def main():
     logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
 
     ogc_server_address, pub_broker_conn_info = parse_connection_file(args.connection_file)
-    if not test_connectivity(ogc_server_address):
+    if not scral_util.test_connectivity(ogc_server_address, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD):
         logging.critical("Network connectivity to " + ogc_server_address + " not available!")
         exit(4)
 
@@ -142,26 +142,6 @@ def parse_connection_file(connection_file):
 
     # 3 Return the OGC server addresses
     return connection_config_file["REST"]["ogc_server_address"], (pub_broker_ip, pub_broker_port)
-
-
-def test_connectivity(server_address):
-    """ This function checks if the connection is correctly configured.
-
-    :param server_address: The address of the OGC server
-    :return: True, if it is possible to establish a connection, False otherwise.
-    """
-    try:
-        r = requests.get(url=server_address, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
-        if r.ok:
-            logging.info("Network connectivity: VERIFIED")
-            return True
-        else:
-            logging.info("Something wrong during connection!")
-            return False
-
-    except Exception as e:
-        logging.debug(e)
-        return False
 
 
 def discovery(ogc_config):
