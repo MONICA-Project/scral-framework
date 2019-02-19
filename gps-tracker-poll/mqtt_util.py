@@ -14,6 +14,7 @@ import json
 import time
 import logging
 
+import arrow
 import paho.mqtt.client as mqtt
 
 from scral_constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS
@@ -62,8 +63,7 @@ class _MQTTConnectionManager:
 def init_connection_manager(address, port, topic_prefix, resource_catalog):
     """ This function should be called to initialize the connection_manager. """
     global connection_manager
-    if connection_manager is None:
-        connection_manager = _MQTTConnectionManager(address, port, DEFAULT_KEEPALIVE, topic_prefix, resource_catalog)
+    connection_manager = _MQTTConnectionManager(address, port, DEFAULT_KEEPALIVE, topic_prefix, resource_catalog)
 
 
 def on_message_received(client, userdata, msg):

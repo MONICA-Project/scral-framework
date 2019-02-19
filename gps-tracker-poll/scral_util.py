@@ -53,7 +53,7 @@ def consistency_check(discovery_result, name, filter_name, verbose=False):
     """ This function checks if an OGC entity is already registered. """
 
     if len(discovery_result) > 1:
-        logging.error("Duplicate found: please verigy OGC-naming!")
+        logging.error("Duplicate found: please verify OGC-naming!")
         logging.info("Current Filter: " + filter_name + "'" + name + "'")
         if verbose:
             z = 0

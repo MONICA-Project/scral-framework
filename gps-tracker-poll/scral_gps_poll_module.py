@@ -1,0 +1,139 @@
+##############################################################################
+#      _____ __________  ___    __                                           #
+#     / ___// ____/ __ \/   |  / /                                           #
+#     \__ \/ /   / /_/ / /| | / /                                            #
+#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Abstraction Layer  #
+#   /____/\____/_/ |_/_/  |_/_____/   v.2.0 - enhanced by Python 3           #
+#                                                                            #
+# LINKS Foundation, (c) 2019                                                 #
+# developed by Jacopo Foglietti & Luca Mannella                              #
+# SCRAL is distributed under a BSD-style license -- See file LICENSE.md      #
+#                                                                            #
+##############################################################################
+
+import logging
+from threading import Thread
+from time import sleep
+from typing import Dict
+
+import requests
+import paho.mqtt.client as mqtt
+
+from requests.exceptions import SSLError
+
+from ogc_configuration import OGCConfiguration
+from scral_constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, OGC_ID, DEFAULT_MQTT_QOS
+from hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL, \
+                              OGC_HAMBURG_FILTER, HAMBURG_UNIT_OF_MEASURE, THINGS_SUBSCRIBE_TOPIC
+import mqtt_util
+from scral_ogc import OGCDatastream
+from scral_module import SCRALModule
+
+
+class SCRALGPSPoll(SCRALModule):
+
+    _resource_catalog: Dict[str, int]
+
+    def __init__(self, connection_file):
+        super().__init__(connection_file)
+
+        # Instantiating an MQTT Subscriber
+        mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
+        mqtt_subscriber.on_connect = mqtt_util.on_connect
+        mqtt_subscriber.on_disconnect = mqtt_util.on_disconnect
+        mqtt_subscriber.on_message = mqtt_util.on_message_received
+
+        logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
+        mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
+        self._mqtt_subscriber = mqtt_subscriber
+
+    # noinspection PyMethodOverriding
+    def runtime(self, ogc_config: OGCConfiguration, pub_topic_prefix: str):
+        """ This method retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
+            These DATASTREAMS are published on MONICA OGC server.
+            This is a "blocking function"
+
+        :param ogc_config: An instance of OGCConfiguration, it contains a representation of an OGC Sensor Things model.
+        :param pub_topic_prefix: The prefix of the topic where you want to publish
+        """
+        self.ogc_datastream_generation(ogc_config)
+        mqtt_util.init_connection_manager(
+            self._pub_broker_ip, self._pub_broker_port, pub_topic_prefix, self._resource_catalog)
+        self.update_mqtt_subscription(ogc_config.get_datastreams())
+
+        th = Thread(target=self.dynamic_discovery, args=(ogc_config, ))
+        th.start()
+        self._mqtt_subscriber.loop_start()
+        th.join()
+
+    def ogc_datastream_generation(self, ogc_config):
+        r = None
+        try:
+            r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER, verify="./config/hamburg/hamburg_cert.cer")
+        except SSLError as tls_exception:
+            logging.error("Error during TLS connection, the connection could be insecure or "
+                          "the certificate could be self-signed...\n" + str(tls_exception))
+        except Exception as ex:
+            logging.error(ex)
+
+        if r is None or not r.ok:
+            raise ConnectionError("Connection status: " + str(r.status_code) + "\nImpossible to establish a connection" +
+                                  " or resources not found on: " + OGC_HAMBURG_THING_URL)
+        else:
+            logging.debug("Connection status: " + str(r.status_code))
+
+        # Collect OGC information needed to build DATASTREAMs payload
+        thing = ogc_config.get_thing()
+        thing_id = thing.get_id()
+        thing_name = thing.get_name()
+
+        sensor = ogc_config.get_sensors()[0]  # Assumption: only "GPS" Sensor is defined for this adapter
+        sensor_id = sensor.get_id()
+        sensor_name = sensor.get_name()
+
+        property_id = ogc_config.get_observed_properties()[0].get_id()  # Assumpt.: only 1 observed property registered
+        property_name = ogc_config.get_observed_properties()[0].get_name()
+
+        # global resource_catalog
+        if self._resource_catalog is None:
+            self._resource_catalog = {}
+        hamburg_devices = r.json()["value"]
+        for hd in hamburg_devices:
+            iot_id = str(hd[OGC_ID])
+            device_id = hd["name"]
+
+            if iot_id in self._resource_catalog:
+                logging.debug("Device: "+device_id+" already registered with id: "+iot_id)
+            else:
+                datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + device_id
+                description = hd["description"]
+                datastream = OGCDatastream(name=datastream_name, description=description, ogc_property_id=property_id,
+                                           ogc_sensor_id=sensor_id, ogc_thing_id=thing_id, x=0.0, y=0.0,
+                                           unit_of_measurement=HAMBURG_UNIT_OF_MEASURE)
+                datastream_id = ogc_config.entity_discovery(
+                                    datastream, ogc_config.URL_DATASTREAMS, ogc_config.FILTER_NAME)
+
+                datastream.set_id(datastream_id)
+                datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC + "(" + iot_id + ")/Locations")
+                ogc_config.add_datastream(datastream)
+
+                self._resource_catalog[iot_id] = datastream_id  # Store Hamburg to MONICA coupled information
+
+    def update_mqtt_subscription(self, datastreams):
+        """ This method updates the lists of MQTT subscription topics.
+
+        :param datastreams: A Dictionary of OGCDatastream
+        """
+        # Get the listening topics and run the subscriptions
+        for ds in datastreams.values():
+            top = ds.get_mqtt_topic()
+            logging.debug("Subscribing to MQTT topic: " + top)
+            self._mqtt_subscriber.subscribe(top, DEFAULT_MQTT_QOS)
+
+    def dynamic_discovery(self, ogc_config):
+        time_to_wait = 60*60*8  # hours
+        while True:
+            sleep(120)  # ToDo: insert time_to_wait here!
+            logging.debug("Good morning!")
+            self.ogc_datastream_generation(ogc_config)
+            self.update_mqtt_subscription(ogc_config.get_datastreams())

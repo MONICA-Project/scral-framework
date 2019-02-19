@@ -11,7 +11,14 @@
 #                                                                            #
 ##############################################################################
 import configparser
+import json
+import logging
+
+import requests
+
 import scral_ogc
+import scral_util
+from scral_constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID
 
 
 class OGCConfiguration:
@@ -80,6 +87,80 @@ class OGCConfiguration:
                 scral_ogc.OGCObservedProperty(property_name, property_description, property_definition))
 
         self._datastreams = {}
+
+    def discovery(self, verbose=False):
+        """ This method uploads the OGC model on the OGC Server and retrieves the @iot.id assigned by the server.
+            If entities were already registered, they are not overwritten (or registered twice)
+            and only their @iot.id are retrieved.
+
+        :return: It can throw an exception if something wrong.
+        """
+        # LOCATION discovery
+        location = self._ogc_location
+        logging.info('LOCATION "' + location.get_name() + '" found')
+        location_id = self.entity_discovery(location, self.URL_LOCATIONS, self.FILTER_NAME, verbose)
+        logging.debug('Location name: "' + location.get_name() + '" with id: ' + str(location_id))
+        location.set_id(location_id)  # temporary useless
+
+        # THING discovery
+        thing = self._ogc_thing
+        thing.set_location_id(location_id)
+        logging.info('THING "' + thing.get_name() + '" found')
+        thing_id = self.entity_discovery(thing, self.URL_THINGS, self.FILTER_NAME, verbose)
+        logging.debug('Thing name: "' + thing.get_name() + '" with id: ' + str(thing_id))
+        thing.set_id(thing_id)
+
+        # SENSORS discovery
+        logging.info("SENSORS discovery")
+        for s in self._sensors:
+            sensor_id = self.entity_discovery(s, self.URL_SENSORS, self.FILTER_NAME, verbose)
+            s.set_id(sensor_id)
+            logging.debug('Sensor name: "' + s.get_name() + '" with id: ' + str(sensor_id))
+
+        # PROPERTIES discovery
+        logging.info("OBSERVEDPROPERTIES discovery")
+        for op in self._observed_properties:
+            op_id = self.entity_discovery(op, self.URL_PROPERTIES, self.FILTER_NAME, verbose)
+            op.set_id(op_id)
+            logging.debug('OBSERVED PROPERTY: "' + op.get_name() + '" with id: ' + str(op_id))
+
+    @staticmethod
+    def entity_discovery(ogc_entity, url_entity, url_filter, verbose=False):
+        """ This method uploads an OGC entity on the OGC Server and retrieves its @iot.id assigned by the server.
+            If the entity is already registered, it is not overwritten (or registered twice)
+            and only its @iot.id is retrieved.
+
+        :param ogc_entity: An object containing the data of the entity.
+        :param url_entity: The URL of the request.
+        :param url_filter: The filter to apply.
+        :param verbose: More logging prints
+        :return: Returns the @iot.id of the entity if it is correctly registered,
+                 if something goes wrong during registration, an exception can be generated.
+        """
+        # Build URL for LOCATION discovery based on Location name
+        ogc_entity_name = ogc_entity.get_name()
+        url_entity_discovery = url_entity + url_filter + "'" + ogc_entity_name + "'"
+
+        r = requests.get(url=url_entity_discovery, headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
+        discovery_result = r.json()['value']
+
+        if not discovery_result or len(discovery_result) == 0:  # if response is empty
+            logging.info(ogc_entity_name + " not yet registered, registration is starting now!")
+            payload = ogc_entity.get_rest_payload()
+            r = requests.post(url=url_entity_discovery, data=json.dumps(payload),
+                              headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
+            json_string = r.json()
+            if OGC_ID not in json_string:
+                raise ValueError("The Entity ID is not defined for: " + ogc_entity_name + "!\n" +
+                                 "Please check the REST request!")
+
+            return json_string[OGC_ID]
+
+        else:
+            if not scral_util.consistency_check(discovery_result, ogc_entity_name, url_filter, verbose):
+                raise ValueError("Multiple results for same Entity name: " + ogc_entity_name + "!")
+            else:
+                return discovery_result[0][OGC_ID]
 
     def get_thing(self):
         return self._ogc_thing
