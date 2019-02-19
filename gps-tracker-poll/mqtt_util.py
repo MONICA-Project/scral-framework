@@ -20,35 +20,11 @@ import paho.mqtt.client as mqtt
 from scral_constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS
 from scral_ogc import OGCObservation
 
-""" This object will contains the publishing MQTT Client and the resource catalog. """
-connection_manager = None
 
-
-class _MQTTConnectionManager:
+class MQTTConnectionManager:
     """ This class manage an MQTT Publisher with the associated resource catalog. """
 
-    def __init__(self, address, port, keepalive, topic_prefix, resource_catalog):
-        """ Initialize the MQTTConnectionManager
 
-        :param address: The IP address (or alias) of the MQTT Broker on which the messages will be published.
-        :param port: The port of the MQTT Broker
-        :param keepalive: The keepalive value used to establish the connection to the broker
-        :param resource_catalog: A dictionary containing the mapping between the Hamburg THING @iot.id and
-            the MONICA DATASTREAM @iot.id
-        """
-        self._mqtt_publisher = mqtt.Client()
-
-        # Map event handlers
-        self._mqtt_publisher.on_connect = on_connect
-        self._mqtt_publisher.on_disconnect = on_disconnect
-        self._mqtt_publisher.on_message = on_message_received
-
-        logging.info("Try to connect to broker: %s:%s" % (address, port))
-        self._mqtt_publisher.connect(address, port, keepalive)
-        self._mqtt_publisher.loop_start()
-
-        self._topic_prefix = topic_prefix
-        self._resource_catalog = resource_catalog
 
     def get_topic_prefix(self):
         return self._topic_prefix
@@ -59,31 +35,6 @@ class _MQTTConnectionManager:
     def get_mqtt_publisher(self):
         return self._mqtt_publisher
 
-
-def init_connection_manager(address, port, topic_prefix, resource_catalog):
-    """ This function should be called to initialize the connection_manager. """
-    global connection_manager
-    connection_manager = _MQTTConnectionManager(address, port, DEFAULT_KEEPALIVE, topic_prefix, resource_catalog)
-
-
-def on_message_received(client, userdata, msg):
-    logging.debug(msg.topic+": "+str(msg.payload))
-    observation_result = json.loads(msg.payload)["location"]["geometry"]  # Load the received message
-    observation_timestamp = str(arrow.utcnow())
-    thing_id = str(msg.topic.split('(')[1].split(')')[0])  # Get the thing_id associated to the physical device
-
-    catalog = connection_manager.get_resource_catalog()
-    datastream_id = catalog[thing_id]                      # Get the datastream_id from the resource catalog
-    # topic = "GOST/Datastreams("+str(datastream_id)+")/Observations"
-    topic_prefix = connection_manager.get_topic_prefix()
-    topic = topic_prefix + "Datastreams("+str(datastream_id)+")/Observations"
-
-    # Create OGC Observation and publish
-    ogc_observation = OGCObservation(datastream_id, observation_timestamp, observation_result, observation_timestamp)
-    observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
-    logging.debug("On topic '"+topic+"' will be send the following Observation payload: " + str(observation_payload))
-    publisher = connection_manager.get_mqtt_publisher()
-    publisher.publish(topic, observation_payload, DEFAULT_MQTT_QOS)
 
 
 def on_connect(mqttc, userdata, flags, rc):

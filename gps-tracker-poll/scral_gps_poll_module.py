@@ -10,7 +10,7 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md      #
 #                                                                            #
 ##############################################################################
-
+import json
 import logging
 from threading import Thread
 from time import sleep
@@ -18,6 +18,7 @@ from typing import Dict
 
 import requests
 import paho.mqtt.client as mqtt
+import arrow
 
 from requests.exceptions import SSLError
 
@@ -26,7 +27,7 @@ from scral_constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, OGC_ID, DEFA
 from hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL, \
                               OGC_HAMBURG_FILTER, HAMBURG_UNIT_OF_MEASURE, THINGS_SUBSCRIBE_TOPIC
 import mqtt_util
-from scral_ogc import OGCDatastream
+from scral_ogc import OGCDatastream, OGCObservation
 from scral_module import SCRALModule
 
 
@@ -34,18 +35,34 @@ class SCRALGPSPoll(SCRALModule):
 
     _resource_catalog: Dict[str, int]
 
-    def __init__(self, connection_file):
+    def __init__(self, connection_file, pub_topic_prefix):
+
         super().__init__(connection_file)
 
         # Instantiating an MQTT Subscriber
         mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
         mqtt_subscriber.on_connect = mqtt_util.on_connect
         mqtt_subscriber.on_disconnect = mqtt_util.on_disconnect
-        mqtt_subscriber.on_message = mqtt_util.on_message_received
+        mqtt_subscriber.on_message = self.on_message_received
 
         logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
-        mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
+        # mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
+        mqtt_subscriber.connect("broker.hivemq.com", BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
         self._mqtt_subscriber = mqtt_subscriber
+
+        # address, port, keepalive, topic_prefix, resource_catalog):
+
+        self._mqtt_publisher = mqtt.Client()
+
+        # Map event handlers
+        self._mqtt_publisher.on_connect = mqtt_util.on_connect
+        self._mqtt_publisher.on_disconnect = mqtt_util.on_disconnect
+
+        logging.info("Try to connect to broker: %s:%s" % (self._pub_broker_ip, self._pub_broker_port))
+        self._mqtt_publisher.connect(self._pub_broker_ip, self._pub_broker_port, DEFAULT_KEEPALIVE)
+        self._mqtt_publisher.loop_start()
+
+        self._topic_prefix = pub_topic_prefix
 
     # noinspection PyMethodOverriding
     def runtime(self, ogc_config: OGCConfiguration, pub_topic_prefix: str):
@@ -57,8 +74,6 @@ class SCRALGPSPoll(SCRALModule):
         :param pub_topic_prefix: The prefix of the topic where you want to publish
         """
         self.ogc_datastream_generation(ogc_config)
-        mqtt_util.init_connection_manager(
-            self._pub_broker_ip, self._pub_broker_port, pub_topic_prefix, self._resource_catalog)
         self.update_mqtt_subscription(ogc_config.get_datastreams())
 
         th = Thread(target=self.dynamic_discovery, args=(ogc_config, ))
@@ -133,7 +148,39 @@ class SCRALGPSPoll(SCRALModule):
     def dynamic_discovery(self, ogc_config):
         time_to_wait = 60*60*8  # hours
         while True:
-            sleep(120)  # ToDo: insert time_to_wait here!
+            sleep(180)  # ToDo: insert time_to_wait here!
             logging.debug("Good morning!")
             self.ogc_datastream_generation(ogc_config)
             self.update_mqtt_subscription(ogc_config.get_datastreams())
+
+    def on_message_received(self, client, userdata, msg):
+        logging.debug(msg.topic + ": " + str(msg.payload))
+        # observation_result = json.loads(msg.payload)["location"]["geometry"]  # Load the received message
+        observation_result = json.loads(msg.payload)
+        observation_timestamp = str(arrow.utcnow())
+        thing_id = str(msg.topic.split('(')[1].split(')')[0])  # Get the thing_id associated to the physical device
+
+        catalog = self._resource_catalog
+        datastream_id = catalog[thing_id]  # Get the datastream_id from the resource catalog
+        # topic = "GOST/Datastreams("+str(datastream_id)+")/Observations"
+        topic_prefix = self._topic_prefix
+        topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
+
+        # Create OGC Observation and publish
+        ogc_observation = OGCObservation(datastream_id, observation_timestamp, observation_result,
+                                         observation_timestamp)
+        observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
+        logging.debug(
+            "On topic '" + topic + "' will be send the following Observation payload: " + str(observation_payload))
+        publisher = self._mqtt_publisher
+        publisher.publish(topic, observation_payload, DEFAULT_MQTT_QOS)
+
+
+""" Initialize the MQTTConnectionManager
+
+    :param address: The IP address (or alias) of the MQTT Broker on which the messages will be published.
+    :param port: The port of the MQTT Broker
+    :param keepalive: The keepalive value used to establish the connection to the broker
+    :param resource_catalog: A dictionary containing the mapping between the Hamburg THING @iot.id and
+        the MONICA DATASTREAM @iot.id
+"""

@@ -71,7 +71,7 @@ def main():
     logging.debug("OGC file: " + args.ogc_file)
     logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
 
-    module = SCRALGPSPoll(args.connection_file)
+    module = SCRALGPSPoll(args.connection_file, pilot_mqtt_topic_prefix)
 
     # 3 Storing the OGC server addresses
     connection_config_file = scral_util.load_from_file(args.connection_file)
