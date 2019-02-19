@@ -16,6 +16,14 @@ import logging
 import requests
 
 
+def init_logger(debug_level):
+    """ This function configure the logger according to a specified debug_level taken from logging class. """
+    logging.basicConfig(format="%(message)s")
+    logging.getLogger().setLevel(level=debug_level)
+    logging.getLogger().handlers[0].setFormatter(logging.Formatter(
+        "%(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S"))
+
+
 def load_from_file(filename):
     """ Read information about a specific configuration from a file and return a JSON object with the related data.
 

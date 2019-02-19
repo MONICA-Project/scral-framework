@@ -48,6 +48,9 @@ import mqtt_util
 from ogc_configuration import OGCConfiguration
 from scral_ogc import OGCDatastream
 
+# global variables
+verbose = True
+
 
 def main():
     """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
@@ -55,10 +58,12 @@ def main():
     global verbose  # overwrite verbose flag from command line
     if args.verbose:
         verbose = True
+        logging_level = logging.DEBUG
     else:
+        logging_level = logging.INFO
         verbose = False
 
-    init_logger()  # logging initialization, it is suggested to call it after command line parsing
+    scral_util.init_logger(logging_level)  # logging initialization
 
     if not args.connection_file:  # has the connection_file been set?
         logging.critical("Connection file is missing!")
@@ -106,17 +111,6 @@ def parse_command_line():
     args = parser.parse_args()
 
     return args
-
-
-def init_logger():
-    """ This function configure the logger according to verbose flag. """
-    logging.basicConfig(format="%(message)s")
-    if verbose:
-        logging.getLogger().setLevel(level=logging.DEBUG)
-    else:
-        logging.getLogger().setLevel(level=logging.INFO)
-    logging.getLogger().handlers[0].setFormatter(logging.Formatter(
-        "%(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S"))
 
 
 def parse_connection_file(connection_file):

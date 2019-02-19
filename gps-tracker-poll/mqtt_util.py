@@ -13,7 +13,6 @@
 import json
 import time
 import logging
-import arrow
 
 import paho.mqtt.client as mqtt
 

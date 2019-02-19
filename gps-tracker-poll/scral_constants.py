@@ -58,6 +58,3 @@ BROKER_HAMBURG_CLIENT_ID = "MONICA_GPS"
 
 # Hamburg default MQTT Topic
 THINGS_SUBSCRIBE_TOPIC = "v1.0/Things"
-
-# global variables
-verbose = True
