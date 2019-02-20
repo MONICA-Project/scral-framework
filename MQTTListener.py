@@ -21,16 +21,16 @@ BROKER_ADDRESS = "localhost"
 BROKER_PORT = 1883
 KEEPALIVE = 60
 CLIENT_ID = "MONICA_GPS"
-TOPIC = "v1.0/Things(12295)/Locations"
+# TOPIC = "v1.0/Things(12295)/Locations"
 
-# TOPIC_GOST = "GOST/+/Observations"
+TOPIC_GOST = "GOST/+/Observations"
 # TOPIC_ALL = "#"
 # TOPIC_THING_ID = "v1.0/Things(12295)/#"
 # TOPIC_ALL_THINGS = "v1.0/+/Locations"
 
 
 def on_connect(client, userdata, flags, rc):
-    topic = TOPIC
+    topic = TOPIC_GOST
     # The callback for when the client receives a CONNACK response from the server.
     logging.info("Connected to '"+BROKER_ADDRESS+"' with result code "+str(rc))
 
@@ -53,7 +53,7 @@ def on_message(client, userdata, msg):
 
 
 def log_configuration(debug_level):
-    """ Configure the log """
+    """ Configuring the log """
 
     logging.basicConfig(format="%(message)s")
     logging.getLogger().setLevel(level=debug_level)

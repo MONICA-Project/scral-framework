@@ -66,21 +66,25 @@ class SCRALGPSPoll(SCRALModule):
         self._topic_prefix = pub_topic_prefix
 
     # noinspection PyMethodOverriding
-    def runtime(self, ogc_config: OGCConfiguration, pub_topic_prefix: str):
+    def runtime(self, ogc_config: OGCConfiguration, pub_topic_prefix: str, dynamic_discovery=True):
         """ This method retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
             These DATASTREAMS are published on MONICA OGC server.
             This is a "blocking function"
 
         :param ogc_config: An instance of OGCConfiguration, it contains a representation of an OGC Sensor Things model.
         :param pub_topic_prefix: The prefix of the topic where you want to publish
+        :param dynamic_discovery:  A boolean value that enable the dynamic discovery of new hamburg sensors
         """
         self.ogc_datastream_generation(ogc_config)
         self.update_mqtt_subscription(ogc_config.get_datastreams())
 
-        th = Thread(target=self.dynamic_discovery, args=(ogc_config, ))
-        th.start()
-        self._mqtt_subscriber.loop_start()
-        th.join()
+        if dynamic_discovery:
+            th = Thread(target=self.dynamic_discovery, args=(ogc_config, ))
+            th.start()
+            self._mqtt_subscriber.loop_start()
+            th.join()
+        else:
+            self._mqtt_subscriber.loop_forever()
 
     def ogc_datastream_generation(self, ogc_config):
         r = None
