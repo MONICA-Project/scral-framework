@@ -1,7 +1,7 @@
 {
   "mqtt": {
-    "broker": "monappdwp3.monica-cloud.eu",
-    "broker_port": 1883,
+    "pub_broker": "monappdwp3.monica-cloud.eu",
+    "pub_broker_port": 1883,
     "broker_keepalive": 60
   },
   "REST": {

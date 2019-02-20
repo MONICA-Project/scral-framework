@@ -89,7 +89,8 @@ class SCRALGPSPoll(SCRALModule):
     def ogc_datastream_generation(self, ogc_config):
         r = None
         try:
-            r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER, verify="./config/hamburg/hamburg_cert.cer")
+            r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER,
+                             verify="gps-tracker-poll/config/hamburg/hamburg_cert.cer")
         except SSLError as tls_exception:
             logging.error("Error during TLS connection, the connection could be insecure or "
                           "the certificate could be self-signed...\n" + str(tls_exception))
@@ -153,7 +154,7 @@ class SCRALGPSPoll(SCRALModule):
     def dynamic_discovery(self, ogc_config):
         time_to_wait = 60*60*8  # hours
         while True:
-            sleep(180)  # ToDo: insert time_to_wait here!
+            sleep(time_to_wait)
             logging.debug("Good morning!")
             self.ogc_datastream_generation(ogc_config)
             self.update_mqtt_subscription(ogc_config.get_datastreams())
