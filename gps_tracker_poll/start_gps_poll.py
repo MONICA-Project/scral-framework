@@ -42,11 +42,10 @@ from scral_module.ogc_configuration import OGCConfiguration
 
 from scral_gps_poll_module import SCRALGPSPoll
 
-verbose = True
+verbose = False
 
 
 def main():
-    """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
     args = parse_command_line()  # parsing command line parameters, it has to be the first instruction
     global verbose  # overwrite verbose flag from command line
     if args.verbose:
@@ -73,9 +72,7 @@ def main():
     logging.debug("OGC file: " + args.ogc_file)
     logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
 
-    module = SCRALGPSPoll(args.connection_file, pilot_mqtt_topic_prefix)
-
-    # 3 Storing the OGC server addresses
+    # Storing the OGC server addresses
     connection_config_file = scral_util.load_from_file(args.connection_file)
     ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
 
@@ -83,9 +80,12 @@ def main():
         logging.critical("Network connectivity to " + ogc_server_address + " not available!")
         exit(4)
 
+    # OGC model configuration and discovery
     ogc_config = OGCConfiguration(args.ogc_file, ogc_server_address)
     ogc_config.discovery(verbose)
 
+    # Module initialization and runtime phase
+    module = SCRALGPSPoll(args.connection_file, pilot_mqtt_topic_prefix)
     module.runtime(ogc_config, pilot_mqtt_topic_prefix)
 
     logging.info("That's all folks!\n")
@@ -102,7 +102,7 @@ def parse_command_line():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='enable verbose mode')
     parser.add_argument('-o', '--ogc', dest='ogc_file', type=str, help='the path of the OGC configuration file')
-    parser.add_argument('-c', '--conn', dest='connection_file', type=str,  # choices=[0, 1, 2], default=0
+    parser.add_argument('-c', '--conn', dest='connection_file', type=str,
                         help='the path of the connection configuration')
     parser.add_argument('-p', '--pilot', default=DEFAULT_CONFIG, type=str, help='the name of the desired pilot')
     args = parser.parse_args()

@@ -11,8 +11,7 @@
 #                                                                            #
 ##############################################################################
 
-# BROKER_HAMBURG_ADDRESS = "test.geoportal-hamburg.de"
-BROKER_HAMBURG_ADDRESS = "broker.mqttdashboard.com"
+BROKER_HAMBURG_ADDRESS = "test.geoportal-hamburg.de"  # testing address: "broker.mqttdashboard.com"
 BROKER_HAMBURG_CLIENT_ID = "MONICA_GPS"
 
 # HAMBURG OGC SERVER

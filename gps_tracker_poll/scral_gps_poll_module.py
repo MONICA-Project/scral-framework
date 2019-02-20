@@ -34,6 +34,7 @@ from hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, 
 
 
 class SCRALGPSPoll(SCRALModule):
+    """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
 
     _resource_catalog: Dict[str, int]
 
@@ -47,14 +48,13 @@ class SCRALGPSPoll(SCRALModule):
         super().__init__(connection_file)
 
         # Creating an MQTT Subscriber
-        mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
-        mqtt_subscriber.on_connect = mqtt_util.on_connect
-        mqtt_subscriber.on_disconnect = mqtt_util.automatic_reconnection
-        mqtt_subscriber.on_message = self.on_message_received
+        self._mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
+        self._mqtt_subscriber.on_connect = mqtt_util.on_connect
+        self._mqtt_subscriber.on_disconnect = mqtt_util.automatic_reconnection
+        self._mqtt_subscriber.on_message = self.on_message_received
 
         logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
-        mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
-        self._mqtt_subscriber = mqtt_subscriber
+        self._mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
 
         # Creating an MQTT Publisher
         self._mqtt_publisher = mqtt.Client()
@@ -71,7 +71,7 @@ class SCRALGPSPoll(SCRALModule):
     def runtime(self, ogc_config: OGCConfiguration, pub_topic_prefix: str, dynamic_discovery=True):
         """ This method retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
             These DATASTREAMS are published on MONICA OGC server.
-            This is a "blocking function"
+            This is a "locking function"
 
         :param ogc_config: An instance of OGCConfiguration, it contains a representation of an OGC Sensor Things model.
         :param pub_topic_prefix: The prefix of the topic where you want to publish
