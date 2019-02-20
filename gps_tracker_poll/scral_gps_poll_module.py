@@ -22,13 +22,15 @@ import arrow
 
 from requests.exceptions import SSLError
 
-from ogc_configuration import OGCConfiguration
-from scral_constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, OGC_ID, DEFAULT_MQTT_QOS
+from scral_ogc import OGCDatastream, OGCObservation
+
+from scral_module.ogc_configuration import OGCConfiguration
+from scral_module.scral_constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, OGC_ID, DEFAULT_MQTT_QOS
+from scral_module import mqtt_util
+from scral_module.scral_module import SCRALModule
+
 from hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL, \
                               OGC_HAMBURG_FILTER, HAMBURG_UNIT_OF_MEASURE, THINGS_SUBSCRIBE_TOPIC
-import mqtt_util
-from scral_ogc import OGCDatastream, OGCObservation
-from scral_module import SCRALModule
 
 
 class SCRALGPSPoll(SCRALModule):
@@ -90,7 +92,7 @@ class SCRALGPSPoll(SCRALModule):
         r = None
         try:
             r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER,
-                             verify="gps-tracker-poll/config/hamburg/hamburg_cert.cer")
+                             verify="./gps_tracker_poll/config/hamburg/hamburg_cert.cer")
         except SSLError as tls_exception:
             logging.error("Error during TLS connection, the connection could be insecure or "
                           "the certificate could be self-signed...\n" + str(tls_exception))

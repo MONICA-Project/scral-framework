@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 ##############################################################################
 #      _____ __________  ___    __                                           #
 #     / ___// ____/ __ \/   |  / /                                           #
@@ -10,6 +12,14 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md      #
 #                                                                            #
 ##############################################################################
+"""
+    SCRAL Module
+    This module is the starting point for developing a SCRAL module.
+    In particular the class SCRALModule have to be extended and the runtime method have to be overloaded.
+"""
+
+import logging
+import sys
 
 VERSION = "v2.0"
 BANNER = """
@@ -24,21 +34,5 @@ BANNER = """
 
 """
 
-# REST headers
-REST_HEADERS = {'Content-Type': 'application/json'}
-
-# default value for pilot and configuration approach
-DEFAULT_CONFIG = "local"
-
-# Local catalog of the active DATASTREAM ID for each OBSERVEDPROPERTY associated to the registered Device IDs
-CATALOG_FILENAME = 'resource_catalog.json'
-
-OGC_SERVER_USERNAME = "scral"
-OGC_SERVER_PASSWORD = "A5_xYY#HqNiao_12#b"
-
-OGC_ID = "@iot.id"
-
-BROKER_PERT = "130.192.85.32"
-BROKER_DEFAULT_PORT = 1883
-DEFAULT_KEEPALIVE = 60
-DEFAULT_MQTT_QOS = 2
+if sys.flags.optimize == 0:
+    logging.debug("All debug checks are active, performances may be impaired")

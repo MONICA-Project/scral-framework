@@ -15,8 +15,8 @@ import json
 import logging
 import os
 
-from scral_constants import CATALOG_FILENAME
-import scral_util
+from .scral_constants import CATALOG_FILENAME
+from . import scral_util
 
 
 class SCRALModule(object):

@@ -11,18 +11,21 @@
 #                                                                            #
 ##############################################################################
 
-BROKER_HAMBURG_ADDRESS = "test.geoportal-hamburg.de"
-BROKER_HAMBURG_CLIENT_ID = "MONICA_GPS"
+# REST headers
+REST_HEADERS = {'Content-Type': 'application/json'}
 
-# HAMBURG OGC SERVER
-OGC_HAMBURG_URL = "https://51.5.242.162/itsLGVhackathon/v1.0/"
-# OGC_HAMBURG_URL = "https://test.geoportal-hamburg.de/itsLGVhackathon/v1.0/"
-OGC_HAMBURG_THING_URL = OGC_HAMBURG_URL+"Things"
-OGC_HAMBURG_FILTER = "?$filter=startswith(name,'MONICA_HAMBURG_GPS')"
+# default value for pilot and configuration approach
+DEFAULT_CONFIG = "local"
 
-# Hamburg default MQTT Topic
-THINGS_SUBSCRIBE_TOPIC = "v1.0/Things"
+# Local catalog of the active DATASTREAM ID for each OBSERVEDPROPERTY associated to the registered Device IDs
+CATALOG_FILENAME = 'resource_catalog.json'
 
-# Hamburg Datastream constant
-HAMBURG_UNIT_OF_MEASURE = {"name": "position", "symbol": "",
-                           "definition": "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#DegreeAngle"}
+OGC_SERVER_USERNAME = "scral"
+OGC_SERVER_PASSWORD = "A5_xYY#HqNiao_12#b"
+
+OGC_ID = "@iot.id"
+
+BROKER_PERT = "130.192.85.32"
+BROKER_DEFAULT_PORT = 1883
+DEFAULT_KEEPALIVE = 60
+DEFAULT_MQTT_QOS = 2

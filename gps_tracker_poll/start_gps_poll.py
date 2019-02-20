@@ -22,22 +22,24 @@
 #   4. If needed, register new entities to OGC Server
 #   5. Retrieve corresponding @iot.id's
 #
-# #ToDo: INTEGRATION
+# #PHASE: INTEGRATION
 #   6. Discovery of physical devices through external platform
 #   7. Start threads and upload DATASTREAM entities to OGC Server
 #   8. Subscribe to MQTT topics, listen to incoming data and publish OBSERVATIONS to OGC Broker
 #
-# #ToDO: DYNAMIC DISCOVERY (could be integrated)
+# #PHASE: DYNAMIC DISCOVERY
 #
 ####################################################################################################
 import argparse
 import logging
 import sys
 
-import scral_util
-import mqtt_util
-from ogc_configuration import OGCConfiguration
-from scral_constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, BANNER, VERSION, DEFAULT_CONFIG
+from scral_module import BANNER, VERSION
+from scral_module import scral_util
+from scral_module import mqtt_util
+from scral_module.scral_constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, DEFAULT_CONFIG
+from scral_module.ogc_configuration import OGCConfiguration
+
 from scral_gps_poll_module import SCRALGPSPoll
 
 verbose = True

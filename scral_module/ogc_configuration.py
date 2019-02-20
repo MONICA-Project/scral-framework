@@ -17,8 +17,8 @@ import logging
 import requests
 
 import scral_ogc
-import scral_util
-from scral_constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID
+from . import scral_util
+from .scral_constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID
 
 
 class OGCConfiguration:
@@ -139,15 +139,15 @@ class OGCConfiguration:
         """
         # Build URL for LOCATION discovery based on Location name
         ogc_entity_name = ogc_entity.get_name()
-        url_entity_discovery = url_entity + url_filter + "'" + ogc_entity_name + "'"
+        url_discovery = url_entity + url_filter + "'" + ogc_entity_name + "'"
 
-        r = requests.get(url=url_entity_discovery, headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
+        r = requests.get(url=url_discovery, headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
         discovery_result = r.json()['value']
 
         if not discovery_result or len(discovery_result) == 0:  # if response is empty
             logging.info(ogc_entity_name + " not yet registered, registration is starting now!")
             payload = ogc_entity.get_rest_payload()
-            r = requests.post(url=url_entity_discovery, data=json.dumps(payload),
+            r = requests.post(url=url_discovery, data=json.dumps(payload),
                               headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
             json_string = r.json()
             if OGC_ID not in json_string:
