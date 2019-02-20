@@ -82,7 +82,7 @@ def test_connectivity(server_address, server_username=None, server_password=None
             logging.info("Network connectivity: VERIFIED")
             return True
         else:
-            logging.info("Something wrong during connection!")
+            logging.error("Something wrong during connection!")
             return False
 
     except Exception as e:

@@ -47,7 +47,7 @@ class SCRALGPSPoll(SCRALModule):
         # Creating an MQTT Subscriber
         mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
         mqtt_subscriber.on_connect = mqtt_util.on_connect
-        mqtt_subscriber.on_disconnect = mqtt_util.on_disconnect
+        mqtt_subscriber.on_disconnect = mqtt_util.automatic_reconnection
         mqtt_subscriber.on_message = self.on_message_received
 
         logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
@@ -57,7 +57,7 @@ class SCRALGPSPoll(SCRALModule):
         # Creating an MQTT Publisher
         self._mqtt_publisher = mqtt.Client()
         self._mqtt_publisher.on_connect = mqtt_util.on_connect
-        self._mqtt_publisher.on_disconnect = mqtt_util.on_disconnect
+        self._mqtt_publisher.on_disconnect = mqtt_util.automatic_reconnection
 
         logging.info("Try to connect to broker: %s:%s" % (self._pub_broker_ip, self._pub_broker_port))
         self._mqtt_publisher.connect(self._pub_broker_ip, self._pub_broker_port, DEFAULT_KEEPALIVE)

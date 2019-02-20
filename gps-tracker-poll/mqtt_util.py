@@ -21,9 +21,9 @@ def on_connect(mqttc, userdata, flags, rc):
         logging.info("Connection with MQTT broker successfully established|")
 
 
-def on_disconnect(client, userdata, rc):
+def automatic_reconnection(client, userdata, rc):
     time.sleep(10)
-    logging.info("Broker connection lost! Try to re-connecting to " + str(client._host) + "...")
+    logging.error("Broker connection lost! Try to re-connecting to " + str(client._host) + "...")
     client.reconnect()
 
 
