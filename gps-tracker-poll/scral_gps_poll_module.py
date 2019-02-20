@@ -36,25 +36,26 @@ class SCRALGPSPoll(SCRALModule):
     _resource_catalog: Dict[str, int]
 
     def __init__(self, connection_file, pub_topic_prefix):
+        """ Initialize MQTT Brokers for listening and publishing
+
+        :param connection_file: A file containing connection information.
+        :param pub_topic_prefix: The MQTT topic prefix on which information will be published.
+        """
 
         super().__init__(connection_file)
 
-        # Instantiating an MQTT Subscriber
+        # Creating an MQTT Subscriber
         mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
         mqtt_subscriber.on_connect = mqtt_util.on_connect
         mqtt_subscriber.on_disconnect = mqtt_util.on_disconnect
         mqtt_subscriber.on_message = self.on_message_received
 
         logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
-        # mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
-        mqtt_subscriber.connect("broker.hivemq.com", BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
+        mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
         self._mqtt_subscriber = mqtt_subscriber
 
-        # address, port, keepalive, topic_prefix, resource_catalog):
-
+        # Creating an MQTT Publisher
         self._mqtt_publisher = mqtt.Client()
-
-        # Map event handlers
         self._mqtt_publisher.on_connect = mqtt_util.on_connect
         self._mqtt_publisher.on_disconnect = mqtt_util.on_disconnect
 
@@ -155,8 +156,7 @@ class SCRALGPSPoll(SCRALModule):
 
     def on_message_received(self, client, userdata, msg):
         logging.debug(msg.topic + ": " + str(msg.payload))
-        # observation_result = json.loads(msg.payload)["location"]["geometry"]  # Load the received message
-        observation_result = json.loads(msg.payload)
+        observation_result = json.loads(msg.payload)["location"]["geometry"]  # Load the received message
         observation_timestamp = str(arrow.utcnow())
         thing_id = str(msg.topic.split('(')[1].split(')')[0])  # Get the thing_id associated to the physical device
 
@@ -174,13 +174,3 @@ class SCRALGPSPoll(SCRALModule):
             "On topic '" + topic + "' will be send the following Observation payload: " + str(observation_payload))
         publisher = self._mqtt_publisher
         publisher.publish(topic, observation_payload, DEFAULT_MQTT_QOS)
-
-
-""" Initialize the MQTTConnectionManager
-
-    :param address: The IP address (or alias) of the MQTT Broker on which the messages will be published.
-    :param port: The port of the MQTT Broker
-    :param keepalive: The keepalive value used to establish the connection to the broker
-    :param resource_catalog: A dictionary containing the mapping between the Hamburg THING @iot.id and
-        the MONICA DATASTREAM @iot.id
-"""

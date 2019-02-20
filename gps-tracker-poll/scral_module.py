@@ -22,7 +22,7 @@ import scral_util
 class SCRALModule(object):
 
     def __init__(self, connection_file):
-        """ Parses the connection file and initialize the MQTT broker.
+        """ Parses the connection file and stores information about the MQTT broker.
 
         @:param The path of the connection file
         :return A tuple containing the OGC server address and broker ip/port information

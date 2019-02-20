@@ -10,31 +10,8 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md      #
 #                                                                            #
 ##############################################################################
-import json
 import time
 import logging
-
-import arrow
-import paho.mqtt.client as mqtt
-
-from scral_constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS
-from scral_ogc import OGCObservation
-
-
-class MQTTConnectionManager:
-    """ This class manage an MQTT Publisher with the associated resource catalog. """
-
-
-
-    def get_topic_prefix(self):
-        return self._topic_prefix
-
-    def get_resource_catalog(self):
-        return self._resource_catalog
-
-    def get_mqtt_publisher(self):
-        return self._mqtt_publisher
-
 
 
 def on_connect(mqttc, userdata, flags, rc):
