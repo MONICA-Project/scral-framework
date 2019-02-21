@@ -15,7 +15,10 @@
 import sys
 
 import scral_module as scral
+import gps_tracker_poll.start_gps_poll as pd
 
 if __name__ == '__main__':
     print(scral.BANNER % scral.VERSION)
     sys.stdout.flush()
+    pd.main()
+    print("That's all folks!\n")

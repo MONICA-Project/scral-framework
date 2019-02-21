@@ -1,15 +1,17 @@
-##############################################################################
-#      _____ __________  ___    __                                           #
-#     / ___// ____/ __ \/   |  / /                                           #
-#     \__ \/ /   / /_/ / /| | / /                                            #
-#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Abstraction Layer  #
-#   /____/\____/_/ |_/_/  |_/_____/   v.2.0 - enhanced by Python 3           #
-#                                                                            #
-# LINKS Foundation, (c) 2019                                                 #
-# developed by Jacopo Foglietti & Luca Mannella                              #
-# SCRAL is distributed under a BSD-style license -- See file LICENSE.md      #
-#                                                                            #
-##############################################################################
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#############################################################################
+#      _____ __________  ___    __                                          #
+#     / ___// ____/ __ \/   |  / /                                          #
+#     \__ \/ /   / /_/ / /| | / /                                           #
+#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer  #
+#   /____/\____/_/ |_/_/  |_/_____/   v.2.0 - enhanced by Python 3          #
+#                                                                           #
+# LINKS Foundation, (c) 2019                                                #
+# developed by Jacopo Foglietti & Luca Mannella                             #
+# SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
+#                                                                           #
+#############################################################################
 import json
 import logging
 
@@ -79,7 +81,7 @@ def test_connectivity(server_address, server_username=None, server_password=None
         else:
             r = requests.get(url=server_address, auth=(server_username, server_password))
         if r.ok:
-            logging.info("Network connectivity: VERIFIED")
+            logging.info("Network connectivity: VERIFIED. Server "+server_address+"is reachable!")
             return True
         else:
             logging.error("Something wrong during connection!")
