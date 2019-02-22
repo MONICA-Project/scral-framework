@@ -4,7 +4,7 @@
 #      _____ __________  ___    __                                           #
 #     / ___// ____/ __ \/   |  / /                                           #
 #     \__ \/ /   / /_/ / /| | / /                                            #
-#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Abstraction Layer  #
+#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer  #
 #   /____/\____/_/ |_/_/  |_/_____/   v.2.0 - enhanced by Python 3           #
 #                                                                            #
 # LINKS Foundation, (c) 2019                                                 #

@@ -1,4 +1,4 @@
-# SCRAL - Smart City Resource Abstraction Layer
+# SCRAL - Smart City Resource Adaptation Layer
 
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 ![Language: Python3](https://img.shields.io/badge/language-python3-blue.svg)
@@ -32,14 +32,14 @@ pip3 install -r requirements.txt
         _____ _____ ____  ___    __
        / ___// ____/ __ \/   |  / /
        \__ \/ /   / /_/ / /| | / /
-      ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Abstraction Layer
+      ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer
      /____/\____/_/ |_/_/  |_/_____/   v2.0 - enhanced by Python 3
 
      (c) 2019, LINKS Foundation
      developed by Jacopo Foglietti & Luca Mannella
 
 
-Smart City Resource Abstraction Layer
+Smart City Resource Adaptation Layer
 
 optional arguments:
   -h, --help            show this help message and exit
