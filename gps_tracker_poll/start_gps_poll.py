@@ -111,6 +111,6 @@ def parse_command_line():
 
 
 if __name__ == '__main__':
-    print(BANNER % VERSION)
+    print("\n"+BANNER % VERSION+"\n")
     sys.stdout.flush()
     main()

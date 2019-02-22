@@ -157,7 +157,7 @@ class SCRALGPSPoll(SCRALModule):
         time_to_wait = 60*60*8  # hours
         while True:
             sleep(time_to_wait)
-            logging.debug("Good morning!")
+            logging.debug("Starting Dynamic Discovery!")
             self.ogc_datastream_generation(ogc_config)
             self.update_mqtt_subscription(ogc_config.get_datastreams())
 
@@ -178,6 +178,6 @@ class SCRALGPSPoll(SCRALModule):
                                          observation_timestamp)
         observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
         logging.debug(
-            "On topic '" + topic + "' will be send the following Observation payload: " + str(observation_payload))
+            "\nOn topic '" + topic + "' will be send the following Observation payload:\n" + str(observation_payload))
         publisher = self._mqtt_publisher
         publisher.publish(topic, observation_payload, DEFAULT_MQTT_QOS)
