@@ -15,7 +15,6 @@ import logging
 
 
 def on_connect(client, userdata, flags, rc):
-    logging.debug("ciao")
     if rc != 0:
         logging.critical("Connection failed, error code: "+str(rc))
     else:

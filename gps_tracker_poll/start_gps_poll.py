@@ -24,7 +24,7 @@
 #
 # #PHASE: INTEGRATION
 #   6. Discovery of physical devices through external platform
-#   7. Start threads and upload DATASTREAM entities to OGC Server
+#   7. Upload DATASTREAM entities to OGC Server
 #   8. Subscribe to MQTT topics, listen to incoming data and publish OBSERVATIONS to OGC Broker
 #
 # #PHASE: DYNAMIC DISCOVERY
@@ -98,7 +98,7 @@ def parse_command_line():
     example_text = "example: start_gps_poll.py -v -f ./my_conf.conf -c external -p hamburg"
 
     parser = argparse.ArgumentParser(prog='SCRAL', epilog=example_text,
-                                     description='... to be decided ...',
+                                     description='GPS Tracker Polling instance',
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='enable verbose mode')
     parser.add_argument('-o', '--ogc', dest='ogc_file', type=str, help='the path of the OGC configuration file')

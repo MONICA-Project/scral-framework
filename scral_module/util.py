@@ -34,9 +34,12 @@ def load_from_file(filename):
     """
 
     file_p = open(filename)
-    content_json = json.load(file_p)
-    file_p.close()
-    return content_json
+    if file_p:
+        content_json = json.load(file_p)
+        file_p.close()
+        return content_json
+    else:
+        raise FileNotFoundError("File: "+filename+" not found or you don't have permission to read it!")
 
 
 def write_to_file(filename, data):
@@ -81,7 +84,7 @@ def test_connectivity(server_address, server_username=None, server_password=None
         else:
             r = requests.get(url=server_address, auth=(server_username, server_password))
         if r.ok:
-            logging.info("Network connectivity: VERIFIED. Server "+server_address+"is reachable!")
+            logging.info("Network connectivity: VERIFIED. Server "+server_address+" is reachable!")
             return True
         else:
             logging.error("Something wrong during connection!")

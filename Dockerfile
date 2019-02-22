@@ -14,4 +14,4 @@ RUN pip3 install -e .
 # docker deploy
 ENTRYPOINT python3 gps_tracker_poll/start_gps_poll.py -v -o gps_tracker_poll/config/ogc_config_gps.conf -c gps_tracker_poll/config/hamburg/connection_config_internal.json -p DOM
 # local testing:
-# ENTRYPOINT python3 gps_tracker_poll/start_gps_poll.py -v -o gps_tracker_poll/config/ogc_config_gps.conf -c gps_tracker_poll/config/connection_config_local.json -p local
+# ENTRYPOINT python3 gps_tracker_poll/start_gps_poll.py -v -o gps_tracker_poll/config/ogc_config_onem2m.conf -c gps_tracker_poll/config/connection_config_local.json -p local

@@ -42,7 +42,9 @@ class OGCConfiguration:
         # Filter example: /ObservedProperties?$filter=name eq 'Area Temperature'
 
         parser = configparser.ConfigParser()  # Parse of the ogc .conf configuration file
-        parser.read(ogc_file_name)
+        files_read = parser.read(ogc_file_name)
+        if len(files_read) <= 0:
+            raise FileNotFoundError("File: '"+ogc_file_name+"' not found or you don't have permission to read it!")
         parser.sections()
 
         # LOCATION
@@ -115,10 +117,10 @@ class OGCConfiguration:
         for s in self._sensors:
             sensor_id = self.entity_discovery(s, self.URL_SENSORS, self.FILTER_NAME, verbose)
             s.set_id(sensor_id)
-            logging.debug('Sensor name: "' + s.get_name() + '" with id: ' + str(sensor_id))
+            logging.debug('SENSOR: "' + s.get_name() + '" with id: ' + str(sensor_id))
 
         # PROPERTIES discovery
-        logging.info("OBSERVEDPROPERTIES discovery")
+        logging.info("OBSERVED PROPERTIES discovery")
         for op in self._observed_properties:
             op_id = self.entity_discovery(op, self.URL_PROPERTIES, self.FILTER_NAME, verbose)
             op.set_id(op_id)

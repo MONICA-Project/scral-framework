@@ -45,7 +45,7 @@ class SCRALGPSPoll(SCRALModule):
         :param pub_topic_prefix: The MQTT topic prefix on which information will be published.
         """
 
-        super().__init__(connection_file)
+        super().__init__(connection_file, pub_topic_prefix)
 
         # Creating an MQTT Subscriber
         self._mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
@@ -55,17 +55,6 @@ class SCRALGPSPoll(SCRALModule):
 
         logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
         self._mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
-
-        # Creating an MQTT Publisher
-        self._mqtt_publisher = mqtt.Client()
-        self._mqtt_publisher.on_connect = mqtt_util.on_connect
-        self._mqtt_publisher.on_disconnect = mqtt_util.automatic_reconnection
-
-        logging.info("Try to connect to broker: %s:%s" % (self._pub_broker_ip, self._pub_broker_port))
-        self._mqtt_publisher.connect(self._pub_broker_ip, self._pub_broker_port, DEFAULT_KEEPALIVE)
-        self._mqtt_publisher.loop_start()
-
-        self._topic_prefix = pub_topic_prefix
 
     # noinspection PyMethodOverriding
     def runtime(self, ogc_config: OGCConfiguration, pub_topic_prefix: str, dynamic_discovery=True):
