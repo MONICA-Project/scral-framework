@@ -35,12 +35,12 @@ import logging
 import sys
 
 from scral_module import BANNER, VERSION
-from scral_module import scral_util
+from scral_module import util
 from scral_module import mqtt_util
-from scral_module.scral_constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, DEFAULT_CONFIG
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, DEFAULT_CONFIG
 from scral_module.ogc_configuration import OGCConfiguration
 
-from scral_gps_poll_module import SCRALGPSPoll
+from gps_poll_module import SCRALGPSPoll
 
 verbose = False
 
@@ -55,7 +55,7 @@ def main():
         logging_level = logging.INFO
         verbose = False
 
-    scral_util.init_logger(logging_level)  # logging initialization
+    util.init_logger(logging_level)  # logging initialization
 
     if not args.connection_file:  # has the connection_file been set?
         logging.critical("Connection file is missing!")
@@ -73,10 +73,10 @@ def main():
     logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
 
     # Storing the OGC server addresses
-    connection_config_file = scral_util.load_from_file(args.connection_file)
+    connection_config_file = util.load_from_file(args.connection_file)
     ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
 
-    if not scral_util.test_connectivity(ogc_server_address, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD):
+    if not util.test_connectivity(ogc_server_address, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD):
         logging.critical("Network connectivity to " + ogc_server_address + " not available!")
         exit(4)
 

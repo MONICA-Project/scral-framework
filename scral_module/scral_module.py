@@ -15,8 +15,8 @@ import json
 import logging
 import os
 
-from .scral_constants import CATALOG_FILENAME
-from . import scral_util
+from .constants import CATALOG_FILENAME
+from . import util
 
 
 class SCRALModule(object):
@@ -29,7 +29,7 @@ class SCRALModule(object):
         """
 
         # 1 Load connection configuration file
-        connection_config_file = scral_util.load_from_file(connection_file)
+        connection_config_file = util.load_from_file(connection_file)
 
         # Store broker address/port
         self._pub_broker_ip = connection_config_file["mqtt"]["pub_broker"]
@@ -37,7 +37,7 @@ class SCRALModule(object):
 
         # 2 Load local resource catalog / TEMPORARY USELESS
         if os.path.exists(CATALOG_FILENAME):
-            self._resource_catalog = scral_util.load_from_file(CATALOG_FILENAME)
+            self._resource_catalog = util.load_from_file(CATALOG_FILENAME)
             logging.info('[PHASE-INIT] Resource Catalog: ', json.dumps(self._resource_catalog))
         else:
             logging.info("No resource catalog available on file.")

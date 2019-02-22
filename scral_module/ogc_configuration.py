@@ -17,8 +17,8 @@ import logging
 import requests
 
 import scral_ogc
-from . import scral_util
-from .scral_constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID
+from . import util
+from .constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID
 
 
 class OGCConfiguration:
@@ -157,7 +157,7 @@ class OGCConfiguration:
             return json_string[OGC_ID]
 
         else:
-            if not scral_util.consistency_check(discovery_result, ogc_entity_name, url_filter, verbose):
+            if not util.consistency_check(discovery_result, ogc_entity_name, url_filter, verbose):
                 raise ValueError("Multiple results for same Entity name: " + ogc_entity_name + "!")
             else:
                 return discovery_result[0][OGC_ID]

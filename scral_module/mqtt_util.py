@@ -14,16 +14,17 @@ import time
 import logging
 
 
-def on_connect(mqttc, userdata, flags, rc):
+def on_connect(client, userdata, flags, rc):
+    logging.debug("ciao")
     if rc != 0:
         logging.critical("Connection failed, error code: "+str(rc))
     else:
-        logging.info("Connection with MQTT broker successfully established|")
+        logging.info("Connection with MQTT broker: '"+str(client._host)+"' successfully established|")
 
 
 def automatic_reconnection(client, userdata, rc):
     time.sleep(10)
-    logging.error("Broker connection lost! Try to re-connecting to " + str(client._host) + "...")
+    logging.error("Broker connection lost! Try to re-connecting to '"+str(client._host)+"'...")
     client.reconnect()
 
 

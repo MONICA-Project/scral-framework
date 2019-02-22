@@ -25,7 +25,7 @@ from requests.exceptions import SSLError
 from scral_ogc import OGCDatastream, OGCObservation
 
 from scral_module.ogc_configuration import OGCConfiguration
-from scral_module.scral_constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, OGC_ID, DEFAULT_MQTT_QOS
+from scral_module.constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, OGC_ID, DEFAULT_MQTT_QOS
 from scral_module import mqtt_util
 from scral_module.scral_module import SCRALModule
 
