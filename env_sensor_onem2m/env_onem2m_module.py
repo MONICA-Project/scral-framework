@@ -13,31 +13,33 @@
 import json
 import logging
 
+import arrow
 import cherrypy as cherrypy
 from flask import Flask, request, jsonify
 
 from env_sensor_onem2m.constants import *
 from scral_module.scral_module import SCRALModule
 import scral_module.util as util
-from scral_ogc import OGCDatastream
+from scral_ogc import OGCDatastream, OGCObservation
 
 app = Flask(__name__)
 
-_ogc_config = None
-_resource_catalog = None
+_onem2m_module = None
 
 
 class SCRALEnvOneM2M(SCRALModule):
 
     def __init__(self, connection_file, pub_topic_prefix, ogc_config):
-        super().__init__(connection_file, pub_topic_prefix)
+        super().__init__(ogc_config, connection_file, pub_topic_prefix)
 
         connection_config_file = util.load_from_file(connection_file)
         self._listening_address = connection_config_file["REST"]["listening_address"]["address"]
         self._listening_port = int(connection_config_file["REST"]["listening_address"]["port"])
 
-        global _ogc_config
-        _ogc_config = ogc_config
+        self._ogc_config = ogc_config
+
+        global _onem2m_module
+        _onem2m_module = self
 
     # noinspection PyMethodOverriding
     def runtime(self):
@@ -48,24 +50,6 @@ class SCRALEnvOneM2M(SCRALModule):
                                 })
         cherrypy.engine.start()
         cherrypy.engine.block()
-
-
-@app.route("/")
-def test():
-    """ Checking if Flask is working. """
-    logging.debug(test.__name__ + " method called")
-
-    return "<h1>Flask is running!</h1>"
-
-
-@app.route(URI_DEFAULT)
-def test_module():
-    """ Checking if SCRAL is running. """
-    logging.debug(test_module.__name__ + " method called")
-
-    to_ret = "<h1>SCRAL module is running!</h1>\n"
-    to_ret += "<h2> ToDo: Insert list of API here! </h2>"
-    return to_ret
 
 
 @app.route(URI_ENV_NODE, methods=["POST"])
@@ -85,42 +69,45 @@ def new_onem2m_request():
     content = json.loads(request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["con"])
     haw_sensor_id = content["sensorId"]
 
-    global _resource_catalog
-    if _resource_catalog is None:
-        _resource_catalog = {}
+    if _onem2m_module is None:
+        return jsonify({"Error": "Internal server error"}), 500
 
-    if env_node_id in _resource_catalog:
-        rc_properties = _resource_catalog[env_node_id]
-        logging.debug("Node: " + str(env_node_id) + " was already registered.")
-    else:
-        datastream_registration(env_node_id, request.json["m2m:sgn"])
+    rc = _onem2m_module.get_resource_catalog()
+    if env_node_id not in rc:
+        logging.info("Node: " + str(env_node_id) + " registration.")
+        ogc_datastream_registration(env_node_id)
 
-    observation_registration(content, request.json["m2m:sgn"])
+    ogc_observation_registration(env_node_id, content, request.json["m2m:sgn"])
 
     return jsonify({"result": "Ok"}), 201
 
 
-def datastream_registration(env_node_id, onem2m_payload):
-    if _ogc_config is None:
+def ogc_datastream_registration(env_node_id):
+    if _onem2m_module is None:
+        return jsonify({"Error": "Internal server error"}), 500
+
+    ogc_config = _onem2m_module.get_ogc_config()
+    if ogc_config is None:
         return jsonify({"Error": "Internal server error"}), 500
 
     # Collect OGC information needed to build DATASTREAMs payload
-    thing = _ogc_config.get_thing()
+    thing = ogc_config.get_thing()
     thing_id = thing.get_id()
     thing_name = thing.get_name()
 
-    sensor = _ogc_config.get_sensors()[0]  # Assumption: only Environmental Node is defined for this adapter
+    sensor = ogc_config.get_sensors()[0]  # Assumption: only Environmental Node is defined for this adapter
     sensor_id = sensor.get_id()
     sensor_name = sensor.get_name()
 
-    _resource_catalog[env_node_id] = {}
-    for op in _ogc_config.get_observed_properties():
+    rc = _onem2m_module.get_resource_catalog()
+    rc[env_node_id] = {}
+    for op in ogc_config.get_observed_properties():
         property_id = op.get_id()
         property_name = op.get_name()
         property_description = op.get_description()
 
         datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + env_node_id
-        if property_name == "Wind-speed":
+        if property_name.lower() == "wind-speed":
             uom = {
                 "name": property_name,
                 "symbol": "m/s",
@@ -133,19 +120,46 @@ def datastream_registration(env_node_id, onem2m_payload):
         datastream = OGCDatastream(name=datastream_name, description="Datastream for " + property_description,
                                    ogc_property_id=property_id, ogc_sensor_id=sensor_id, ogc_thing_id=thing_id,
                                    x=0.0, y=0.0, unit_of_measurement=uom)
-        datastream_id = _ogc_config.entity_discovery(
-            datastream, _ogc_config.URL_DATASTREAMS, _ogc_config.FILTER_NAME)
+        datastream_id = ogc_config.entity_discovery(
+            datastream, ogc_config.URL_DATASTREAMS, ogc_config.FILTER_NAME)
 
         datastream.set_id(datastream_id)
-        _ogc_config.add_datastream(datastream)
+        ogc_config.add_datastream(datastream)
 
-        _resource_catalog[env_node_id][property_name] = datastream_id  # Store Hamburg to MONICA coupled information
+        rc[env_node_id][property_name] = datastream_id  # Store Hamburg to MONICA coupled information
 
 
-def observation_registration(content, onem2m_payload):
+def ogc_observation_registration(env_node_id, content, onem2m_payload):
+    observation_result = content["result"]  # Load the measure
+    phenomenon_time = content["resultTime"]  # Time of the phenomenon
+    observation_time = str(arrow.utcnow())
+    obs_property = onem2m_payload["nev"]["rep"]["m2m:cin"]["lbl"][0]  # label
+    logging.debug("Node: '"+env_node_id+"', Property: '"+obs_property+"', Observation: '"+observation_result+"'.")
 
-    description = content["measureName"]
+    topic_prefix = _onem2m_module.get_topic_prefix()
+    datastream_id = _onem2m_module.get_resource_catalog()[env_node_id][obs_property]
+    topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
 
-    unit_of_measure = content["measureUnit"]
+    # Create OGC Observation and publish
+    ogc_observation = OGCObservation(datastream_id, phenomenon_time, observation_result, observation_time)
+    observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
 
-    property = onem2m_payload["nev"]["rep"]["m2m:cin"]["lbl"][0]  # label
+    _onem2m_module.mqtt_publish(topic, observation_payload)
+
+
+@app.route("/")
+def test():
+    """ Checking if Flask is working. """
+    logging.debug(test.__name__ + " method called")
+
+    return "<h1>Flask is running!</h1>"
+
+
+@app.route(URI_DEFAULT)
+def test_module():
+    """ Checking if SCRAL is running. """
+    logging.debug(test_module.__name__ + " method called")
+
+    to_ret = "<h1>SCRAL module is running!</h1>\n"
+    to_ret += "<h2> ToDo: Insert list of API here! </h2>"
+    return to_ret
