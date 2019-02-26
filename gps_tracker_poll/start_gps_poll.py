@@ -86,8 +86,8 @@ def main():
     ogc_config.discovery(verbose)
 
     # Module initialization and runtime phase
-    module = SCRALGPSPoll(args.connection_file, pilot_mqtt_topic_prefix)
-    module.runtime(ogc_config, pilot_mqtt_topic_prefix)
+    module = SCRALGPSPoll(ogc_config, args.connection_file, pilot_mqtt_topic_prefix)
+    module.runtime(pilot_mqtt_topic_prefix)
 
     logging.info("That's all folks!\n")
 

@@ -18,24 +18,25 @@ from abc import abstractmethod
 
 import paho.mqtt.client as mqtt
 
-from .constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE
+from .constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS
 from . import util
 from . import mqtt_util
 
 
 class SCRALModule(object):
 
-    def __init__(self, connection_file, pub_topic_prefix):
+    def __init__(self, ogc_config, connection_file, pub_topic_prefix):
         """ Parses the connection file and stores information about the MQTT broker.
 
         @:param The path of the connection file
         :return A tuple containing the OGC server address and broker ip/port information
         """
-
-        # 1 Load connection configuration file
+        # 1 Storing the OGC configuration
+        self._ogc_config = ogc_config
+        # 2 Load connection configuration file
         connection_config_file = util.load_from_file(connection_file)
 
-        # 2 Load local resource catalog / TEMPORARY USELESS
+        # 3 Load local resource catalog / TEMPORARY USELESS
         if os.path.exists(CATALOG_FILENAME):
             self._resource_catalog = util.load_from_file(CATALOG_FILENAME)
             logging.info('[PHASE-INIT] Resource Catalog: ', json.dumps(self._resource_catalog))
@@ -43,7 +44,7 @@ class SCRALModule(object):
             logging.info("No resource catalog available on file.")
             self._resource_catalog = {}
 
-        # 3 Creating an MQTT Publisher
+        # 4 Creating an MQTT Publisher
         self._topic_prefix = pub_topic_prefix
         self._pub_broker_address = connection_config_file["mqtt"]["pub_broker"]
         self._pub_broker_port = connection_config_file["mqtt"]["pub_broker_port"]
@@ -52,7 +53,7 @@ class SCRALModule(object):
         self._mqtt_publisher.on_connect = mqtt_util.on_connect
         self._mqtt_publisher.on_disconnect = mqtt_util.automatic_reconnection
 
-        logging.info("Try to connect to broker: %s:%s" % (self._pub_broker_address, self._pub_broker_port))
+        logging.info("Try to connect to broker: %s:%s for publishing" % (self._pub_broker_address, self._pub_broker_port))
         logging.debug("Client ID is: "+str(self._mqtt_publisher._client_id))
         self._mqtt_publisher.connect(self._pub_broker_address, self._pub_broker_port, DEFAULT_KEEPALIVE)
         self._mqtt_publisher.loop_start()
@@ -62,6 +63,19 @@ class SCRALModule(object):
 
     def get_mqtt_connection_port(self):
         return self._pub_broker_port
+
+    def get_ogc_config(self):
+        return self._ogc_config
+
+    def get_resource_catalog(self):
+        return self._resource_catalog
+
+    def get_topic_prefix(self):
+        return self._topic_prefix
+
+    def mqtt_publish(self, topic, payload, qos=DEFAULT_MQTT_QOS):
+        logging.debug("\nOn topic '"+topic+"' will be send the following payload:\n"+str(payload))
+        self._mqtt_publisher.publish(topic, payload, qos)
 
     @abstractmethod
     def runtime(self):

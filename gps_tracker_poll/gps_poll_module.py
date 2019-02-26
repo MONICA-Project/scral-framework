@@ -24,7 +24,6 @@ from requests.exceptions import SSLError
 
 from scral_ogc import OGCDatastream, OGCObservation
 
-from scral_module.ogc_configuration import OGCConfiguration
 from scral_module.constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, OGC_ID, DEFAULT_MQTT_QOS
 from scral_module import mqtt_util
 from scral_module.scral_module import SCRALModule
@@ -38,14 +37,14 @@ class SCRALGPSPoll(SCRALModule):
 
     _resource_catalog: Dict[str, int]
 
-    def __init__(self, connection_file, pub_topic_prefix):
+    def __init__(self, ogc_config, connection_file, pub_topic_prefix):
         """ Initialize MQTT Brokers for listening and publishing
 
         :param connection_file: A file containing connection information.
         :param pub_topic_prefix: The MQTT topic prefix on which information will be published.
         """
 
-        super().__init__(connection_file, pub_topic_prefix)
+        super().__init__(ogc_config, connection_file, pub_topic_prefix)
 
         # Creating an MQTT Subscriber
         self._mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
@@ -53,32 +52,31 @@ class SCRALGPSPoll(SCRALModule):
         self._mqtt_subscriber.on_disconnect = mqtt_util.automatic_reconnection
         self._mqtt_subscriber.on_message = self.on_message_received
 
-        logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
+        logging.info("Try to connect to broker: %s:%s for listening" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
         logging.debug("Client id is: '" + BROKER_HAMBURG_CLIENT_ID + "'")
         self._mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
 
     # noinspection PyMethodOverriding
-    def runtime(self, ogc_config: OGCConfiguration, pub_topic_prefix: str, dynamic_discovery=True):
+    def runtime(self, pub_topic_prefix: str, dynamic_discovery=True):
         """ This method retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
             These DATASTREAMS are published on MONICA OGC server.
-            This is a "locking function"
+            This is a "blocking function"
 
-        :param ogc_config: An instance of OGCConfiguration, it contains a representation of an OGC Sensor Things model.
         :param pub_topic_prefix: The prefix of the topic where you want to publish
         :param dynamic_discovery:  A boolean value that enable the dynamic discovery of new hamburg sensors
         """
-        self.ogc_datastream_generation(ogc_config)
-        self.update_mqtt_subscription(ogc_config.get_datastreams())
+        self.ogc_datastream_registration()
+        self.update_mqtt_subscription(self._ogc_config.get_datastreams())
 
         if dynamic_discovery:
-            th = Thread(target=self.dynamic_discovery, args=(ogc_config, ))
+            th = Thread(target=self.dynamic_discovery)
             th.start()
             self._mqtt_subscriber.loop_start()
             th.join()
         else:
             self._mqtt_subscriber.loop_forever()
 
-    def ogc_datastream_generation(self, ogc_config):
+    def ogc_datastream_registration(self):
         r = None
         try:
             r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER,
@@ -96,16 +94,17 @@ class SCRALGPSPoll(SCRALModule):
             logging.debug("Connection status: " + str(r.status_code))
 
         # Collect OGC information needed to build DATASTREAMs payload
-        thing = ogc_config.get_thing()
+        thing = self._ogc_config.get_thing()
         thing_id = thing.get_id()
         thing_name = thing.get_name()
 
-        sensor = ogc_config.get_sensors()[0]  # Assumption: only "GPS" Sensor is defined for this adapter
+        sensor = self._ogc_config.get_sensors()[0]  # Assumption: only "GPS" Sensor is defined for this adapter
         sensor_id = sensor.get_id()
         sensor_name = sensor.get_name()
 
-        property_id = ogc_config.get_observed_properties()[0].get_id()  # Assumpt.: only 1 observed property registered
-        property_name = ogc_config.get_observed_properties()[0].get_name()
+        # Assumption: only 1 observed property registered
+        property_id = self._ogc_config.get_observed_properties()[0].get_id()
+        property_name = self._ogc_config.get_observed_properties()[0].get_name()
 
         # global resource_catalog
         if self._resource_catalog is None:
@@ -123,12 +122,12 @@ class SCRALGPSPoll(SCRALModule):
                 datastream = OGCDatastream(name=datastream_name, description=description, ogc_property_id=property_id,
                                            ogc_sensor_id=sensor_id, ogc_thing_id=thing_id, x=0.0, y=0.0,
                                            unit_of_measurement=HAMBURG_UNIT_OF_MEASURE)
-                datastream_id = ogc_config.entity_discovery(
-                                    datastream, ogc_config.URL_DATASTREAMS, ogc_config.FILTER_NAME)
+                datastream_id = self._ogc_config.entity_discovery(
+                                    datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
 
                 datastream.set_id(datastream_id)
                 datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC + "(" + iot_id + ")/Locations")
-                ogc_config.add_datastream(datastream)
+                self._ogc_config.add_datastream(datastream)
 
                 self._resource_catalog[iot_id] = datastream_id  # Store Hamburg to MONICA coupled information
 
@@ -143,31 +142,25 @@ class SCRALGPSPoll(SCRALModule):
             logging.debug("Subscribing to MQTT topic: " + top)
             self._mqtt_subscriber.subscribe(top, DEFAULT_MQTT_QOS)
 
-    def dynamic_discovery(self, ogc_config):
+    def dynamic_discovery(self):
         time_to_wait = 60*60*8  # hours
         while True:
             sleep(time_to_wait)
             logging.debug("Starting Dynamic Discovery!")
-            self.ogc_datastream_generation(ogc_config)
-            self.update_mqtt_subscription(ogc_config.get_datastreams())
+            self.ogc_datastream_registration()
+            self.update_mqtt_subscription(self._ogc_config.get_datastreams())
 
     def on_message_received(self, client, userdata, msg):
         logging.debug("\nOn topic: "+msg.topic + " - message received:\n" + str(msg.payload))
         observation_result = json.loads(msg.payload)["location"]["geometry"]  # Load the received message
-        observation_timestamp = str(arrow.utcnow())
+        observation_time = str(arrow.utcnow())
         thing_id = str(msg.topic.split('(')[1].split(')')[0])  # Get the thing_id associated to the physical device
 
-        catalog = self._resource_catalog
-        datastream_id = catalog[thing_id]  # Get the datastream_id from the resource catalog
-        # topic = "GOST/Datastreams("+str(datastream_id)+")/Observations"
+        datastream_id = self._resource_catalog[thing_id]  # Get the datastream_id from the resource catalog
         topic_prefix = self._topic_prefix
         topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
 
         # Create OGC Observation and publish
-        ogc_observation = OGCObservation(datastream_id, observation_timestamp, observation_result,
-                                         observation_timestamp)
+        ogc_observation = OGCObservation(datastream_id, observation_time, observation_result, observation_time)
         observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
-        logging.debug(
-            "\nOn topic '" + topic + "' will be send the following Observation payload:\n" + str(observation_payload))
-        publisher = self._mqtt_publisher
-        publisher.publish(topic, observation_payload, DEFAULT_MQTT_QOS)
+        self.mqtt_publish(topic, observation_payload)
