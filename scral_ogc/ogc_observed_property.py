@@ -18,5 +18,11 @@ class OGCObservedProperty:
     def get_name(self):
         return self._name
 
+    def get_description(self):
+        return self._description
+
+    def get_definition(self):
+        return self._definition
+
     def get_rest_payload(self):
         return {"name": self._name, "description": self._description, "definition": self._definition}

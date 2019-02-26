@@ -1,10 +1,13 @@
+import json
+
+
 class OGCDatastream:
     """ This class represents the DATASTREAM entity of the OCG Sensor Things model.
         For more info: http://developers.sensorup.com/docs/#datastreams_post
     """
 
     def __init__(self, name, description, ogc_property_id, ogc_sensor_id, ogc_thing_id,
-                 unit_of_measurement, x, y, observed_area_type="Point",
+                 unit_of_measurement: json, x: float, y: float, observed_area_type="Point",
                  observation_type="http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement"):
         # the id is assigned by the OGC Server
         self._id = None

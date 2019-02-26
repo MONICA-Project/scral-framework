@@ -149,7 +149,7 @@ class OGCConfiguration:
         if not discovery_result or len(discovery_result) == 0:  # if response is empty
             logging.info(ogc_entity_name + " not yet registered, registration is starting now!")
             payload = ogc_entity.get_rest_payload()
-            r = requests.post(url=url_discovery, data=json.dumps(payload),
+            r = requests.post(url=url_entity, data=json.dumps(payload),
                               headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
             json_string = r.json()
             if OGC_ID not in json_string:
