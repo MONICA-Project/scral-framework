@@ -32,6 +32,7 @@
 ####################################################################################################
 import argparse
 import logging
+import signal
 import sys
 
 from scral_module import BANNER, VERSION
@@ -111,6 +112,7 @@ def parse_command_line():
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, util.signal_handler)
     print("\n"+BANNER % VERSION+"\n")
     sys.stdout.flush()
     main()

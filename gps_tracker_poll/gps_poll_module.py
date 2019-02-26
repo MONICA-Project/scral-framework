@@ -54,6 +54,7 @@ class SCRALGPSPoll(SCRALModule):
         self._mqtt_subscriber.on_message = self.on_message_received
 
         logging.info("Try to connect to broker: %s:%s" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
+        logging.debug("Client id is: '" + BROKER_HAMBURG_CLIENT_ID + "'")
         self._mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
 
     # noinspection PyMethodOverriding
@@ -151,7 +152,7 @@ class SCRALGPSPoll(SCRALModule):
             self.update_mqtt_subscription(ogc_config.get_datastreams())
 
     def on_message_received(self, client, userdata, msg):
-        logging.debug(msg.topic + ": " + str(msg.payload))
+        logging.debug("\nOn topic: "+msg.topic + " - message received:\n" + str(msg.payload))
         observation_result = json.loads(msg.payload)["location"]["geometry"]  # Load the received message
         observation_timestamp = str(arrow.utcnow())
         thing_id = str(msg.topic.split('(')[1].split(')')[0])  # Get the thing_id associated to the physical device

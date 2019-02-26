@@ -14,6 +14,7 @@
 #############################################################################
 import json
 import logging
+import sys
 
 import requests
 
@@ -93,3 +94,10 @@ def test_connectivity(server_address, server_username=None, server_password=None
     except Exception as e:
         logging.debug(e)
         return False
+
+
+def signal_handler(signal, frame):
+    logging.critical('You pressed Ctrl+C!')
+    print('SCRAL is turning down now, thanks for choosing SCRAL!')
+    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella")
+    sys.exit(0)

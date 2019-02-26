@@ -18,9 +18,9 @@ from abc import abstractmethod
 
 import paho.mqtt.client as mqtt
 
-import mqtt_util
 from .constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE
 from . import util
+from . import mqtt_util
 
 
 class SCRALModule(object):
@@ -53,6 +53,7 @@ class SCRALModule(object):
         self._mqtt_publisher.on_disconnect = mqtt_util.automatic_reconnection
 
         logging.info("Try to connect to broker: %s:%s" % (self._pub_broker_address, self._pub_broker_port))
+        logging.debug("Client ID is: "+str(self._mqtt_publisher._client_id))
         self._mqtt_publisher.connect(self._pub_broker_address, self._pub_broker_port, DEFAULT_KEEPALIVE)
         self._mqtt_publisher.loop_start()
 
