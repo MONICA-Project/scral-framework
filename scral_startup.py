@@ -12,13 +12,19 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md      #
 #                                                                            #
 ##############################################################################
+import signal
 import sys
 
 import scral_module as scral
-import gps_tracker_poll.start_gps_poll as pd
+from scral_module import util
+import the_module_that_you_want_to_use as module
 
 if __name__ == '__main__':
     print(scral.BANNER % scral.VERSION)
     sys.stdout.flush()
-    pd.main()
-    print("That's all folks!\n")
+
+    signal.signal(signal.SIGINT, util.signal_handler)
+    module.main()
+
+    print("That's all folks! Thanks for choosing SCRAL!")
+    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella")

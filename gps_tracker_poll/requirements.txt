@@ -1,4 +1,4 @@
-paho-mqtt 
+paho-mqtt
 arrow
 requests
 configparser

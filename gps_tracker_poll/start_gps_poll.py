@@ -35,11 +35,11 @@ import logging
 import signal
 import sys
 
-from scral_module import BANNER, VERSION
 from scral_module import util
 from scral_module import mqtt_util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, DEFAULT_CONFIG
 from scral_module.ogc_configuration import OGCConfiguration
+from scral_module import BANNER, VERSION
 
 from gps_poll_module import SCRALGPSPoll
 
@@ -89,8 +89,6 @@ def main():
     module = SCRALGPSPoll(ogc_config, args.connection_file, pilot_mqtt_topic_prefix)
     module.runtime(pilot_mqtt_topic_prefix)
 
-    logging.info("That's all folks!\n")
-
 
 def parse_command_line():
     """ This function parses the command line.
@@ -116,3 +114,5 @@ if __name__ == '__main__':
     print("\n"+BANNER % VERSION+"\n")
     sys.stdout.flush()
     main()
+    print("That's all folks! Thanks for choosing SCRAL!")
+    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella")
