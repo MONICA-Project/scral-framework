@@ -10,9 +10,10 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
+import random
 
 BROKER_HAMBURG_ADDRESS = "test.geoportal-hamburg.de"  # testing address: "broker.mqttdashboard.com"
-BROKER_HAMBURG_CLIENT_ID = "MONICA_GPS"
+BROKER_HAMBURG_CLIENT_ID = "MONICA_GPS_"+str(random.randint(0, 1000000))
 
 # HAMBURG OGC SERVER
 OGC_HAMBURG_URL = "https://51.5.242.162/itsLGVhackathon/v1.0/"
