@@ -114,5 +114,5 @@ if __name__ == '__main__':
     print("\n"+BANNER % VERSION+"\n")
     sys.stdout.flush()
     main()
-    print("That's all folks! Thanks for choosing SCRAL!")
-    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella")
+    print("\nThat's all folks! Thanks for choosing SCRAL!")
+    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella\n")

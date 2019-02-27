@@ -30,14 +30,16 @@
 ####################################################################################################
 import argparse
 import logging
+import signal
 import sys
 
-from env_sensor_onem2m.env_onem2m_module import SCRALEnvOneM2M
-from scral_module import BANNER, VERSION
+import scral_module as scral
 from scral_module import util
 from scral_module import mqtt_util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, DEFAULT_CONFIG
 from scral_module.ogc_configuration import OGCConfiguration
+
+from env_sensor_onem2m.env_onem2m_module import SCRALEnvOneM2M
 
 verbose = False
 
@@ -85,8 +87,6 @@ def main():
     module = SCRALEnvOneM2M(args.connection_file, pilot_mqtt_topic_prefix, ogc_config)
     module.runtime()
 
-    logging.info("That's all folks!\n")
-
 
 def parse_command_line():
     """ This function parses the command line.
@@ -108,6 +108,11 @@ def parse_command_line():
 
 
 if __name__ == '__main__':
-    print("\n"+BANNER % VERSION+"\n")
+    print(scral.BANNER % scral.VERSION)
     sys.stdout.flush()
+
+    signal.signal(signal.SIGINT, util.signal_handler)
     main()
+
+    print("\nThat's all folks! Thanks for choosing SCRAL!")
+    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella.\n")

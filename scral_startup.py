@@ -17,7 +17,7 @@ import sys
 
 import scral_module as scral
 from scral_module import util
-import the_module_that_you_want_to_use as module
+from env_sensor_onem2m import start_onem2m_env as module
 
 if __name__ == '__main__':
     print(scral.BANNER % scral.VERSION)
@@ -26,5 +26,5 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, util.signal_handler)
     module.main()
 
-    print("That's all folks! Thanks for choosing SCRAL!")
-    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella")
+    print("\nThat's all folks! Thanks for choosing SCRAL!")
+    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella.\n")
