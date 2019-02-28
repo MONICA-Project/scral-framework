@@ -28,7 +28,7 @@ from scral_module.constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, OGC_I
 from scral_module import mqtt_util
 from scral_module.scral_module import SCRALModule
 
-from hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL, \
+from .hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL, \
                               OGC_HAMBURG_FILTER, HAMBURG_UNIT_OF_MEASURE, THINGS_SUBSCRIBE_TOPIC
 
 
