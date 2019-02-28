@@ -67,16 +67,18 @@ def new_onem2m_request():
         return jsonify({"Error": "Environmental Node ID not found!"}), 400
 
     content = json.loads(request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["con"])
-    haw_sensor_id = content["sensorId"]
+    # haw_sensor_id = content["sensorId"]
 
     if _onem2m_module is None:
         return jsonify({"Error": "Internal server error"}), 500
 
+    ### DATASTREAM REGISTRATION ###
     rc = _onem2m_module.get_resource_catalog()
     if env_node_id not in rc:
         logging.info("Node: " + str(env_node_id) + " registration.")
         ogc_datastream_registration(env_node_id)
 
+    ### OBSERVATION REGISTRATION ###
     ogc_observation_registration(env_node_id, content, request.json["m2m:sgn"])
 
     return jsonify({"result": "Ok"}), 201
