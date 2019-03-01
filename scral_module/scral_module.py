@@ -24,12 +24,17 @@ from . import mqtt_util
 
 
 class SCRALModule(object):
+    """ This class is the base entity of SCRAL framework.
+        When you want to develop a new SCRAL module, you have to extend this class, extend (if necessary) the __init__
+        initializer and to implement the runtime method (that actually does not have a default implementation.
+    """
 
     def __init__(self, ogc_config, connection_file, pub_topic_prefix):
-        """ Parses the connection file and stores information about the MQTT broker.
+        """ Parses the connection file, instantiate an MQTT Client and stores all relevant connection information.
 
-        @:param The path of the connection file
-        :return A tuple containing the OGC server address and broker ip/port information
+        :param ogc_config: An instance of an OGCConfiguration.
+        :param connection_file: The path of the connection file, it has to contain the address of the MQTT broker.
+        :param pub_topic_prefix: The prefix of the MQTT topic used to publish information.
         """
         # 1 Storing the OGC configuration
         self._ogc_config = ogc_config
@@ -74,9 +79,18 @@ class SCRALModule(object):
         return self._topic_prefix
 
     def mqtt_publish(self, topic, payload, qos=DEFAULT_MQTT_QOS):
+        """ Publish the payload given as parameter on the broker
+
+        :param topic: The MQTT topic on which the client will publish the message.
+        :param payload: Data to send (according to Paho documentation could be: None, str, bytearray, int or float).
+        :param qos: The desired quality of service (it has an hardcoded default value).
+        """
         logging.debug("\nOn topic '"+topic+"' will be send the following payload:\n"+str(payload))
         self._mqtt_publisher.publish(topic, payload, qos)
 
     @abstractmethod
     def runtime(self):
+        """ This is an abstract method that has to be overwritten.
+            It manage the runtime operation of the module.
+        """
         raise NotImplementedError("Implement runtime method in subclasses")

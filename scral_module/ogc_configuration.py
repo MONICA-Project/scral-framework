@@ -38,8 +38,8 @@ class OGCConfiguration:
         self.URL_SENSORS = ogc_server_address + "/Sensors"                # All Sensors
         self.URL_PROPERTIES = ogc_server_address + "/ObservedProperties"  # All Observed Properties
         self.URL_DATASTREAMS = ogc_server_address + "/Datastreams"        # All DataStreams
-        self.FILTER_NAME = "?$filter=name eq "
         # Filter example: /ObservedProperties?$filter=name eq 'Area Temperature'
+        self.FILTER_NAME = "?$filter=name eq "
 
         parser = configparser.ConfigParser()  # Parse of the ogc .conf configuration file
         files_read = parser.read(ogc_file_name)
@@ -135,7 +135,7 @@ class OGCConfiguration:
         :param ogc_entity: An object containing the data of the entity.
         :param url_entity: The URL of the request.
         :param url_filter: The filter to apply.
-        :param verbose: More logging prints
+        :param verbose: Set it to true to have more logging prints.
         :return: Returns the @iot.id of the entity if it is correctly registered,
                  if something goes wrong during registration, an exception can be generated.
         """
@@ -159,8 +159,14 @@ class OGCConfiguration:
             return json_string[OGC_ID]
 
         else:
-            if not util.consistency_check(discovery_result, ogc_entity_name, url_filter, verbose):
+            if len(discovery_result) > 1:
+                logging.critical("Verify OGC-naming| Duplicate found for entity: <"+ogc_entity_name+">.")
+                logging.debug("Current Filter: '" + url_filter + "'")
+                if verbose:
+                    for res in discovery_result:
+                        logging.debug(str(res))
                 raise ValueError("Multiple results for same Entity name: " + ogc_entity_name + "!")
+
             else:
                 return discovery_result[0][OGC_ID]
 

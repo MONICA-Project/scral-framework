@@ -15,7 +15,7 @@
 """
     SCRAL Module
     This module is the starting point for developing a SCRAL module.
-    In particular the class SCRALModule have to be extended and the runtime method have to be overloaded.
+    In particular the class SCRALModule have to be extended and the runtime method have to be overwritten/overloaded.
 """
 
 import logging

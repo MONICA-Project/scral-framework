@@ -10,6 +10,11 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
+"""
+    SCRAL - mqtt_util
+    This file contains several MQTT utility functions that could be used in different modules.
+"""
+
 import time
 import logging
 

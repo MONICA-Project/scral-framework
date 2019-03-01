@@ -10,6 +10,10 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
+"""
+    SCRAL - constants
+    This file contains useful constants for SCRAL framework.
+"""
 
 # REST headers
 REST_HEADERS = {'Content-Type': 'application/json'}
