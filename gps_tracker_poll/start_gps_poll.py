@@ -41,7 +41,7 @@ from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, DEF
 from scral_module.ogc_configuration import OGCConfiguration
 from scral_module import BANNER, VERSION
 
-from .gps_poll_module import SCRALGPSPoll
+from gps_tracker_poll.gps_poll_module import SCRALGPSPoll
 
 verbose = False
 

@@ -17,7 +17,6 @@ import logging
 import requests
 
 import scral_ogc
-from . import util
 from .constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID
 
 

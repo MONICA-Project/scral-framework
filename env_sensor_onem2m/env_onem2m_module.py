@@ -17,7 +17,7 @@ import arrow
 import cherrypy as cherrypy
 from flask import Flask, request, jsonify
 
-from env_sensor_onem2m.constants import *
+from env_sensor_onem2m.constants import URI_DEFAULT, URI_ENV_NODE, ONEM2M_CONTENT_TYPE
 from scral_module.scral_module import SCRALModule
 import scral_module.util as util
 from scral_ogc import OGCDatastream, OGCObservation
