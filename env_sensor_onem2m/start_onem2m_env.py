@@ -1,4 +1,4 @@
-###################################################################################################
+#############################################################################
 #      _____ __________  ___    __                                          #
 #     / ___// ____/ __ \/   |  / /                                          #
 #     \__ \/ /   / /_/ / /| | / /                                           #
@@ -15,7 +15,7 @@
 #
 # PHASE: INIT + SETUP + BOOT
 #   1. Init variables and setup server and MQTT connections
-#   2. Read configuration File and load predefined OGC scheme (exit if integrity not satisfied)
+#   2. Read configuration File and load OGC scheme (exit if integrity not satisfied)
 #
 # #PHASE: DISCOVERY
 #   3. Check via discovery if loaded entities are already registered
@@ -27,7 +27,7 @@
 #   7. Upload DATASTREAM entities to OGC Server
 #   8. Expose SCRAL endpoint and listen to incoming requests
 #
-####################################################################################################
+##############################################################################
 import argparse
 import logging
 import signal

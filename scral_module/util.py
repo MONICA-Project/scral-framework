@@ -98,6 +98,25 @@ def test_connectivity(server_address, server_username=None, server_password=None
 
 def signal_handler(signal, frame):
     logging.critical('You pressed Ctrl+C!')
-    print('SCRAL is turning down now, thanks for choosing SCRAL!')
-    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella")
+    print("\nSCRAL is turning down now, thanks for choosing SCRAL!")
+    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella.\n")
     sys.exit(0)
+
+
+def build_ogc_unit_of_measure(property_name):
+    uom = {"name": property_name}
+
+    if property_name == "wind-speed":
+        uom["symbol"] = "m s^-1"
+        uom["definition"] = "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#MeterPerSecond"
+    elif property_name == "temperature":
+        uom["symbol"] = "degC"
+        uom["definition"] = "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#DegreeCelsius"
+    elif property_name == "pressure":
+        uom["symbol"] = "Pa"
+        uom["definition"] = "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#Pascal"
+    elif property_name == "humidity":
+        uom["symbol"] = "kg/m^3"
+        uom["definition"] = "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#KilogramPerCubicMeter"
+
+    return uom

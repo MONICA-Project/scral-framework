@@ -72,13 +72,13 @@ def new_onem2m_request():
     if _onem2m_module is None:
         return jsonify({"Error": "Internal server error"}), 500
 
-    ### DATASTREAM REGISTRATION ###
+    # -> ### DATASTREAM REGISTRATION ###
     rc = _onem2m_module.get_resource_catalog()
     if env_node_id not in rc:
         logging.info("Node: " + str(env_node_id) + " registration.")
         ogc_datastream_registration(env_node_id)
 
-    ### OBSERVATION REGISTRATION ###
+    # -> ### OBSERVATION REGISTRATION ###
     ogc_observation_registration(env_node_id, content, request.json["m2m:sgn"])
 
     return jsonify({"result": "Ok"}), 201
@@ -109,15 +109,7 @@ def ogc_datastream_registration(env_node_id):
         property_description = op.get_description()
 
         datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + env_node_id
-        if property_name.lower() == "wind-speed":
-            uom = {
-                "name": property_name,
-                "symbol": "m/s",
-                "definition": "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#MeterPerSecond"
-            }
-        # elif
-        else:
-            uom = {"name": property_name}
+        uom = util.build_ogc_unit_of_measure(property_name.lower())
 
         datastream = OGCDatastream(name=datastream_name, description="Datastream for " + property_description,
                                    ogc_property_id=property_id, ogc_sensor_id=sensor_id, ogc_thing_id=thing_id,
