@@ -1,0 +1,31 @@
+{
+  "m2m:sgn": {
+    "net": "3",
+    "sur": "/onem2m/monica/hamburg/env-node2/5/sub_scrall",
+    "nec": "",
+    "nev": {
+      "rep": {
+        "m2m:cin": {
+          "pi": "SyGOQOp0AQ",
+          "ty": 4,
+          "ct": "20190125T100646",
+          "ri": "r1f16Jvd74",
+          "rn": "4-201901251006468467xxo",
+          "lt": "20190125T100646",
+          "et": "20290125T100646",
+          "acpi": [
+            "/onem2m/acp_monica"
+          ],
+          "lbl": [
+            "Temperature"
+          ],
+          "st": 7389,
+          "cs": 221,
+          "cr": "monica_prod",
+          "cnf": "application/json:0",
+          "con": "{\"sensorId\":\"5\",\"sensorName\":\"TFA Dostmann Kombisender\",\"measureName\":\"Temperature MONICA Environmental Node 2\",\"measureUnit\":\"celsius\",\"measureSymbol\":\"C\",\"resultTime\":\"2019-01-25T10:06:46.734Z\",\"result\":\"22.5\"}"
+        }
+      }
+    }
+  }
+}
