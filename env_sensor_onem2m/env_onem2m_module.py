@@ -66,8 +66,17 @@ def new_onem2m_request():
     if env_node_id is None:
         return jsonify({"Error": "Environmental Node ID not found!"}), 400
 
-    content = json.loads(request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["con"])
-    # haw_sensor_id = content["sensorId"]
+    content_type = request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["cnf"]
+    if content_type != ONEM2M_CONTENT_TYPE:
+        raise TypeError("The content: <"+content_type+"> was not recognized! <"+ONEM2M_CONTENT_TYPE+"> is expected!")
+
+    raw_content = request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["con"]
+    if type(raw_content) is str:
+        content = json.loads(raw_content)
+    elif type(raw_content) is dict:
+        content = raw_content
+    else:
+        raise TypeError("The content type is "+str(type(raw_content))+", it must be a String or a Dictionary")
 
     if _onem2m_module is None:
         return jsonify({"Error": "Internal server error"}), 500
