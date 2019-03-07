@@ -48,6 +48,7 @@ verbose = False
 
 def main():
     args = parse_command_line()  # parsing command line parameters, it has to be the first instruction
+
     global verbose  # overwrite verbose flag from command line
     if args.verbose:
         verbose = True
@@ -61,9 +62,11 @@ def main():
     if not args.connection_file:  # has the connection_file been set?
         logging.critical("Connection file is missing!")
         exit(1)
+
     if not args.ogc_file:  # has the ogc_file been set?
         logging.critical("OGC configuration file is missing!")
         exit(2)
+
     pilot_mqtt_topic_prefix = mqtt_util.get_publish_mqtt_topic(args.pilot)  # 'local' is the default configuration value
     if not pilot_mqtt_topic_prefix:
         logging.critical('Wrong pilot name: "' + args.pilot + '"!')
@@ -87,14 +90,14 @@ def main():
 
     # Module initialization and runtime phase
     module = SCRALGPSPoll(ogc_config, args.connection_file, pilot_mqtt_topic_prefix)
-    module.runtime(pilot_mqtt_topic_prefix)
+    module.runtime()
 
 
 def parse_command_line():
     """ This function parses the command line.
     :return: a dictionary with all the parsed parameters.
     """
-    example_text = "example: start_gps_poll.py -v -f ./my_conf.conf -c external -p hamburg"
+    example_text = "example: start_gps_poll.py -v -f ./my_conf.conf -c external -p DOM"
 
     parser = argparse.ArgumentParser(prog='SCRAL', epilog=example_text,
                                      description='GPS Tracker Polling instance',

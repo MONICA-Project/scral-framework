@@ -28,21 +28,35 @@ _onem2m_module = None
 
 
 class SCRALEnvOneM2M(SCRALModule):
+    """ Resource manager for integration of the Environmental Nodes (through OneM2M platform). """
 
     def __init__(self, connection_file, pub_topic_prefix, ogc_config):
+        """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
+
+        :param connection_file: A file containing connection information.
+        :param pub_topic_prefix: The MQTT topic prefix on which information will be published.
+        """
         super().__init__(ogc_config, connection_file, pub_topic_prefix)
 
+        # Creating endpoint for listening to REST requests
         connection_config_file = util.load_from_file(connection_file)
         self._listening_address = connection_config_file["REST"]["listening_address"]["address"]
         self._listening_port = int(connection_config_file["REST"]["listening_address"]["port"])
 
-        self._ogc_config = ogc_config
+        #self._ogc_config = ogc_config
 
         global _onem2m_module
         _onem2m_module = self
 
     # noinspection PyMethodOverriding
     def runtime(self):
+        """
+        This method deploys an REST endpoint as Flask application based on CherryPy WSGI web server.
+        This endpoint will listen for incoming REST requests on different route paths, and will trigger specific
+        methods accordingly
+
+        :param dynamic_discovery:  A boolean value that enable the dynamic discovery of new hamburg sensors
+        """
         cherrypy.tree.graft(app, "/")
         cherrypy.config.update({"server.socket_host": self._listening_address,
                                 "server.socket_port": self._listening_port,

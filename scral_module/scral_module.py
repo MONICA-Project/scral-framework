@@ -15,6 +15,7 @@ import json
 import logging
 import os
 from abc import abstractmethod
+from typing import Dict
 
 import paho.mqtt.client as mqtt
 
@@ -29,7 +30,9 @@ class SCRALModule(object):
         initializer and to implement the runtime method (that actually does not have a default implementation.
     """
 
-    def __init__(self, ogc_config, connection_file, pub_topic_prefix):
+    _resource_catalog: Dict[str, int]
+
+    def __init__(self, ogc_config: object, connection_file: object, pub_topic_prefix: object) -> object:
         """ Parses the connection file, instantiate an MQTT Client and stores all relevant connection information.
 
         :param ogc_config: An instance of an OGCConfiguration.
@@ -79,7 +82,7 @@ class SCRALModule(object):
         return self._topic_prefix
 
     def mqtt_publish(self, topic, payload, qos=DEFAULT_MQTT_QOS):
-        """ Publish the payload given as parameter on the broker
+        """ Publish the payload given as parameter to the MQTT publisher
 
         :param topic: The MQTT topic on which the client will publish the message.
         :param payload: Data to send (according to Paho documentation could be: None, str, bytearray, int or float).
@@ -91,6 +94,6 @@ class SCRALModule(object):
     @abstractmethod
     def runtime(self):
         """ This is an abstract method that has to be overwritten.
-            It manage the runtime operation of the module.
+            It manages the runtime operation of the module.
         """
         raise NotImplementedError("Implement runtime method in subclasses")

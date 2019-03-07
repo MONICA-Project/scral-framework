@@ -19,8 +19,7 @@ import scral_module as scral
 from scral_module import util
 # from gps_tracker_poll import start_gps_poll as module
 # from env_sensor_onem2m import start_onem2m_env as module
-# from sound_level_meter import start_slm as module
-from x import module
+from sound_level_meter import start_slm as module
 
 
 if __name__ == '__main__':

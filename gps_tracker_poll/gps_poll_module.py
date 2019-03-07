@@ -14,7 +14,6 @@ import json
 import logging
 from threading import Thread
 from time import sleep
-from typing import Dict
 
 import requests
 import paho.mqtt.client as mqtt
@@ -34,8 +33,6 @@ from gps_tracker_poll.hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HA
 
 class SCRALGPSPoll(SCRALModule):
     """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
-
-    _resource_catalog: Dict[str, int]
 
     def __init__(self, ogc_config, connection_file, pub_topic_prefix):
         """ Initialize MQTT Brokers for listening and publishing
@@ -57,12 +54,11 @@ class SCRALGPSPoll(SCRALModule):
         self._mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
 
     # noinspection PyMethodOverriding
-    def runtime(self, pub_topic_prefix: str, dynamic_discovery=True):
+    def runtime(self, dynamic_discovery=True):
         """ This method retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
             These DATASTREAMS are published on MONICA OGC server.
             This is a "blocking function"
 
-        :param pub_topic_prefix: The prefix of the topic where you want to publish
         :param dynamic_discovery:  A boolean value that enable the dynamic discovery of new hamburg sensors
         """
         self.ogc_datastream_registration()
@@ -107,8 +103,6 @@ class SCRALGPSPoll(SCRALModule):
         property_name = self._ogc_config.get_observed_properties()[0].get_name()
 
         # global resource_catalog
-        if self._resource_catalog is None:
-            self._resource_catalog = {}
         hamburg_devices = r.json()["value"]
         for hd in hamburg_devices:
             iot_id = str(hd[OGC_ID])

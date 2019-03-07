@@ -1,5 +1,5 @@
 class OGCObservedProperty:
-    """ This class represents the OBSERVATION entity of the OCG Sensor Things model.
+    """ This class represents the OBSERVEDPROPERTY entity of the OCG Sensor Things model.
         For more info: http://developers.sensorup.com/docs/#observedProperties_post
     """
 
