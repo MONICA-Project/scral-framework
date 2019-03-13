@@ -45,7 +45,9 @@ class SCRALSoundLevelMeter(SCRALModule):
         self._listening_port = int(connection_config_file["REST"]["listening_address"]["port"])
 
         # Get cloud access token by using available credentials
-        self._cloud_token = self.get_credentials(URL_SLM_LOGIN, CREDENTIALS, REST_HEADERS)
+        self._cloud_token = util.get_server_access_token(URL_SLM_LOGIN, CREDENTIALS, REST_HEADERS, token_prefix="Bearer ")
+
+        self._sequences = []
 
         global _slm_module
         _slm_module = self
@@ -80,16 +82,16 @@ class SCRALSoundLevelMeter(SCRALModule):
             r = requests.get(url_locations, headers=self._cloud_token)
         except Exception as ex:
             logging.error(ex)
+
         if r is None:
             raise ConnectionError(
-                "Connection status: " + str(r.status_code) + "\nImpossible to establish a connection"
-                + "with " + url)
+                "Connection status: " + str(r.status_code) + "\nImpossible to establish a connection with " + url)
         else:
             locations_list = r.json()['value']
             logging.debug("Active locations list: " + str(locations_list))
-        locations_id_list = []
 
         # Get location ids from active locations
+        locations_id_list = []
         for location in locations_list:
             locations_id_list.append(location["locationId"])
 
@@ -97,9 +99,9 @@ class SCRALSoundLevelMeter(SCRALModule):
         active_devices = {}
         for location_id in locations_id_list:
             logging.info("Start discovery for active SLMs in a given site (pilot)")
-            url_location = url_locations + "/" + str(location_id)
+            url_loc = url_locations + "/" + str(location_id)
             try:
-                r = requests.get(url_location, headers=self._cloud_token)
+                r = requests.get(url_loc, headers=self._cloud_token)
             except Exception as ex:
                 logging.error(ex)
 
@@ -116,6 +118,9 @@ class SCRALSoundLevelMeter(SCRALModule):
             active_devices[location_assigned_device_id]["coordinates"] = location_coordinates["coordinates"]
             active_devices[location_assigned_device_id]["name"] = location_assigned_device_name
             active_devices[location_assigned_device_id]["description"] = location_assigned_device_description
+
+            url_sequences = url + "/tenants/" + str(tenant_id) + "/sites/" + str(site_id) + "/locations" + str(
+                location_id) + "/sequences"
 
         logging.debug("ACTIVE SLMs catalog: " + str(active_devices))
 
@@ -165,30 +170,3 @@ class SCRALSoundLevelMeter(SCRALModule):
 
                     # Store device/property information in local resource catalog
                     self._resource_catalog[device_name][property_name] = datastream_id
-
-    @staticmethod
-    def get_credentials(url, credentials, headers):
-        """ This function get authorized token from SLM server
-        :param: url: B&K server address
-        :param: credentials: available access credentials
-        ·param: headers: REST query headers
-        :return: a dictionary with limited-time-available access credentials
-        """
-
-        auth = None
-        try:
-            auth = requests.post(url=url, data=json.dumps(credentials), headers=headers)
-        except Exception as ex:
-            logging.error(ex)
-
-        if auth:
-            # enable authorization
-            cloud_token = dict()
-            cloud_token["Accept"] = "application/json"
-            access_token = auth.json()['accessToken']
-            cloud_token['Authorization'] = "Bearer " + str(access_token)
-        else:
-            raise ValueError("Credentials " + credentials + " have been denied by the SLM server")
-
-        logging.info("B&K access token successfully authorized!")
-        return cloud_token

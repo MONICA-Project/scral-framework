@@ -11,11 +11,11 @@
 #                                                                           #
 #############################################################################
 
-#ToDo: Add URL for a SCRAL endpoint listening to "sound event detection" requests
+# ToDo: Add URL for a SCRAL endpoint listening to "sound event detection" requests
 URI_DEFAULT = ""
 URI_SOUND_EVENT = URI_DEFAULT + ""
 
-#ToDo: check which info is still valid and which needs to be updated
+# ToDo: check which info is still valid and which needs to be updated
 
 # CLOUD URLS and IDs
 URL_SLM_CLOUD = "https://bkcluster-test.bksv.com/monica/api/v1"

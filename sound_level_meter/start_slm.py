@@ -30,9 +30,7 @@
 ####################################################################################################
 
 import argparse
-import json
 import logging
-import requests
 import sys
 import signal
 
@@ -111,9 +109,6 @@ def parse_command_line():
     args = parser.parse_args()
 
     return args
-
-
-
 
 
 if __name__ == '__main__':
