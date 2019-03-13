@@ -27,7 +27,9 @@ CATALOG_FILENAME = 'resource_catalog.json'
 OGC_SERVER_USERNAME = "scral"
 OGC_SERVER_PASSWORD = "A5_xYY#HqNiao_12#b"
 
-OGC_ID = "@iot.id"
+OGC_ID_KEY = "@iot.id"
+OGC_DEVICE_NAME_KEY = "name"
+GOST_RESULT_KEY = "value"
 
 BROKER_PERT = "130.192.85.32"
 BROKER_DEFAULT_PORT = 1883

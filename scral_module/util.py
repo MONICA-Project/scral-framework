@@ -87,6 +87,34 @@ def test_connectivity(server_address, server_username=None, server_password=None
         return False
 
 
+def get_server_access_token(url, credentials, headers, token_prefix="", token_suffix=""):
+    """ This function get authorized token from a target server
+
+    :param: url: The URL of the target server
+    :param: credentials: available access credentials
+    :param: headers: REST query headers
+    :return: a dictionary with limited-time-available access credentials
+    """
+
+    auth = None
+    try:
+        auth = requests.post(url=url, data=json.dumps(credentials), headers=headers)
+    except Exception as ex:
+        logging.error(ex)
+
+    if auth:
+        # enable authorization
+        cloud_token = dict()
+        cloud_token["Accept"] = "application/json"
+        access_token = auth.json()['accessToken']
+        cloud_token['Authorization'] = token_prefix + str(access_token) + token_suffix
+    else:
+        raise ValueError("Credentials " + credentials + " have been denied by the server.")
+
+    logging.info("Access token successfully authorized!")
+    return cloud_token
+
+
 def signal_handler(signal, frame):
     """ This signal handler overwrite the default behaviour of SIGKILL (pressing CTRL+C). """
 

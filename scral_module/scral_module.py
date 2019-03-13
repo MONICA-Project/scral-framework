@@ -15,11 +15,11 @@ import json
 import logging
 import os
 from abc import abstractmethod
-from typing import Dict
 
 import paho.mqtt.client as mqtt
 
 from .constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS
+from ogc_configuration import OGCConfiguration
 from . import util
 from . import mqtt_util
 
@@ -30,9 +30,7 @@ class SCRALModule(object):
         initializer and to implement the runtime method (that actually does not have a default implementation.
     """
 
-    _resource_catalog: Dict[str, int]
-
-    def __init__(self, ogc_config: object, connection_file: object, pub_topic_prefix: object) -> object:
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pub_topic_prefix: str):
         """ Parses the connection file, instantiate an MQTT Client and stores all relevant connection information.
 
         :param ogc_config: An instance of an OGCConfiguration.
@@ -90,6 +88,59 @@ class SCRALModule(object):
         """
         logging.debug("\nOn topic '"+topic+"' will be send the following payload:\n"+str(payload))
         self._mqtt_publisher.publish(topic, payload, qos)
+
+    # def ogc_datastream_registration(self, ogc_devices_server_url, certificate_path=None):
+    #     """ It manages the registration of the data inside OGC server. """
+    #     r = None
+    #     try:
+    #         r = requests.get(url=ogc_devices_server_url, verify=certificate_path)
+    #     except SSLError as tls_exception:
+    #         logging.error("Error during TLS connection, the connection could be insecure or "
+    #                       "the certificate_path could be self-signed...\n" + str(tls_exception))
+    #     except Exception as ex:
+    #         logging.error(ex)
+    #
+    #     if r is None or not r.ok:
+    #         raise ConnectionError(
+    #             "Connection status: " + str(r.status_code) + "\nImpossible to establish a connection" +
+    #             " or resources not found for: " + ogc_devices_server_url)
+    #     else:
+    #         logging.debug("Connection status: " + str(r.status_code))
+    #
+    #     # Collect OGC information needed to build DATASTREAMs payload
+    #     thing = self._ogc_config.get_thing()  # Assumption: usually only 1 thing is defined for each module
+    #     thing_id = thing.get_id()
+    #     thing_name = thing.get_name()
+    #
+    #     devices = r.json()[GOST_RESULT_KEY]
+    #     for dev in devices:
+    #         iot_id = dev[OGC_ID_KEY]
+    #         device_id = dev[OGC_DEVICE_NAME_KEY]
+    #         self._resource_catalog[iot_id] = {}
+    #
+    #         for sensor in self._ogc_config.get_sensors():
+    #             sensor_id = sensor.get_id()
+    #             sensor_name = sensor.get_name()
+    #
+    #             for op in self._ogc_config.get_observed_properties():
+    #                 property_id = op.get_id()
+    #                 property_name = op.get_name()
+    #                 property_description = op.get_description()
+    #
+    #                 datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + device_id
+    #                 uom = util.build_ogc_unit_of_measure(property_name.lower())
+    #
+    #                 datastream = OGCDatastream(name=datastream_name,
+    #                                            ogc_property_id=property_id, ogc_sensor_id=sensor_id,
+    #                                            ogc_thing_id=thing_id,  x=0.0, y=0.0, unit_of_measurement=uom,
+    #                                            description="Datastream for "+property_description+" of "+device_id)
+    #                 datastream_id = self._ogc_config.entity_discovery(
+    #                     datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
+    #
+    #                 datastream.set_id(datastream_id)
+    #                 self._ogc_config.add_datastream(datastream)
+    #
+    #                 self._resource_catalog[iot_id][property_name] = datastream_id
 
     @abstractmethod
     def runtime(self):

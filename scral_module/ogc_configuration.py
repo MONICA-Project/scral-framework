@@ -17,7 +17,7 @@ import logging
 import requests
 
 import scral_ogc
-from .constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID
+from scral_module.constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID_KEY
 
 
 class OGCConfiguration:
@@ -96,34 +96,31 @@ class OGCConfiguration:
 
         :return: It can throw an exception if something wrong.
         """
+        logging.info("--- Starting OGC discovery ---")
         # LOCATION discovery
         location = self._ogc_location
-        logging.info('LOCATION "' + location.get_name() + '" found')
         location_id = self.entity_discovery(location, self.URL_LOCATIONS, self.FILTER_NAME, verbose)
-        logging.debug('Location name: "' + location.get_name() + '" with id: ' + str(location_id))
+        logging.info('Location: "' + location.get_name() + '" with id: ' + str(location_id))
         location.set_id(location_id)  # temporary useless
 
         # THING discovery
         thing = self._ogc_thing
         thing.set_location_id(location_id)
-        logging.info('THING "' + thing.get_name() + '" found')
         thing_id = self.entity_discovery(thing, self.URL_THINGS, self.FILTER_NAME, verbose)
-        logging.debug('Thing name: "' + thing.get_name() + '" with id: ' + str(thing_id))
+        logging.info('Thing: "' + thing.get_name() + '" with id: ' + str(thing_id))
         thing.set_id(thing_id)
 
         # SENSORS discovery
-        logging.info("SENSORS discovery")
         for s in self._sensors:
             sensor_id = self.entity_discovery(s, self.URL_SENSORS, self.FILTER_NAME, verbose)
             s.set_id(sensor_id)
-            logging.debug('SENSOR: "' + s.get_name() + '" with id: ' + str(sensor_id))
+            logging.info('SENSOR: "' + s.get_name() + '" with id: ' + str(sensor_id))
 
-        # PROPERTIES discovery
-        logging.info("OBSERVED PROPERTIES discovery")
+        # OBSERVED PROPERTIES discovery
         for op in self._observed_properties:
             op_id = self.entity_discovery(op, self.URL_PROPERTIES, self.FILTER_NAME, verbose)
             op.set_id(op_id)
-            logging.debug('OBSERVED PROPERTY: "' + op.get_name() + '" with id: ' + str(op_id))
+            logging.info('OBSERVED PROPERTY: "' + op.get_name() + '" with id: ' + str(op_id))
 
     @staticmethod
     def entity_discovery(ogc_entity, url_entity, url_filter, verbose=False):
@@ -151,11 +148,11 @@ class OGCConfiguration:
             r = requests.post(url=url_entity, data=json.dumps(payload),
                               headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
             json_string = r.json()
-            if OGC_ID not in json_string:
+            if OGC_ID_KEY not in json_string:
                 raise ValueError("The Entity ID is not defined for: " + ogc_entity_name + "!\n" +
                                  "Please check the REST request!")
 
-            return json_string[OGC_ID]
+            return json_string[OGC_ID_KEY]
 
         else:
             if len(discovery_result) > 1:
@@ -167,7 +164,7 @@ class OGCConfiguration:
                 raise ValueError("Multiple results for same Entity name: " + ogc_entity_name + "!")
 
             else:
-                return discovery_result[0][OGC_ID]
+                return discovery_result[0][OGC_ID_KEY]
 
     def get_thing(self):
         return self._ogc_thing
