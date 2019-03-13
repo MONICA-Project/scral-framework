@@ -7,7 +7,7 @@
   "REST": {
     "ogc_server_address": "http://monappdwp3.monica-cloud.eu:5050/gost_dom/v1.0",
     "listening_address": {
-      "address": "0.0.0.0",
+      "address": "127.0.0.1",
       "port": "8000"
     }
   }

@@ -6,8 +6,8 @@
   },
   "REST": {
     "ogc_server_address": "http://bgw-http-proxy:5050/gost_dom/v1.0",
-      "listening_address": {
-      "address": "0.0.0.0",
+    "listening_address": {
+      "address": "127.0.0.1",
       "port": "8000"
     }
   }
