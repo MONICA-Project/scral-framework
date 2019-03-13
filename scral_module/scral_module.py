@@ -18,10 +18,10 @@ from abc import abstractmethod
 
 import paho.mqtt.client as mqtt
 
-from .constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS
-from ogc_configuration import OGCConfiguration
-from . import util
-from . import mqtt_util
+from scral_module.constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS
+from scral_module.ogc_configuration import OGCConfiguration
+from scral_module import util
+from scral_module import mqtt_util
 
 
 class SCRALModule(object):
