@@ -45,13 +45,12 @@ class SCRALSoundLevelMeter(SCRALModule):
         self._listening_address = connection_config_file["REST"]["listening_address"]["address"]
         self._listening_port = int(connection_config_file["REST"]["listening_address"]["port"])
 
+        self._sequences = []
+        self._active_devices = {}
+
         # Get cloud access token by using available credentials
         self._cloud_token = util.get_server_access_token(URL_SLM_LOGIN, CREDENTIALS,
                                                          REST_HEADERS, token_prefix="Bearer ")
-
-        self._sequences = []
-
-        self._active_devices = {}
 
         global _slm_module
         _slm_module = self
@@ -77,7 +76,7 @@ class SCRALSoundLevelMeter(SCRALModule):
         self.ogc_datastream_registration(URL_SLM_CLOUD, TENANT_ID, SITE_ID)
 
         # Start thread pool for Observations
-        # self.start_thread_pool(self._active_devices)
+        self.start_thread_pool()
 
     def ogc_datastream_registration(self, url, tenant_id, site_id):
         """
@@ -97,7 +96,7 @@ class SCRALSoundLevelMeter(SCRALModule):
         except Exception as ex:
             logging.error(ex)
 
-        if r is None:
+        if not r or not r.ok:
             raise ConnectionError(
                 "Connection status: " + str(r.status_code) + "\nImpossible to establish a connection with " + url)
         else:
@@ -132,7 +131,7 @@ class SCRALSoundLevelMeter(SCRALModule):
             self._active_devices[device_id]["name"] = device_name
             self._active_devices[device_id]["description"] = device_description
 
-            url_sequences = url + "/tenants/" + str(tenant_id) + "/sites/" + str(site_id) + "/locations" + str(
+            url_sequences = url + "/tenants/" + str(tenant_id) + "/sites/" + str(site_id) + "/locations/" + str(
                 location_id) + "/sequences"
             self._active_devices[device_id]["location_sequences"] = url_sequences
 
@@ -148,7 +147,7 @@ class SCRALSoundLevelMeter(SCRALModule):
         properties_list = self._ogc_config.get_observed_properties()  # There are more than one properties to parse
 
         # Start OGC Datastreams registration
-        logging.debug("Start OGC DATASTREAMs registration")
+        logging.info("--- Start OGC DATASTREAMs registration ---")
         # Iterate over active devices
         for device_id, values in self._active_devices.items():
             device_name = values["name"]
@@ -184,46 +183,50 @@ class SCRALSoundLevelMeter(SCRALModule):
                     logging.debug("Added Datastream: " + str(datastream_id) + " to the resource catalog for device: "
                                   + device_name + " and property: " + property_name)
 
-    def start_thread_pool(self, active_devices):
+    def start_thread_pool(self):
         thread_pool = []
         thread_id = 1
 
         for device_id, values in self._active_devices.items():
-            thread = self.MyThread(thread_id, "Thread-" + str(thread_id), values["name"], values["location_sequences"])
+            thread = self.SLMThread(thread_id, "Thread-" + str(thread_id), values["name"], values["location_sequences"])
             thread.start()
             thread_pool.append(thread)
             thread_id += 1
 
         for thread in thread_pool:
-            thread.join
+            thread.join()
 
-        logging.debug("Exiting Main Thread")
+        logging.error("Exiting Main Thread")
 
-    class MyThread(threading.Thread):
-        def __init__(self, thread_id, thread_name, device_id, url_sequences):
-            threading.Thread.__init__(self)
-            self.thread_name = thread_name
-            self.thread_id = thread_id
-            self.device_id = device_id
-            self.url_sequences = url_sequences
+    class SLMThread(threading.Thread):
+        def __init__(self, thread_id, thread_name, device_name, url_sequences):
+            super().__init__()
+            self._sequences = []
+
+            self._thread_name = thread_name
+            self._thread_id = thread_id
+            self._device_name = device_name
+            self._url_sequences = url_sequences
 
         def run(self):
-            logging.debug("Starting Thread: " + self.thread_name)
-            self.fetch_sequences(self.thread_id, self.thread_name, self.device_id, self.url_sequences)
-            logging.debug("Exiting " + self.thread_name)
+            logging.debug("Starting Thread: " + self._thread_name)
+            self._fetch_sequences()
+            self._process_list()
+            logging.debug("Exiting " + self._thread_name)
 
-        @staticmethod
-        def fetch_sequences(thread_id, thread_name, device_id, url_sequences):
-
+        def _fetch_sequences(self):
             r = None
             try:
-                r = requests.get(url_sequences, headers=_slm_module.get_cloud_token)
+                r = requests.get(self._url_sequences, headers=_slm_module.get_cloud_token)
             except Exception as ex:
                 logging.error(ex)
-            if r is None:
+            if not r or not r.ok:
                 raise ConnectionError(
                     "Connection status: " + str(r.status_code) + "\nImpossible to establish a connection with "
-                    + url_sequences)
+                    + self._url_sequences)
             else:
                 for sequence in r.json()['value']:
-                    logging.debug(thread_name + " sequence: " + json.dumps(sequence))
+                    logging.debug(self._thread_name + " sequence:\n" + str(json.dumps(sequence)))
+
+        def _process_list(self):
+            pass
