@@ -19,9 +19,11 @@
 
 import json
 import logging
+import re
 import sys
 
 import requests
+from arrow.arrow import Arrow
 
 
 def init_logger(debug_level):
@@ -147,3 +149,13 @@ def build_ogc_unit_of_measure(property_name):
         uom["definition"] = "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#KilogramPerCubicMeter"
 
     return uom
+
+
+def from_utc_to_query(utc_timestamp: Arrow):
+    """ This function convert an arrow UTC timestamp in a data format adapted for a REST request.
+
+    :param utc_timestamp: A timestamp in Arrow format (e.g. 2019-05-13T11:22:33+01:00)
+    :return: The timestamp adapted for a REST query (e.g. 2019-05-13T11%3A22%3A33Z)
+    """
+    time_stamp = str(utc_timestamp).split('+')[0] + 'Z'
+    return re.sub(':', '%3A', str(time_stamp))
