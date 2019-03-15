@@ -20,7 +20,7 @@ import json
 import logging
 from flask import Flask
 
-from scral_ogc import OGCDatastream
+from scral_ogc import OGCDatastream, OGCObservation
 from scral_module.constants import REST_HEADERS
 from scral_module import util
 from scral_module.scral_module import SCRALModule
@@ -155,7 +155,7 @@ class SCRALSoundLevelMeter(SCRALModule):
         properties_list = self._ogc_config.get_observed_properties()  # There are more than one properties to parse
 
         # Start OGC Datastreams registration
-        logging.info("--- Start OGC DATASTREAMs registration ---")
+        logging.info("\n\n--- Start OGC DATASTREAMs registration ---\n")
         # Iterate over active devices
         for device_id, values in self._active_devices.items():
             device_name = values["name"]
@@ -163,16 +163,17 @@ class SCRALSoundLevelMeter(SCRALModule):
             device_description = values["description"]
 
             # Check whether device has been already registered
-            if device_name in self._resource_catalog:
-                logging.debug("Device: "+device_id+" already registered with id: "+device_id+" and name: "+device_name)
+            if device_id in self._resource_catalog:
+                logging.debug("Device: "+device_name+" already registered with id: "+device_id)
             else:
-                self._resource_catalog[device_name] = {}
+                self._resource_catalog[device_id] = {}
 
                 # Iterate over ObservedProperties
                 for ogc_property in properties_list:
                     property_id = ogc_property.get_id()
                     property_name = ogc_property.get_name()
                     property_definition = {"definition": ogc_property.get_definition()}
+                    # for the future debuggare: maybe could be better to use device_id
                     datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + device_name
                     description = device_description
                     datastream = OGCDatastream(name=datastream_name, description=description,
@@ -186,10 +187,9 @@ class SCRALSoundLevelMeter(SCRALModule):
                     self._ogc_config.add_datastream(datastream)
 
                     # Store device/property information in local resource catalog
-                    self._resource_catalog[device_name][property_name] = datastream_id
-
+                    self._resource_catalog[device_id][property_name] = datastream_id
                     logging.debug("Added Datastream: " + str(datastream_id) + " to the resource catalog for device: "
-                                  + device_name + " and property: " + property_name)
+                                  + device_id + " and property: " + property_name)
 
     def start_thread_pool(self):
         thread_pool = []
@@ -197,7 +197,7 @@ class SCRALSoundLevelMeter(SCRALModule):
 
         for device_id, values in self._active_devices.items():
             thread = SCRALSoundLevelMeter.SLMThread(
-                thread_id, "Thread-" + str(thread_id), values["name"], values["location_sequences"])
+                thread_id, "Thread-" + str(thread_id), device_id, values["location_sequences"])
             thread.start()
             thread_pool.append(thread)
             thread_id += 1
@@ -208,12 +208,12 @@ class SCRALSoundLevelMeter(SCRALModule):
         logging.error("Exiting Main Thread")
 
     class SLMThread(threading.Thread):
-        def __init__(self, thread_id, thread_name, device_name, url_sequences):
+        def __init__(self, thread_id, thread_name, device_id, url_sequences):
             super().__init__()
 
             self._thread_name = thread_name
             self._thread_id = thread_id
-            self._device_name = device_name
+            self._device_id = device_id
             self._url_sequences = url_sequences
 
         def run(self):
@@ -231,14 +231,14 @@ class SCRALSoundLevelMeter(SCRALModule):
                 raise ConnectionError("Connection status: " + str(r.status_code) +
                                       "\nImpossible to establish a connection with " + self._url_sequences)
 
-            # Set time-window size in order to define the number of values you retrieve for each request (in UTC)
-            utc_ts_end = arrow.utcnow()
-            utc_ts_start = utc_ts_end - timedelta(seconds=UPDATE_INTERVAL)
+            # ### LAeq values averaged on 5 minutes ###
+            min5_in_seconds = 300  # this is the timer, new query triggered each 5 min (300 sec)
+            time_elapsed = 0       # counter for current time passed by
+            start_timer = time.time()
 
-            # prepare format for URL
-            query_ts_end = util.from_utc_to_query(utc_ts_end)
-            query_ts_start = util.from_utc_to_query(utc_ts_start)
-            time_token = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
+            utc_now = arrow.utcnow()
+            query_ts_end = util.from_utc_to_query(utc_now)
+            time_token = build_time_token(utc_now, UPDATE_INTERVAL)
 
             sequences_data = []
             for sequence in r.json()['value']:
@@ -249,6 +249,12 @@ class SCRALSoundLevelMeter(SCRALModule):
                 data = {"valueType": sequence_name, "time": time_token}
                 if sequence_name == "LAeq" or sequence_name == "LCeq":
                     data["url_prefix"] = prefix + "/single"
+                elif sequence_name == "Avg5minLAeq":
+                    data["url_prefix"] = prefix + "/single"
+
+                    min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
+                    time_token = build_time_token(min10_ago_in_seconds, min5_in_seconds)
+                    data["time"] = time_token
                 elif sequence_name == "CPBLZeq":
                     data["url_prefix"] = prefix + "/array"
                 else:
@@ -257,29 +263,69 @@ class SCRALSoundLevelMeter(SCRALModule):
 
                 sequences_data.append(data)
 
-            logging.debug("Initial values: "+query_ts_start+" --- "+query_ts_end)
-
+            time_elapsed = 300  # to force to perform request the first time
+            rc = _slm_module.get_resource_catalog()
+            logging.info("\n\n--- Start OGC OBSERVATIONs registration ---\n")
             while True:
                 try:
                     for seq in sequences_data:
+                        property_name = seq["valueType"]
+
+                        if property_name == "Avg5minLAeq" and time_elapsed < min5_in_seconds:
+                            continue  # not update data
+
                         url = seq["url_prefix"] + seq["time"]
                         r = requests.get(url, headers=_slm_module.get_cloud_token())
-                        payload = r.json()['value']
-                        logging.debug("Sequence: " + seq["valueType"]+"\n"+json.dumps(payload) + "\n")
-                        break
+                        payload = r.json()  # ['value']
+                        logging.debug("Sequence: " + property_name+"\n"+json.dumps(payload) + "\n")
 
-                    time.sleep(UPDATE_INTERVAL)
+                        if payload["value"] and len(payload["value"]) >= 1:
+                            datastream_id = rc[self._device_id][property_name]
+                            self.ogc_observation_registration(datastream_id, property_name, payload)
+
+                    time.sleep(UPDATE_INTERVAL)  # ##
+                    time_elapsed = time.time() - start_timer  #
 
                     # UPDATE INTERVALS
-                    query_ts_start = query_ts_end
-                    query_ts_end = util.from_utc_to_query(arrow.utcnow())
-                    time_token = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
-                    logging.debug("Updated values: " + query_ts_start + " --- " + query_ts_end)
                     for seq in sequences_data:
-                        seq["time"] = time_token
+                        if property_name == "Avg5minLAeq":
+                            if time_elapsed >= min5_in_seconds:
+                                time_elapsed = 0
+                                start_timer = time.time()
+
+                                min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
+                                seq["time"] = build_time_token(min10_ago_in_seconds, min5_in_seconds)
+                        else:
+                            query_ts_start = query_ts_end
+                            query_ts_end = util.from_utc_to_query(arrow.utcnow())
+                            seq["time"] = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
 
                 except ValueError:
                     if r.status_code == 401:
-                        logging.info("Authentication Token expired!")
+                        logging.info("\nAuthentication Token expired!\n")
                         _slm_module.update_cloud_token()
 
+        def ogc_observation_registration(self, datastream_id, property_name, payload):
+            # Preparing MQTT topic
+            topic_prefix = _slm_module.get_topic_prefix()
+            topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
+
+            # Preparing Payload
+            observation_result = {"valueType": property_name, "response": payload}
+            phenomenon_time = payload["value"][0]["startTime"]
+            observation = OGCObservation(datastream_id, phenomenon_time, observation_result, str(arrow.utcnow()))
+
+            # Publishing
+            _slm_module.mqtt_publish(topic, json.dumps(observation.get_rest_payload()))
+
+
+def build_time_token(utc_ts_end, update_interval):
+    # Set time-window size in order to define the number of values you retrieve for each request (in UTC)
+    utc_ts_start = utc_ts_end - timedelta(seconds=update_interval)
+
+    # prepare format for URL
+    query_ts_end = util.from_utc_to_query(utc_ts_end)
+    query_ts_start = util.from_utc_to_query(utc_ts_start)
+
+    time_token = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
+    return time_token
