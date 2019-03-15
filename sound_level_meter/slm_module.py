@@ -11,21 +11,24 @@
 #                                                                           #
 #############################################################################
 import threading
+import time
+from datetime import timedelta
 
+import arrow
 import requests
 import json
 import logging
-import scral_module.util as util
-
 from flask import Flask
-from scral_module.scral_module import SCRALModule
-from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS
-from scral_module.constants import REST_HEADERS
-from sound_level_meter.constants import URL_SLM_CLOUD, TENANT_ID, SITE_ID
+
 from scral_ogc import OGCDatastream
+from scral_module.constants import REST_HEADERS
+from scral_module import util
+from scral_module.scral_module import SCRALModule
+
+from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, UPDATE_INTERVAL, URL_SLM_CLOUD, TENANT_ID, SITE_ID
+
 
 app = Flask(__name__)
-
 _slm_module = None
 
 
@@ -201,7 +204,6 @@ class SCRALSoundLevelMeter(SCRALModule):
     class SLMThread(threading.Thread):
         def __init__(self, thread_id, thread_name, device_name, url_sequences):
             super().__init__()
-            self._sequences = []
 
             self._thread_name = thread_name
             self._thread_id = thread_id
@@ -211,7 +213,6 @@ class SCRALSoundLevelMeter(SCRALModule):
         def run(self):
             logging.debug("Starting Thread: " + self._thread_name)
             self._fetch_sequences()
-            self._process_list()
             logging.debug("Exiting " + self._thread_name)
 
         def _fetch_sequences(self):
@@ -221,12 +222,51 @@ class SCRALSoundLevelMeter(SCRALModule):
             except Exception as ex:
                 logging.error(ex)
             if not r or not r.ok:
-                raise ConnectionError(
-                    "Connection status: " + str(r.status_code) + "\nImpossible to establish a connection with "
-                    + self._url_sequences)
-            else:
-                for sequence in r.json()['value']:
-                    logging.debug(self._thread_name + " sequence:\n" + str(json.dumps(sequence)))
+                raise ConnectionError("Connection status: " + str(r.status_code) +
+                                      "\nImpossible to establish a connection with " + self._url_sequences)
 
-        def _process_list(self):
-            pass
+            # Set time-window size in order to define the number of values you retrieve for each request (in UTC)
+            utc_ts_end = arrow.utcnow()
+            utc_ts_start = utc_ts_end - timedelta(seconds=UPDATE_INTERVAL)
+
+            # prepare format for URL
+            query_ts_end = util.from_utc_to_query(utc_ts_end)
+            query_ts_start = util.from_utc_to_query(utc_ts_start)
+            time_token = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
+
+            sequences_data = []
+            for sequence in r.json()['value']:
+                logging.debug(self._thread_name + " sequence:\n" + str(json.dumps(sequence)))
+                prefix = self._url_sequences+"/"+sequence["sequenceId"]+"/data"
+
+                sequence_name = sequence["name"]
+                data = {"valueType": sequence_name, "time": time_token}
+                if sequence_name == "LAeq" or sequence_name == "LCeq":
+                    data["url_prefix"] = prefix + "/single"
+                elif sequence_name == "CPBLZeq":
+                    data["url_prefix"] = prefix + "/array"
+                else:
+                    logging.debug(sequence_name+" not yet integrated!")
+                    continue
+
+                sequences_data.append(data)
+
+            logging.debug("Initial values: "+query_ts_start+" --- "+query_ts_end)
+
+            while True:
+                for seq in sequences_data:
+                    url = seq["url_prefix"] + seq["time"]
+                    r = requests.get(url, headers=_slm_module.get_cloud_token)
+                    payload = r.json()['value']
+                    logging.debug("Sequence: " + seq["valueType"]+"\n"+json.dumps(payload) + "\n")
+                    break
+
+                time.sleep(UPDATE_INTERVAL)
+
+                # UPDATE INTERVALS
+                query_ts_start = query_ts_end
+                query_ts_end = util.from_utc_to_query(arrow.utcnow())
+                time_token = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
+                logging.debug("Updated values: " + query_ts_start + " --- " + query_ts_end)
+                for seq in sequences_data:
+                    seq["time"] = time_token
