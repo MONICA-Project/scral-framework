@@ -10,8 +10,8 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
-import threading
 import time
+from threading import Thread, Lock
 from datetime import timedelta
 
 import arrow
@@ -51,6 +51,8 @@ class SCRALSoundLevelMeter(SCRALModule):
 
         self._sequences = []
         self._active_devices = {}
+
+        self._publish_mutex = Lock()
 
         self._url_login = url_login
         self._credential = credentials
@@ -207,7 +209,7 @@ class SCRALSoundLevelMeter(SCRALModule):
 
         logging.error("Exiting Main Thread")
 
-    class SLMThread(threading.Thread):
+    class SLMThread(Thread):
         def __init__(self, thread_id, thread_name, device_id, url_sequences):
             super().__init__()
 
@@ -277,7 +279,7 @@ class SCRALSoundLevelMeter(SCRALModule):
                         url = seq["url_prefix"] + seq["time"]
                         r = requests.get(url, headers=_slm_module.get_cloud_token())
                         payload = r.json()  # ['value']
-                        logging.debug("Sequence: " + property_name+"\n"+json.dumps(payload) + "\n")
+                        logging.debug("Sequence: " + property_name+"\n"+json.dumps(payload))
 
                         if payload["value"] and len(payload["value"]) >= 1:
                             datastream_id = rc[self._device_id][property_name]
@@ -288,6 +290,8 @@ class SCRALSoundLevelMeter(SCRALModule):
 
                     # UPDATE INTERVALS
                     for seq in sequences_data:
+                        property_name = seq["valueType"]
+
                         if property_name == "Avg5minLAeq":
                             if time_elapsed >= min5_in_seconds:
                                 time_elapsed = 0
@@ -316,7 +320,11 @@ class SCRALSoundLevelMeter(SCRALModule):
             observation = OGCObservation(datastream_id, phenomenon_time, observation_result, str(arrow.utcnow()))
 
             # Publishing
-            _slm_module.mqtt_publish(topic, json.dumps(observation.get_rest_payload()))
+            _slm_module._publish_mutex.acquire()
+            try:
+                _slm_module.mqtt_publish(topic, json.dumps(observation.get_rest_payload()))
+            finally:
+                _slm_module._publish_mutex.release()
 
 
 def build_time_token(utc_ts_end, update_interval):
