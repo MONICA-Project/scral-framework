@@ -35,7 +35,8 @@ _slm_module = None
 class SCRALSoundLevelMeter(SCRALModule):
     """ Resource manager for integration of the SLM-GW (by usage of B&K's IoT Sound Level Meters). """
 
-    def __init__(self, ogc_config, connection_file, pub_topic_prefix):
+    def __init__(self, ogc_config, connection_file, pub_topic_prefix,
+                 url_login, credentials, token_prefix="", token_suffix=""):
         """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
 
         :param connection_file: A file containing connection information.
@@ -51,19 +52,23 @@ class SCRALSoundLevelMeter(SCRALModule):
         self._sequences = []
         self._active_devices = {}
 
-        # Get cloud access token by using available credentials
-        self._cloud_token = util.get_server_access_token(URL_SLM_LOGIN, CREDENTIALS,
-                                                         REST_HEADERS, token_prefix="Bearer ")
+        self._url_login = url_login
+        self._credential = credentials
+        self._token_prefix = token_prefix
+        self._token_suffix = token_suffix
+        self._cloud_token = ""
+        self.update_cloud_token()
 
         global _slm_module
         _slm_module = self
 
-    def get_active_devices(self):
-        return self._active_devices
-
-    @property
     def get_cloud_token(self):
         return self._cloud_token
+
+    def update_cloud_token(self):
+        """ Updates the cloud access token by using available credentials """
+        self._cloud_token = util.get_server_access_token(self._url_login, self._credential, REST_HEADERS,
+                                                         self._token_prefix, self._token_suffix)
 
     # noinspection PyMethodOverriding
     def runtime(self):
@@ -191,7 +196,8 @@ class SCRALSoundLevelMeter(SCRALModule):
         thread_id = 1
 
         for device_id, values in self._active_devices.items():
-            thread = self.SLMThread(thread_id, "Thread-" + str(thread_id), values["name"], values["location_sequences"])
+            thread = SCRALSoundLevelMeter.SLMThread(
+                thread_id, "Thread-" + str(thread_id), values["name"], values["location_sequences"])
             thread.start()
             thread_pool.append(thread)
             thread_id += 1
@@ -218,7 +224,7 @@ class SCRALSoundLevelMeter(SCRALModule):
         def _fetch_sequences(self):
             r = None
             try:
-                r = requests.get(self._url_sequences, headers=_slm_module.get_cloud_token)
+                r = requests.get(self._url_sequences, headers=_slm_module.get_cloud_token())
             except Exception as ex:
                 logging.error(ex)
             if not r or not r.ok:
@@ -254,19 +260,26 @@ class SCRALSoundLevelMeter(SCRALModule):
             logging.debug("Initial values: "+query_ts_start+" --- "+query_ts_end)
 
             while True:
-                for seq in sequences_data:
-                    url = seq["url_prefix"] + seq["time"]
-                    r = requests.get(url, headers=_slm_module.get_cloud_token)
-                    payload = r.json()['value']
-                    logging.debug("Sequence: " + seq["valueType"]+"\n"+json.dumps(payload) + "\n")
-                    break
+                try:
+                    for seq in sequences_data:
+                        url = seq["url_prefix"] + seq["time"]
+                        r = requests.get(url, headers=_slm_module.get_cloud_token())
+                        payload = r.json()['value']
+                        logging.debug("Sequence: " + seq["valueType"]+"\n"+json.dumps(payload) + "\n")
+                        break
 
-                time.sleep(UPDATE_INTERVAL)
+                    time.sleep(UPDATE_INTERVAL)
 
-                # UPDATE INTERVALS
-                query_ts_start = query_ts_end
-                query_ts_end = util.from_utc_to_query(arrow.utcnow())
-                time_token = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
-                logging.debug("Updated values: " + query_ts_start + " --- " + query_ts_end)
-                for seq in sequences_data:
-                    seq["time"] = time_token
+                    # UPDATE INTERVALS
+                    query_ts_start = query_ts_end
+                    query_ts_end = util.from_utc_to_query(arrow.utcnow())
+                    time_token = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
+                    logging.debug("Updated values: " + query_ts_start + " --- " + query_ts_end)
+                    for seq in sequences_data:
+                        seq["time"] = time_token
+
+                except ValueError:
+                    if r.status_code == 401:
+                        logging.info("Authentication Token expired!")
+                        _slm_module.update_cloud_token()
+

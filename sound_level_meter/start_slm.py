@@ -39,7 +39,9 @@ from scral_module import util
 from scral_module import mqtt_util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, DEFAULT_CONFIG
 from scral_module.ogc_configuration import OGCConfiguration
+
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
+from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX
 
 
 verbose = False
@@ -88,7 +90,8 @@ def main():
     ogc_config.discovery(verbose)
 
     # Module initialization and runtime phase
-    module = SCRALSoundLevelMeter(ogc_config, args.connection_file, pilot_mqtt_topic_prefix)
+    module = SCRALSoundLevelMeter(ogc_config, args.connection_file, pilot_mqtt_topic_prefix,
+                                  URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX)
     module.runtime()
 
 
