@@ -151,11 +151,16 @@ def build_ogc_unit_of_measure(property_name):
     return uom
 
 
-def from_utc_to_query(utc_timestamp: Arrow):
+def from_utc_to_query(utc_timestamp: Arrow, remove_milliseconds=True):
     """ This function convert an arrow UTC timestamp in a data format adapted for a REST request.
 
     :param utc_timestamp: A timestamp in Arrow format (e.g. 2019-05-13T11:22:33+01:00)
+    :param remove_milliseconds: if set to True, milliseconds are removed from timestamp
     :return: The timestamp adapted for a REST query (e.g. 2019-05-13T11%3A22%3A33Z)
     """
-    time_stamp = str(utc_timestamp).split('+')[0] + 'Z'
+    time_stamp = str(utc_timestamp).split('+')[0]
+    if remove_milliseconds:
+        time_stamp = str(utc_timestamp).split('.')[0]
+    time_stamp += 'Z'
+
     return re.sub(':', '%3A', str(time_stamp))

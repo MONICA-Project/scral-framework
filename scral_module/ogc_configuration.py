@@ -96,7 +96,7 @@ class OGCConfiguration:
 
         :return: It can throw an exception if something wrong.
         """
-        logging.info("--- Starting OGC discovery ---")
+        logging.info("\n\n--- Starting OGC discovery ---\n")
         # LOCATION discovery
         location = self._ogc_location
         location_id = self.entity_discovery(location, self.URL_LOCATIONS, self.FILTER_NAME, verbose)
@@ -121,6 +121,8 @@ class OGCConfiguration:
             op_id = self.entity_discovery(op, self.URL_PROPERTIES, self.FILTER_NAME, verbose)
             op.set_id(op_id)
             logging.info('OBSERVED PROPERTY: "' + op.get_name() + '" with id: ' + str(op_id))
+
+        logging.info("--- End of OGC discovery---\n")
 
     @staticmethod
     def entity_discovery(ogc_entity, url_entity, url_filter, verbose=False):
@@ -156,7 +158,7 @@ class OGCConfiguration:
 
         else:
             if len(discovery_result) > 1:
-                logging.critical("Verify OGC-naming| Duplicate found for entity: <"+ogc_entity_name+">.")
+                logging.critical("Verify OGC-naming! Duplicate found for entity: <"+ogc_entity_name+">.")
                 logging.debug("Current Filter: '" + url_filter + "'")
                 if verbose:
                     for res in discovery_result:
