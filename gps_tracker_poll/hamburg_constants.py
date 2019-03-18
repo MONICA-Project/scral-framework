@@ -25,5 +25,4 @@ OGC_HAMBURG_FILTER = "?$filter=startswith(name,'MONICA_HAMBURG_GPS')"
 THINGS_SUBSCRIBE_TOPIC = "v1.0/Things"
 
 # Hamburg Datastream constant
-HAMBURG_UNIT_OF_MEASURE = {"name": "position", "symbol": "",
-                           "definition": "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#DegreeAngle"}
+HAMBURG_UNIT_OF_MEASURE = "position"

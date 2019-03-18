@@ -37,7 +37,7 @@ import signal
 import scral_module as scral   
 from scral_module import util
 from scral_module import mqtt_util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, DEFAULT_CONFIG
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
 from scral_module.ogc_configuration import OGCConfiguration
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
@@ -48,7 +48,8 @@ verbose = False
 
 
 def main():
-    args = parse_command_line()  # parsing command line parameters, it has to be the first instruction
+    # parsing command line parameters, it has to be the first instruction
+    args = util.parse_command_line("SLM integration instance")
 
     global verbose  # overwrite verbose flag from command line
     if args.verbose:
@@ -95,31 +96,10 @@ def main():
     module.runtime()
 
 
-def parse_command_line():
-    """ This function parses the command line.
-    :return: a dictionary with all the parsed parameters.
-    """
-    example_text = "example: start_slm.py -v -f ./my_conf.conf -c external -p MOVIDA"
-
-    parser = argparse.ArgumentParser(prog='SCRAL', epilog=example_text,
-                                     description='SLM integration instance',
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='enable verbose mode')
-    parser.add_argument('-o', '--ogc', dest='ogc_file', type=str, help='the path of the OGC configuration file')
-    parser.add_argument('-c', '--conn', dest='connection_file', type=str,
-                        help='the path of the connection configuration')
-    parser.add_argument('-p', '--pilot', default=DEFAULT_CONFIG, type=str, help='the name of the desired pilot')
-    args = parser.parse_args()
-
-    return args
-
-
 if __name__ == '__main__':
     print(scral.BANNER % scral.VERSION)
     sys.stdout.flush()
 
     signal.signal(signal.SIGINT, util.signal_handler)
     main()
-
-    print("\nThat's all folks! Thanks for choosing SCRAL!")
-    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella.\n")
+    print(END_MESSAGE)

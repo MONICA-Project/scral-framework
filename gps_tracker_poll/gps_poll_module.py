@@ -25,6 +25,7 @@ from scral_ogc import OGCDatastream, OGCObservation
 
 from scral_module.constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, OGC_ID_KEY, DEFAULT_MQTT_QOS
 from scral_module import mqtt_util
+from scral_module import util
 from scral_module.scral_module import SCRALModule
 
 from gps_tracker_poll.hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL,\
@@ -115,7 +116,7 @@ class SCRALGPSPoll(SCRALModule):
                 description = hd["description"]
                 datastream = OGCDatastream(name=datastream_name, description=description, ogc_property_id=property_id,
                                            ogc_sensor_id=sensor_id, ogc_thing_id=thing_id, x=0.0, y=0.0,
-                                           unit_of_measurement=HAMBURG_UNIT_OF_MEASURE)
+                                           unit_of_measurement=util.build_ogc_unit_of_measure(HAMBURG_UNIT_OF_MEASURE))
                 datastream_id = self._ogc_config.entity_discovery(
                                     datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
 

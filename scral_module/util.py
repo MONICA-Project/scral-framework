@@ -16,14 +16,17 @@
     SCRAL util
     This file contains several utility functions that could be used in different modules.
 """
-
+import argparse
 import json
 import logging
 import re
 import sys
 
+import configparser
 import requests
 from arrow.arrow import Arrow
+
+from scral_module.constants import DEFAULT_CONFIG, CREDITS
 
 
 def init_logger(debug_level):
@@ -33,6 +36,34 @@ def init_logger(debug_level):
     logging.getLogger().setLevel(level=debug_level)
     logging.getLogger().handlers[0].setFormatter(logging.Formatter(
         "%(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S"))
+
+
+def parse_command_line(description):
+    """ This function parses the command line.
+    :return: a dictionary with all the parsed parameters.
+    """
+    example_text = "example: start_module.py -v -f ./my_conf.conf -c external -p MOVIDA"
+
+    parser = argparse.ArgumentParser(prog='SCRAL', epilog=example_text,
+                                     description=description,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='enable verbose mode')
+    parser.add_argument('-o', '--ogc', dest='ogc_file', type=str, help='the path of the OGC configuration file')
+    parser.add_argument('-c', '--conn', dest='connection_file', type=str,
+                        help='the path of the connection configuration')
+    parser.add_argument('-p', '--pilot', default=DEFAULT_CONFIG, type=str, help='the name of the desired pilot')
+    args = parser.parse_args()
+
+    return args
+
+
+def init_parser(file_to_parse):
+    parser = configparser.ConfigParser()
+    files_read = parser.read(file_to_parse)
+    if len(files_read) <= 0:
+        raise FileNotFoundError("File: '" + file_to_parse + "' not found or you don't have permission to read it!")
+    parser.sections()
+    return parser
 
 
 def load_from_file(filename):
@@ -121,8 +152,7 @@ def signal_handler(signal, frame):
     """ This signal handler overwrite the default behaviour of SIGKILL (pressing CTRL+C). """
 
     logging.critical('You pressed Ctrl+C!')
-    print("\nSCRAL is turning down now, thanks for choosing SCRAL!")
-    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella.\n")
+    print("\nSCRAL is turning down now, thanks for choosing SCRAL!\n"+CREDITS)
     sys.exit(0)
 
 
@@ -147,6 +177,9 @@ def build_ogc_unit_of_measure(property_name):
     elif property_name == "humidity":
         uom["symbol"] = "kg/m^3"
         uom["definition"] = "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#KilogramPerCubicMeter"
+    elif property_name == "position":
+        uom["symbol"] = "",
+        uom["definition"] = "http://www.qudt.org/qudt/owl/1.0.0/unit/Instances.html#DegreeAngle"
 
     return uom
 

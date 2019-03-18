@@ -35,3 +35,7 @@ BROKER_PERT = "130.192.85.32"
 BROKER_DEFAULT_PORT = 1883
 DEFAULT_KEEPALIVE = 60
 DEFAULT_MQTT_QOS = 2
+
+# Debug, graphic and similiar
+CREDITS = "(c) 2019, LINKS Foundation\ndeveloped by Jacopo Foglietti & Luca Mannella.\n"
+END_MESSAGE = "\nThat's all folks! Thanks for choosing SCRAL!\n"+CREDITS
