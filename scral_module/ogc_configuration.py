@@ -10,13 +10,13 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
-import configparser
 import json
 import logging
 
 import requests
 
 import scral_ogc
+from scral_module import util
 from scral_module.constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID_KEY
 
 
@@ -40,11 +40,8 @@ class OGCConfiguration:
         # Filter example: /ObservedProperties?$filter=name eq 'Area Temperature'
         self.FILTER_NAME = "?$filter=name eq "
 
-        parser = configparser.ConfigParser()  # Parse of the ogc .conf configuration file
-        files_read = parser.read(ogc_file_name)
-        if len(files_read) <= 0:
-            raise FileNotFoundError("File: '"+ogc_file_name+"' not found or you don't have permission to read it!")
-        parser.sections()
+        self._ogc_file_name = ogc_file_name
+        parser = util.init_parser(self._ogc_file_name)
 
         # LOCATION
         name = parser['LOCATION']['NAME']  # only one LOCATION for each configuration file
@@ -60,12 +57,15 @@ class OGCConfiguration:
         self._ogc_thing = scral_ogc.OGCThing(name, description, props_type)
 
         # COUNTABLE
-        self._num_sensors = int(parser['THING']['NUM_OF_SENSORS'])
-        self._num_properties = int(parser['THING']['NUM_OF_PROPERTIES'])
+        num_sensors = int(parser['THING']['NUM_OF_SENSORS'])
+        num_properties = int(parser['THING']['NUM_OF_PROPERTIES'])
+        num_v_sensors = int(parser['THING']['NUM_OF_V_SENSORS'])
+        num_v_properties = int(parser['THING']['NUM_OF_V_PROPERTIES'])
+        self._num_v_datastreams = int(parser['THING']['NUM_OF_V_DATASTREAMS'])
 
         i = 0  # SENSORS
         self._sensors = []
-        while i < self._num_sensors:
+        while i < num_sensors:
             section = "SENSOR_" + str(i)
             i += 1
             sensor_name = parser[section]['NAME']
@@ -77,7 +77,7 @@ class OGCConfiguration:
 
         i = 0  # OBSERVED PROPERTIES
         self._observed_properties = []
-        while i < self._num_properties:
+        while i < num_properties:
             section = "PROPERTY_" + str(i)
             i += 1
             property_name = parser[section]['NAME']
@@ -87,7 +87,35 @@ class OGCConfiguration:
             self._observed_properties.append(
                 scral_ogc.OGCObservedProperty(property_name, property_description, property_definition))
 
+        self._virtual_sensors = []    # Virtual SENSORS
+        if num_v_sensors > 0:
+            i = 0
+            while i < num_v_sensors:
+                section = "V_SENSOR_" + str(i)
+                i += 1
+                sensor_name = parser[section]['NAME']
+                sensor_description = parser[section]['DESCRIPTION']
+                sensor_encoding = parser[section]['ENCODING']
+                sensor_metadata = parser[section]['METADATA']
+
+                self._virtual_sensors.append(
+                    scral_ogc.OGCSensor(sensor_name, sensor_description, sensor_metadata, sensor_encoding))
+
+        self._virtual_properties = []  # Virtual SENSORS
+        if num_v_properties > 0:
+            i = 0  # Virtual PROPERTIES
+            while i < num_v_properties:
+                section = "V_PROPERTY_" + str(i)
+                i += 1
+                property_name = parser[section]['NAME']
+                property_description = parser[section]['DESCRIPTION']
+                property_definition = parser[section]['PROPERTY_TYPE']
+
+                self._virtual_properties.append(
+                    scral_ogc.OGCObservedProperty(property_name, property_description, property_definition))
+
         self._datastreams = {}
+        self._virtual_datastream = {}
 
     def discovery(self, verbose=False):
         """ This method uploads the OGC model on the OGC Server and retrieves the @iot.id assigned by the server.
@@ -100,14 +128,14 @@ class OGCConfiguration:
         # LOCATION discovery
         location = self._ogc_location
         location_id = self.entity_discovery(location, self.URL_LOCATIONS, self.FILTER_NAME, verbose)
-        logging.info('Location: "' + location.get_name() + '" with id: ' + str(location_id))
+        logging.info('LOCATION: "' + location.get_name() + '" with id: ' + str(location_id))
         location.set_id(location_id)  # temporary useless
 
         # THING discovery
         thing = self._ogc_thing
         thing.set_location_id(location_id)
         thing_id = self.entity_discovery(thing, self.URL_THINGS, self.FILTER_NAME, verbose)
-        logging.info('Thing: "' + thing.get_name() + '" with id: ' + str(thing_id))
+        logging.info('THING: "' + thing.get_name() + '" with id: ' + str(thing_id))
         thing.set_id(thing_id)
 
         # SENSORS discovery
@@ -121,6 +149,54 @@ class OGCConfiguration:
             op_id = self.entity_discovery(op, self.URL_PROPERTIES, self.FILTER_NAME, verbose)
             op.set_id(op_id)
             logging.info('OBSERVED PROPERTY: "' + op.get_name() + '" with id: ' + str(op_id))
+
+        # Virtual SENSORS discovery
+        for s in self._virtual_sensors:
+            sensor_id = self.entity_discovery(s, self.URL_SENSORS, self.FILTER_NAME, verbose)
+            s.set_id(sensor_id)
+            logging.info('Virtual SENSOR: "' + s.get_name() + '" with id: ' + str(sensor_id))
+
+        # Virtual PROPERTIES discovery
+        for op in self._virtual_properties:
+            op_id = self.entity_discovery(op, self.URL_PROPERTIES, self.FILTER_NAME, verbose)
+            op.set_id(op_id)
+            logging.info('Virtual PROPERTY: "' + op.get_name() + '" with id: ' + str(op_id))
+
+        # VIRTUAL_DATASTREAM discovery
+        if self._num_v_datastreams > 0:
+            parser = util.init_parser(self._ogc_file_name)
+            i = 0
+            while i < self._num_v_datastreams:
+                section = "V_DATASTREAM_" + str(i)
+                i += 1
+
+                sensor_name = parser[section]['SENSOR']
+                property_name = parser[section]['PROPERTY']
+
+                datastream_name = parser[section]['THING'] + "/" + sensor_name + "/" + property_name
+                datastream_description = parser[section]['DESCRIPTION']
+                ds_coord_x = float(parser[section]['COORDINATES_X'])
+                ds_coord_y = float(parser[section]['COORDINATES_Y'])
+
+                ds_unit_of_measure = util.build_ogc_unit_of_measure(parser[section]['UNIT_MEASURE'])
+
+                ogc_sensor_id = None
+                for s in self._sensors:
+                    if s.get_name() == sensor_name:
+                        ogc_sensor_id = s.get_id()
+                        break
+
+                ogc_property_id = None
+                for op in self._observed_properties:
+                    if op.get_name() == property_name:
+                        ogc_property_id = op.get_id()
+
+                virtual_datastream = scral_ogc.OGCDatastream(datastream_name, datastream_description,
+                                                             ogc_property_id, ogc_sensor_id, thing_id,
+                                                             ds_unit_of_measure, ds_coord_x, ds_coord_y)
+                vds_id = self.entity_discovery(virtual_datastream, self.URL_DATASTREAMS, self.FILTER_NAME, verbose)
+                logging.info('Virtual DATASTREAM: "' + datastream_name + '" with id: ' + str(vds_id))
+                self._virtual_datastream[vds_id] = virtual_datastream
 
         logging.info("--- End of OGC discovery---\n")
 
@@ -151,7 +227,7 @@ class OGCConfiguration:
                               headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
             json_string = r.json()
             if OGC_ID_KEY not in json_string:
-                raise ValueError("The Entity ID is not defined for: " + ogc_entity_name + "!\n" +
+                raise ValueError("The Entity ID is not defined for: '" + ogc_entity_name + "'\n" +
                                  "Please check the REST request!")
 
             return json_string[OGC_ID_KEY]
@@ -181,10 +257,10 @@ class OGCConfiguration:
         return self._observed_properties
 
     def get_sensors_number(self):
-        return self._num_sensors
+        return len(self._sensors)
 
     def get_properties_number(self):
-        return self._num_properties
+        return len(self._observed_properties)
 
     def get_datastreams(self):
         return self._datastreams
