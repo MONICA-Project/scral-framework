@@ -84,7 +84,7 @@ def main():
     ogc_config.discovery(verbose)
 
     # Module initialization and runtime phase
-    module = SCRALEnvOneM2M(args.connection_file, pilot_mqtt_topic_prefix, ogc_config)
+    module = SCRALEnvOneM2M(ogc_config, args.connection_file, pilot_mqtt_topic_prefix)
     module.runtime()
 
 
