@@ -87,7 +87,13 @@ class SCRALModule(object):
         :param qos: The desired quality of service (it has an hardcoded default value).
         """
         logging.debug("\nOn topic '"+topic+"' will be send the following payload:\n"+str(payload))
-        self._mqtt_publisher.publish(topic, payload, qos)
+        info = self._mqtt_publisher.publish(topic, payload, qos)
+
+        if info.rc == mqtt.MQTT_ERR_SUCCESS:
+            return True
+        else:
+            return False
+
 
     # def ogc_datastream_registration(self, ogc_devices_server_url, certificate_path=None):
     #     """ It manages the registration of the data inside OGC server. """

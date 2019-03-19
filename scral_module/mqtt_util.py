@@ -18,12 +18,14 @@
 import time
 import logging
 
+from paho.mqtt.client import MQTT_ERR_SUCCESS
+
 
 def on_connect(client, userdata, flags, rc):
-    if rc != 0:
-        logging.critical("Connection failed, error code: "+str(rc))
+    if rc == MQTT_ERR_SUCCESS:
+        logging.info("Connection with MQTT broker: '" + str(client._host) + "' successfully established|")
     else:
-        logging.info("Connection with MQTT broker: '"+str(client._host)+"' successfully established|")
+        logging.critical("Connection failed, error code: "+str(rc))
 
 
 def automatic_reconnection(client, userdata, rc):
