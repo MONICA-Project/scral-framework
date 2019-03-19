@@ -1,0 +1,12 @@
+{
+  "tagId":"123",
+  "bearing":203.35797,
+  "accuracy":0,
+  "lon":0,
+  "lat":0,
+  "height":0,
+  "type":"ora2",
+  "message":"I-Fights spotted",
+  "reportType":"video",
+  "timestamp":"2018-09-17T12:34:52Z"
+}
