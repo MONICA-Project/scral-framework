@@ -33,12 +33,12 @@ class SCRALRestModule(SCRALModule):
         self._listening_port = int(connection_config_file["REST"]["listening_address"]["port"])
 
     # noinspection PyMethodOverriding
-    def runtime(self, app):
+    def runtime(self, flask_instance):
         """
         This method deploys an REST endpoint as Flask application based on CherryPy WSGI web server.
         This endpoint will listen for incoming REST requests on different route paths.
         """
-        cherrypy.tree.graft(app, "/")
+        cherrypy.tree.graft(flask_instance, "/")
         cherrypy.config.update({"server.socket_host": self._listening_address,
                                 "server.socket_port": self._listening_port,
                                 "engine.autoreload.on": False,

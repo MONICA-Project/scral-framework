@@ -109,7 +109,7 @@ def new_glasses_request():
     type = request.json["type"]
 
     if module is None:
-        return jsonify({"Error": "Internal server error"}), 500
+        return make_response(jsonify({"Error": "Internal server error"}), 500)
 
     # -> ### DATASTREAM REGISTRATION ###
     rc = module.get_resource_catalog()
@@ -120,9 +120,9 @@ def new_glasses_request():
             return make_response(jsonify({"Error": "Internal server error"}), 500)
     else:
         logging.error("Device already registered!")
-        return jsonify({"Error": "Duplicate request!"}), 422
+        return make_response(jsonify({"Error": "Duplicate request!"}), 422)
 
-    return jsonify({"result": "Ok"}), 201
+    return make_response(jsonify({"result": "Ok"}), 201)
 
 
 @app.route(URI_GLASSES_LOCALIZATION, methods=["PUT"])
