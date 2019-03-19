@@ -26,3 +26,13 @@ class OGCObservedProperty:
 
     def get_rest_payload(self):
         return {"name": self._name, "description": self._description, "definition": self._definition}
+
+    def __eq__(self, other):
+        if self.get_id() == other.get_id():
+            if self.get_name() == other.get_name():
+                if self.get_definition() == other.get_definition():
+                    if self.get_description() == other.get_description():
+                        return True
+
+        return False
+
