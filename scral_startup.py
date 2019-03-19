@@ -17,9 +17,8 @@ import sys
 
 import scral_module as scral
 from scral_module import util
-# from gps_tracker_poll import start_gps_poll as module
-# from env_sensor_onem2m import start_onem2m_env as module
-from sound_level_meter import start_slm as module
+from scral_module.constants import END_MESSAGE
+from specific_scral_module import file as module
 
 
 if __name__ == '__main__':
@@ -29,5 +28,4 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, util.signal_handler)
     module.main()
 
-    print("\nThat's all folks! Thanks for choosing SCRAL!")
-    print("(c) 2019, LINKS Foundation\n developed by Jacopo Foglietti & Luca Mannella.\n")
+    print(END_MESSAGE)

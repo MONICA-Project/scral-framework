@@ -170,32 +170,33 @@ class OGCConfiguration:
                 section = "V_DATASTREAM_" + str(i)
                 i += 1
 
-                sensor_name = parser[section]['SENSOR']
-                property_name = parser[section]['PROPERTY']
+                virtual_sensor_name = parser[section]['SENSOR']
+                virtual_property_name = parser[section]['PROPERTY']
 
-                datastream_name = parser[section]['THING'] + "/" + sensor_name + "/" + property_name
-                datastream_description = parser[section]['DESCRIPTION']
-                ds_coord_x = float(parser[section]['COORDINATES_X'])
-                ds_coord_y = float(parser[section]['COORDINATES_Y'])
+                v_datastream_name = parser[section]['THING'] + "/" + virtual_sensor_name + "/" + virtual_property_name
+                v_datastream_description = parser[section]['DESCRIPTION']
+                v_ds_coord_x = float(parser[section]['COORDINATES_X'])
+                v_ds_coord_y = float(parser[section]['COORDINATES_Y'])
 
-                ds_unit_of_measure = util.build_ogc_unit_of_measure(parser[section]['UNIT_MEASURE'])
+                v_ds_unit_of_measure = util.build_ogc_unit_of_measure(parser[section]['UNIT_MEASURE'])
 
-                ogc_sensor_id = None
-                for s in self._sensors:
-                    if s.get_name() == sensor_name:
-                        ogc_sensor_id = s.get_id()
+                virtual_sensor_id = None
+                for s in self._virtual_sensors:
+                    if s.get_name() == virtual_sensor_name:
+                        virtual_sensor_id = s.get_id()
                         break
 
-                ogc_property_id = None
-                for op in self._observed_properties:
-                    if op.get_name() == property_name:
-                        ogc_property_id = op.get_id()
+                virtual_property_id = None
+                for op in self._virtual_properties:
+                    if op.get_name() == virtual_property_name:
+                        virtual_property_id = op.get_id()
+                        break
 
-                virtual_datastream = scral_ogc.OGCDatastream(datastream_name, datastream_description,
-                                                             ogc_property_id, ogc_sensor_id, thing_id,
-                                                             ds_unit_of_measure, ds_coord_x, ds_coord_y)
+                virtual_datastream = scral_ogc.OGCDatastream(v_datastream_name, v_datastream_description,
+                                                             virtual_property_id, virtual_sensor_id, thing_id,
+                                                             v_ds_unit_of_measure, v_ds_coord_x, v_ds_coord_y)
                 vds_id = self.entity_discovery(virtual_datastream, self.URL_DATASTREAMS, self.FILTER_NAME, verbose)
-                logging.info('Virtual DATASTREAM: "' + datastream_name + '" with id: ' + str(vds_id))
+                logging.info('Virtual DATASTREAM: "' + v_datastream_name + '" with id: ' + str(vds_id))
                 self._virtual_datastream[vds_id] = virtual_datastream
 
         logging.info("--- End of OGC discovery---\n")

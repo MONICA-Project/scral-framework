@@ -14,7 +14,6 @@ import json
 import logging
 
 import arrow
-from flask import jsonify, make_response
 
 from scral_ogc import OGCObservation
 from scral_ogc.ogc_datastream import OGCDatastream
