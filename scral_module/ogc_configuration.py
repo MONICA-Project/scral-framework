@@ -269,6 +269,15 @@ class OGCConfiguration:
     def get_datastream(self, datastream_id):
         return self._datastreams[datastream_id]
 
+    def add_observed_property(self, ogc_obs_property):
+        obs_id = self.entity_discovery(ogc_obs_property, self.URL_PROPERTIES, self.FILTER_NAME)
+        ogc_obs_property.set_id(obs_id)
+
+        if ogc_obs_property not in self._observed_properties:
+            self._observed_properties.append(ogc_obs_property)
+
+        return ogc_obs_property
+
     def add_datastream(self, datastream):
         datastream_id = datastream.get_id()
         if datastream_id is None:
