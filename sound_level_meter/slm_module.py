@@ -23,16 +23,14 @@ from flask import Flask
 from scral_ogc import OGCDatastream, OGCObservation
 from scral_module.constants import REST_HEADERS
 from scral_module import util
-from scral_module.scral_module import SCRALModule
+from scral_module.rest_module import SCRALRestModule
 
-from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, UPDATE_INTERVAL, URL_SLM_CLOUD, TENANT_ID, SITE_ID
-
+from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, TENANT_ID, SITE_ID
 
 app = Flask(__name__)
-_slm_module = None
 
 
-class SCRALSoundLevelMeter(SCRALModule):
+class SCRALSoundLevelMeter(SCRALRestModule):
     """ Resource manager for integration of the SLM-GW (by usage of B&K's IoT Sound Level Meters). """
 
     def __init__(self, ogc_config, connection_file, pub_topic_prefix,
@@ -43,11 +41,6 @@ class SCRALSoundLevelMeter(SCRALModule):
         :param pub_topic_prefix: The MQTT topic prefix on which information will be published.
         """
         super().__init__(ogc_config, connection_file, pub_topic_prefix)
-
-        # Creating endpoint for listening to "sound event detection" REST requests
-        connection_config_file = util.load_from_file(connection_file)
-        self._listening_address = connection_config_file["REST"]["listening_address"]["address"]
-        self._listening_port = int(connection_config_file["REST"]["listening_address"]["port"])
 
         self._sequences = []
         self._active_devices = {}
@@ -61,11 +54,11 @@ class SCRALSoundLevelMeter(SCRALModule):
         self._cloud_token = ""
         self.update_cloud_token()
 
-        global _slm_module
-        _slm_module = self
-
     def get_cloud_token(self):
         return self._cloud_token
+
+    def get_mutex(self):
+        return self._publish_mutex
 
     def update_cloud_token(self):
         """ Updates the cloud access token by using available credentials """
@@ -73,7 +66,7 @@ class SCRALSoundLevelMeter(SCRALModule):
                                                          self._token_prefix, self._token_suffix)
 
     # noinspection PyMethodOverriding
-    def runtime(self):
+    def runtime(self, flask_instance):
         """
         This method discovers active SLMs from B&K cloud, registers them as OGC Datastreams into the MONICA
         cloud and finally retrieves sound measurements for each device by using parallel querying threads.
@@ -86,7 +79,10 @@ class SCRALSoundLevelMeter(SCRALModule):
         self.ogc_datastream_registration(URL_SLM_CLOUD, TENANT_ID, SITE_ID)
 
         # Start thread pool for Observations
-        self.start_thread_pool()
+        self._start_thread_pool()
+
+        # starting REST web server
+        super().runtime(flask_instance)
 
     def ogc_datastream_registration(self, url, tenant_id, site_id):
         """
@@ -145,19 +141,9 @@ class SCRALSoundLevelMeter(SCRALModule):
                 location_id) + "/sequences"
             self._active_devices[device_id]["location_sequences"] = url_sequences
 
-        # Collect OGC information needed to build Datastreams payload
-        thing = self._ogc_config.get_thing()
-        thing_id = thing.get_id()
-        thing_name = thing.get_name()
-
-        sensor = self._ogc_config.get_sensors()[0]  # Assumption: only "SLM" Sensor is defined for this adapter
-        sensor_id = sensor.get_id()
-        sensor_name = sensor.get_name()
-
-        properties_list = self._ogc_config.get_observed_properties()  # There are more than one properties to parse
-
         # Start OGC Datastreams registration
         logging.info("\n\n--- Start OGC DATASTREAMs registration ---\n")
+
         # Iterate over active devices
         for device_id, values in self._active_devices.items():
             device_name = values["name"]
@@ -169,54 +155,80 @@ class SCRALSoundLevelMeter(SCRALModule):
                 logging.debug("Device: "+device_name+" already registered with id: "+device_id)
             else:
                 self._resource_catalog[device_id] = {}
-
                 # Iterate over ObservedProperties
-                for ogc_property in properties_list:
-                    property_id = ogc_property.get_id()
-                    property_name = ogc_property.get_name()
-                    property_definition = {"definition": ogc_property.get_definition()}
-                    # for the future debuggare: maybe could be better to use device_id
-                    datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + device_name
-                    description = device_description
-                    datastream = OGCDatastream(name=datastream_name, description=description,
-                                               ogc_property_id=property_id, ogc_sensor_id=sensor_id,
-                                               ogc_thing_id=thing_id, x=device_coordinates[0], y=device_coordinates[1],
-                                               unit_of_measurement=property_definition)
-                    datastream_id = self._ogc_config.entity_discovery(
-                                        datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
+                for ogc_property in self._ogc_config.get_observed_properties():
+                    self._new_datastream(ogc_property, device_id, device_name, device_coordinates, device_description)
 
-                    datastream.set_id(datastream_id)
-                    self._ogc_config.add_datastream(datastream)
+        logging.info("--- End of OGC DATASTREAMs registration ---\n")
 
-                    # Store device/property information in local resource catalog
-                    self._resource_catalog[device_id][property_name] = datastream_id
-                    logging.debug("Added Datastream: " + str(datastream_id) + " to the resource catalog for device: "
-                                  + device_id + " and property: " + property_name)
+    def new_datastream(self, ogc_obs_property, device_id):
+        """ """
+        obs_prop = self._ogc_config.add_observed_property(ogc_obs_property)
+        device_coordinates = self._active_devices[device_id]["coordinates"]
+        device_name = self._active_devices[device_id]["name"]
+        device_description = self._active_devices[device_id]["description"]
 
-    def start_thread_pool(self):
+        self._new_datastream(obs_prop, device_id, device_name, device_coordinates, device_description)
+
+    def _new_datastream(self, ogc_property, device_id, device_name, device_coordinates, device_description):
+        """ """
+        # Collect OGC information needed to build Datastreams payload
+        thing = self._ogc_config.get_thing()
+        thing_id = thing.get_id()
+        thing_name = thing.get_name()
+
+        sensor = self._ogc_config.get_sensors()[0]  # Assumption: only "SLM" Sensor is defined for this adapter
+        sensor_id = sensor.get_id()
+        sensor_name = sensor.get_name()
+
+        property_id = ogc_property.get_id()
+        property_name = ogc_property.get_name()
+        property_definition = {"definition": ogc_property.get_definition()}
+
+        # for the future debuggare: maybe could be better to use device_id
+        datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + device_name
+        datastream = OGCDatastream(name=datastream_name, description=device_description,
+                                   ogc_property_id=property_id, ogc_sensor_id=sensor_id,
+                                   ogc_thing_id=thing_id, x=device_coordinates[0], y=device_coordinates[1],
+                                   unit_of_measurement=property_definition)
+        datastream_id = self._ogc_config.entity_discovery(
+            datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
+
+        datastream.set_id(datastream_id)
+        self._ogc_config.add_datastream(datastream)
+
+        # Store device/property information in local resource catalog
+        if property_name not in self._resource_catalog[device_id].keys():
+            self._resource_catalog[device_id][property_name] = datastream_id
+            logging.debug("Added Datastream: " + str(datastream_id) + " to the resource catalog for device: "
+                          + device_id + " and property: " + property_name)
+
+    def _start_thread_pool(self, locking=False):
         thread_pool = []
         thread_id = 1
 
         for device_id, values in self._active_devices.items():
             thread = SCRALSoundLevelMeter.SLMThread(
-                thread_id, "Thread-" + str(thread_id), device_id, values["location_sequences"])
+                thread_id, "Thread-" + str(thread_id), device_id, values["location_sequences"], self)
             thread.start()
             thread_pool.append(thread)
             thread_id += 1
 
-        for thread in thread_pool:
-            thread.join()
-
-        logging.error("Exiting Main Thread")
+        logging.info("Threads detached")
+        if locking:
+            for thread in thread_pool:
+                thread.join()
+            logging.error("All threads have been interrupted!")
 
     class SLMThread(Thread):
-        def __init__(self, thread_id, thread_name, device_id, url_sequences):
+        def __init__(self, thread_id, thread_name, device_id, url_sequences, slm_module):
             super().__init__()
 
             self._thread_name = thread_name
             self._thread_id = thread_id
             self._device_id = device_id
             self._url_sequences = url_sequences
+            self._slm_module = slm_module
 
         def run(self):
             logging.debug("Starting Thread: " + self._thread_name)
@@ -226,7 +238,7 @@ class SCRALSoundLevelMeter(SCRALModule):
         def _fetch_sequences(self):
             r = None
             try:
-                r = requests.get(self._url_sequences, headers=_slm_module.get_cloud_token())
+                r = requests.get(self._url_sequences, headers=self._slm_module.get_cloud_token())
             except Exception as ex:
                 logging.error(ex)
             if not r or not r.ok:
@@ -266,7 +278,7 @@ class SCRALSoundLevelMeter(SCRALModule):
                 sequences_data.append(data)
 
             time_elapsed = 300  # to force to perform request the first time
-            rc = _slm_module.get_resource_catalog()
+            rc = self._slm_module.get_resource_catalog()
             logging.info("\n\n--- Start OGC OBSERVATIONs registration ---\n")
             while True:
                 try:
@@ -277,13 +289,13 @@ class SCRALSoundLevelMeter(SCRALModule):
                             continue  # not update data
 
                         url = seq["url_prefix"] + seq["time"]
-                        r = requests.get(url, headers=_slm_module.get_cloud_token())
+                        r = requests.get(url, headers=self._slm_module.get_cloud_token())
                         payload = r.json()  # ['value']
                         logging.debug("Sequence: " + property_name+"\n"+json.dumps(payload))
 
                         if payload["value"] and len(payload["value"]) >= 1:
                             datastream_id = rc[self._device_id][property_name]
-                            self.ogc_observation_registration(datastream_id, property_name, payload)
+                            self._ogc_observation_registration(datastream_id, property_name, payload)
 
                     time.sleep(UPDATE_INTERVAL)  # ##
                     time_elapsed = time.time() - start_timer  #
@@ -307,11 +319,11 @@ class SCRALSoundLevelMeter(SCRALModule):
                 except ValueError:
                     if r.status_code == 401:
                         logging.info("\nAuthentication Token expired!\n")
-                        _slm_module.update_cloud_token()
+                        self._slm_module.update_cloud_token()
 
-        def ogc_observation_registration(self, datastream_id, property_name, payload):
+        def _ogc_observation_registration(self, datastream_id, property_name, payload):
             # Preparing MQTT topic
-            topic_prefix = _slm_module.get_topic_prefix()
+            topic_prefix = self._slm_module.get_topic_prefix()
             topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
 
             # Preparing Payload
@@ -320,11 +332,12 @@ class SCRALSoundLevelMeter(SCRALModule):
             observation = OGCObservation(datastream_id, phenomenon_time, observation_result, str(arrow.utcnow()))
 
             # Publishing
-            _slm_module._publish_mutex.acquire()
+            mutex = self._slm_module.get_mutex()
+            mutex.acquire()
             try:
-                _slm_module.mqtt_publish(topic, json.dumps(observation.get_rest_payload()))
+                self._slm_module.mqtt_publish(topic, json.dumps(observation.get_rest_payload()))
             finally:
-                _slm_module._publish_mutex.release()
+                mutex.release()
 
 
 def build_time_token(utc_ts_end, update_interval):

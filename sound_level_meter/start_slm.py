@@ -28,22 +28,24 @@
 #   8. Expose SCRAL endpoint and listen to incoming requests
 #
 ####################################################################################################
-
-import argparse
 import logging
 import sys
 import signal
 
-import scral_module as scral   
+from flask import Flask, request, jsonify, make_response
+
+import scral_module as scral
+import scral_ogc
 from scral_module import util
 from scral_module import mqtt_util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
 from scral_module.ogc_configuration import OGCConfiguration
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
-from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX
+from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, URI_DEFAULT, URI_SOUND_EVENT
 
-
+flask_instance = Flask(__name__)
+slm_module = None
 verbose = False
 
 
@@ -90,10 +92,49 @@ def main():
     ogc_config = OGCConfiguration(args.ogc_file, ogc_server_address)
     ogc_config.discovery(verbose)
 
-    # Module initialization and runtime phase
-    module = SCRALSoundLevelMeter(ogc_config, args.connection_file, pilot_mqtt_topic_prefix,
-                                  URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX)
-    module.runtime()
+    global slm_module  # Module initialization and runtime phase
+    slm_module = SCRALSoundLevelMeter(ogc_config, args.connection_file, pilot_mqtt_topic_prefix,
+                                      URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX)
+    slm_module.runtime(flask_instance)
+
+
+@flask_instance.route(URI_SOUND_EVENT, methods=["PUT"])  # your hands up
+def new_sound_event():
+    payload = request.json
+    property_name = payload["type"]
+    try:
+        property_description = payload["description"]
+    except KeyError:
+        property_description = property_name + " description"
+    try:
+        property_definition = payload["definition"]
+    except KeyError:
+        property_definition = property_name + " definition"
+
+    obs_prop = scral_ogc.OGCObservedProperty(property_name, property_description, property_definition)
+    device_id = payload["deviceId"]
+
+    slm_module.new_datastream(obs_prop, device_id)
+
+    return make_response(jsonify({"result": "Ok"}), 201)
+
+
+@flask_instance.route("/")
+def test():
+    """ Checking if Flask is working. """
+    logging.debug(test.__name__ + " method called \n")
+
+    return "<h1>Flask is running!</h1>"
+
+
+@flask_instance.route(URI_DEFAULT)
+def test_module():
+    """ Checking if SCRAL is running. """
+    logging.debug(test_module.__name__ + " method called \n")
+
+    to_ret = "<h1>SCRAL module is running!</h1>\n"
+    to_ret += "<h2> ToDo: Insert list of API here! </h2>"
+    return to_ret
 
 
 if __name__ == '__main__':
