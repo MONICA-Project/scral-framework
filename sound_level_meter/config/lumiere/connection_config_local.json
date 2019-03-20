@@ -1,0 +1,19 @@
+{
+  "mqtt": {
+    "pub_broker": "localhost",
+    "pub_broker_port": 1884,
+    "pub_broker_keepalive": 60
+  },
+  "REST": {
+    "ogc_server_address": "http://localhost:8080/v1.0",
+    "listening_address": {
+      "address": "0.0.0.0",
+      "port": "8000"
+    }
+  },
+  "cloud": {
+    "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
+    "SiteName": "Fete des Lumieres 2018",
+    "SiteID": "ddf7b2bd-3d42-4e0f-9c76-9cc356abd644"
+  }
+}

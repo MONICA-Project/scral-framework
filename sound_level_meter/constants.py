@@ -17,10 +17,8 @@ URI_SOUND_EVENT = URI_DEFAULT + "/sound-event"
 # CLOUD URLS and IDs
 URL_SLM_CLOUD = "https://bkcluster-test.bksv.com/monica/api/v1"
 URL_SLM_LOGIN = "https://bkcluster-test.bksv.com/monica/api/v1/account/login"
-
 # CLOUD_HEADERS = {"Accept": "application/json", "Authorization": ""}
-TENANT_ID = "f159a3d1-cde1-405e-bc46-754609125585"
-SITE_ID = "54c9dd30-f915-42b7-b00c-c07c891fb0ce"
+
 
 # CREDENTIALS
 CREDENTIALS = {"clientId": "7aab9af4-d311-4091-8bfc-35cb6b96b491",

@@ -25,7 +25,7 @@ from scral_module.constants import REST_HEADERS
 from scral_module import util
 from scral_module.rest_module import SCRALRestModule
 
-from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, TENANT_ID, SITE_ID
+from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD
 
 app = Flask(__name__)
 
@@ -54,6 +54,10 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         self._cloud_token = ""
         self.update_cloud_token()
 
+        connection_config_file = util.load_from_file(connection_file)
+        self._tenant_id = connection_config_file["cloud"]["TenantID"]
+        self._site_id = connection_config_file["cloud"]["SiteID"]
+
     def get_cloud_token(self):
         return self._cloud_token
 
@@ -76,7 +80,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         and will generate corresponding Observations.
         """
         # Start SLM discovery and Datastream registration
-        self.ogc_datastream_registration(URL_SLM_CLOUD, TENANT_ID, SITE_ID)
+        self.ogc_datastream_registration(URL_SLM_CLOUD)
 
         # Start thread pool for Observations
         self._start_thread_pool()
@@ -84,16 +88,14 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         # starting REST web server
         super().runtime(flask_instance)
 
-    def ogc_datastream_registration(self, url, tenant_id, site_id):
+    def ogc_datastream_registration(self, url):
         """
         This method discovers active SLMs for a given site_id and registers a new OGC Datastream for
         each couple SLM-ObservedProperty.
         :param url: server address
-        :param tenant_id: server tenant_id
-        :param site_id: server site_id (pilot specific)
         """
 
-        url_locations = url + "/tenants/" + str(tenant_id) + "/sites/" + str(site_id) + "/locations"
+        url_locations = url + "/tenants/" + str(self._tenant_id) + "/sites/" + str(self._site_id) + "/locations"
 
         # Get the list of active locations registered to the site_id
         r = None
@@ -105,18 +107,19 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         if not r or not r.ok:
             raise ConnectionError(
                 "Connection status: " + str(r.status_code) + "\nImpossible to establish a connection with " + url)
-        else:
-            locations_list = r.json()['value']
-            logging.debug("Active locations list: " + str(locations_list))
+
+        logging.info("\n\n--- Active device discovery ---\n")
+        locations_list = r.json()['value']
 
         # Get location ids from active locations
+        logging.debug("Active locations list: ")
         locations_id_list = []
         for location in locations_list:
+            logging.debug(location)
             locations_id_list.append(location["locationId"])
 
         # Discover active devices from active location ids (assumption: 1 SLM x 1 location_id)
         for location_id in locations_id_list:
-            logging.info("Start discovery for active SLMs in a given site (pilot)")
             url_loc = url_locations + "/" + str(location_id)
             try:
                 r = requests.get(url_loc, headers=self._cloud_token)
@@ -137,9 +140,10 @@ class SCRALSoundLevelMeter(SCRALRestModule):
             self._active_devices[device_id]["name"] = device_name
             self._active_devices[device_id]["description"] = device_description
 
-            url_sequences = url + "/tenants/" + str(tenant_id) + "/sites/" + str(site_id) + "/locations/" + str(
-                location_id) + "/sequences"
+            url_sequences = url + "/tenants/" + str(self._tenant_id) + "/sites/" + str(
+                self._site_id) + "/locations/" + str(location_id) + "/sequences"
             self._active_devices[device_id]["location_sequences"] = url_sequences
+        logging.info("\n\n--- End of active device discovery ---\n")
 
         # Start OGC Datastreams registration
         logging.info("\n\n--- Start OGC DATASTREAMs registration ---\n")
