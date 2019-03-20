@@ -45,7 +45,7 @@ from sound_level_meter.slm_module import SCRALSoundLevelMeter
 from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, URI_DEFAULT, URI_SOUND_EVENT
 
 flask_instance = Flask(__name__)
-slm_module = None
+slm_module: SCRALSoundLevelMeter = None
 verbose = False
 
 
@@ -98,7 +98,7 @@ def main():
     slm_module.runtime(flask_instance)
 
 
-@flask_instance.route(URI_SOUND_EVENT, methods=["PUT"])  # your hands up
+@flask_instance.route(URI_SOUND_EVENT, methods=["PUT"])
 def new_sound_event():
     payload = request.json
     property_name = payload["type"]
@@ -114,9 +114,12 @@ def new_sound_event():
     obs_prop = scral_ogc.OGCObservedProperty(property_name, property_description, property_definition)
     device_id = payload["deviceId"]
 
-    slm_module.new_datastream(obs_prop, device_id)
+    datastream_id = slm_module.new_datastream(obs_prop, device_id)
+    if not datastream_id:
+        return make_response(jsonify({"Error": "Internal server error."}), 500)
 
-    return make_response(jsonify({"result": "Ok"}), 201)
+    slm_module.ogc_observation_registration(datastream_id, payload["startTime"], payload)
+    return make_response(jsonify({"Result": "Ok"}), 201)
 
 
 @flask_instance.route("/")

@@ -168,7 +168,8 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         device_name = self._active_devices[device_id]["name"]
         device_description = self._active_devices[device_id]["description"]
 
-        self._new_datastream(obs_prop, device_id, device_name, device_coordinates, device_description)
+        datastream_id = self._new_datastream(obs_prop, device_id, device_name, device_coordinates, device_description)
+        return datastream_id
 
     def _new_datastream(self, ogc_property, device_id, device_name, device_coordinates, device_description):
         """ """
@@ -202,6 +203,8 @@ class SCRALSoundLevelMeter(SCRALRestModule):
             self._resource_catalog[device_id][property_name] = datastream_id
             logging.debug("Added Datastream: " + str(datastream_id) + " to the resource catalog for device: "
                           + device_id + " and property: " + property_name)
+
+        return datastream_id
 
     def _start_thread_pool(self, locking=False):
         thread_pool = []
@@ -293,14 +296,21 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                         payload = r.json()  # ['value']
                         logging.debug("Sequence: " + property_name+"\n"+json.dumps(payload))
 
-                        if payload["value"] and len(payload["value"]) >= 1:
+                        if payload["value"] and len(payload["value"]) >= 1:  # is the payload not empty?
                             datastream_id = rc[self._device_id][property_name]
-                            self._ogc_observation_registration(datastream_id, property_name, payload)
+                            observation_result = {"valueType": property_name, "response": payload}
+                            phenomenon_time = payload["value"][0]["startTime"]
+                            self._slm_module.ogc_observation_registration(
+                                datastream_id, phenomenon_time, observation_result)
 
-                    time.sleep(UPDATE_INTERVAL)  # ##
-                    time_elapsed = time.time() - start_timer  #
+                    time.sleep(UPDATE_INTERVAL)
+                    logging.debug("\n")
 
                     # UPDATE INTERVALS
+                    time_elapsed = time.time() - start_timer
+                    query_ts_start = query_ts_end
+                    query_ts_end = util.from_utc_to_query(arrow.utcnow())
+
                     for seq in sequences_data:
                         property_name = seq["valueType"]
 
@@ -312,8 +322,6 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                                 min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
                                 seq["time"] = build_time_token(min10_ago_in_seconds, min5_in_seconds)
                         else:
-                            query_ts_start = query_ts_end
-                            query_ts_end = util.from_utc_to_query(arrow.utcnow())
                             seq["time"] = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
 
                 except ValueError:
@@ -321,23 +329,19 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                         logging.info("\nAuthentication Token expired!\n")
                         self._slm_module.update_cloud_token()
 
-        def _ogc_observation_registration(self, datastream_id, property_name, payload):
-            # Preparing MQTT topic
-            topic_prefix = self._slm_module.get_topic_prefix()
-            topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
+    def ogc_observation_registration(self, datastream_id, phenomenon_time, observation_result):
+        # Preparing MQTT topic
+        topic = self._topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
 
-            # Preparing Payload
-            observation_result = {"valueType": property_name, "response": payload}
-            phenomenon_time = payload["value"][0]["startTime"]
-            observation = OGCObservation(datastream_id, phenomenon_time, observation_result, str(arrow.utcnow()))
+        # Preparing Payload
+        observation = OGCObservation(datastream_id, phenomenon_time, observation_result, str(arrow.utcnow()))
 
-            # Publishing
-            mutex = self._slm_module.get_mutex()
-            mutex.acquire()
-            try:
-                self._slm_module.mqtt_publish(topic, json.dumps(observation.get_rest_payload()))
-            finally:
-                mutex.release()
+        # Publishing
+        self._publish_mutex.acquire()
+        try:
+            self.mqtt_publish(topic, json.dumps(observation.get_rest_payload()))
+        finally:
+            self._publish_mutex.release()
 
 
 def build_time_token(utc_ts_end, update_interval):
