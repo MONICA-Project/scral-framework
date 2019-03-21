@@ -44,8 +44,8 @@ from smart_glasses.constants import URI_DEFAULT, URI_GLASSES_REGISTRATION, URI_G
                                     URI_GLASSES_INCIDENT, PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDENT_NAME
 from smart_glasses.smart_glasses_module import SCRALSmartGlasses
 
-app = Flask(__name__)
-module = None
+flask_instance = Flask(__name__)
+module: SCRALSmartGlasses = None
 verbose = False
 
 
@@ -95,10 +95,10 @@ def main():
     # Module initialization and runtime phase
     global module
     module = SCRALSmartGlasses(ogc_config, args.connection_file, pilot_mqtt_topic_prefix)
-    module.runtime(app)
+    module.runtime(flask_instance)
 
 
-@app.route(URI_GLASSES_REGISTRATION, methods=["POST"])
+@flask_instance.route(URI_GLASSES_REGISTRATION, methods=["POST"])
 def new_glasses_request():
     logging.debug(new_glasses_request.__name__ + " method called")
 
@@ -114,7 +114,7 @@ def new_glasses_request():
     # -> ### DATASTREAM REGISTRATION ###
     rc = module.get_resource_catalog()
     if glasses_id not in rc:
-        logging.info("Node: '" + str(glasses_id) + "' registration.")
+        logging.info("Glasses: '" + str(glasses_id) + "' registration.")
         ok = module.ogc_datastream_registration(glasses_id)
         if not ok:
             return make_response(jsonify({"Error": "Internal server error"}), 500)
@@ -125,40 +125,40 @@ def new_glasses_request():
     return make_response(jsonify({"result": "Ok"}), 201)
 
 
-@app.route(URI_GLASSES_LOCALIZATION, methods=["PUT"])
+@flask_instance.route(URI_GLASSES_LOCALIZATION, methods=["PUT"])
 def new_glasses_localization():
     logging.debug(new_glasses_localization.__name__ + " method called")
-    response = put_observation(PROPERTY_LOCALIZATION_NAME)
+    response = put_observation(PROPERTY_LOCALIZATION_NAME, request.json)
     return response
 
 
-@app.route(URI_GLASSES_INCIDENT, methods=["PUT"])
+@flask_instance.route(URI_GLASSES_INCIDENT, methods=["PUT"])
 def new_glasses_incident():
     logging.debug(new_glasses_incident.__name__ + " method called")
-    response = put_observation(PROPERTY_INCIDENT_NAME)
+    response = put_observation(PROPERTY_INCIDENT_NAME, request.json)
     return response
 
 
-def put_observation(observed_property):
-    if not request.json:
+def put_observation(observed_property, payload):
+    if not payload:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
 
     if module is None:
         return make_response(jsonify({"Error": "Internal server error"}), 500)
     else:
-        glasses_id = request.json["tagId"]
-        result = module.ogc_observation_registration(observed_property, request.json)
+        glasses_id = payload["tagId"]
+        result = module.ogc_observation_registration(observed_property, payload)
         if result is True:
             return make_response(jsonify({"result": "Ok"}), 201)
         elif result is None:
-            logging.error("Node: '" + str(glasses_id) + "' was not registered.")
+            logging.error("Glasses: '" + str(glasses_id) + "' was not registered.")
             return make_response(jsonify({"Error": "Glasses not registered!"}), 400)
         else:
             logging.error("Impossible to publish on MQTT server.")
             return make_response(jsonify({"Error": "Internal server error"}), 500)
 
 
-@app.route("/")
+@flask_instance.route("/")
 def test():
     """ Checking if Flask is working. """
     logging.debug(test.__name__ + " method called \n")
@@ -166,7 +166,7 @@ def test():
     return "<h1>Flask is running!</h1>"
 
 
-@app.route(URI_DEFAULT)
+@flask_instance.route(URI_DEFAULT)
 def test_module():
     """ Checking if SCRAL is running. """
     logging.debug(test_module.__name__ + " method called \n")
