@@ -1,0 +1,8 @@
+{
+"camera_id": "1",
+"type_module": "fighting_detection",
+"timestamp": "2017-08-03T17:56:32.372+00:00",
+"situation": "fighting_event",
+"camera_ids": ["TEST123"],
+"confidence": ""
+}

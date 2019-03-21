@@ -1,0 +1,10 @@
+{
+"type_module": "crowd_density_global",
+"module_id": "c6ced472-2351-51a6-88a2-7a0385ffbd05_crowd_density_global",
+"camera_ids": [ "TIVOLI_25", "TIVOLI_31", "TIVOLI_27" ],
+"density_count": 9,
+"density_map": [ [ 0.0,0.0, 0.0, 0.0 ], [ 0.0, 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 0.0, 0.0 ], [ 0.0, 0.0, 0.0, 0.0, 0.0 ] ],
+"ground_plane_position": [ 55.67343, 12.56539 ],
+"timestamp_1": "2018-08-17T16: 11: 39.394058+00: 00",
+"timestamp_2": "2018-08-17T16:11:39.394058+00: 00"
+}

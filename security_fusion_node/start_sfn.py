@@ -99,13 +99,13 @@ def main():
 
 @flask_instance.route(URI_CAMERA, methods=["POST", "PUT"])
 def new_camera_request():
-    logging.debug(new_camera_request.__name__ + " method called")
+    logging.debug(new_camera_request.__name__ + " POST method called")
 
     if not request.json:
         return jsonify({"Error": "Wrong request!"}), 400
 
     camera_id = request.json["camera_id"]
-    sensor_type = request.json["type_module"]
+    sensor_type = "Camera"  # TO FIX
 
     if module is None:
         return make_response(jsonify({"Error": "Internal server error"}), 500)
@@ -114,31 +114,84 @@ def new_camera_request():
     if request.method == "POST":  # POST
         if camera_id not in rc:
             logging.info("Camera: '" + str(camera_id) + "' registration.")
-            ok = module.ogc_datastream_registration(camera_id, )
+            ok = module.ogc_datastream_registration(camera_id, sensor_type, request.json)
             if not ok:
                 return make_response(jsonify({"Error": "Internal server error"}), 500)
         else:
             logging.error("Device already registered!")
             return make_response(jsonify({"Error": "Duplicate request!"}), 422)
 
-    elif request.method == "PUT":  # PUT
-        if camera_id not in rc:
-            logging.error("Camera: '" + str(camera_id) + "' was not registered.")
-            return make_response(jsonify({"Error": "Camera not registered!"}), 400)
-        else:
+        return make_response(jsonify({"result": "Ok"}), 201)
 
-    else:
-        return make_response(jsonify({"Error": "Method not allowed!"}), 405)
+    elif request.method == "PUT":  # PUT
+        logging.debug(new_camera_request.__name__ + " PUT method called")
+        property_type = request.json["type_module"]
+        camera_id = request.json["camera_id"]
+
+        if property_type == "fighting_detection":
+            observed_property = "FD-Estimation"
+            # ToDO: add controls for other properties
+            # ToDo: look for a smart way to handle these controls
+        response = put_observation(observed_property, request.json, camera_id)
+        return response
 
 
 @flask_instance.route(URI_CDG, methods=["POST", "PUT"])
 def new_cdg_request():
-    if request.method == "POST":
-        module.cdg_registration()
-    elif request.method == "PUT":
-        module.cdg_observation()
+    logging.debug(new_cdg_request.__name__ + " POST method called")
+
+    if not request.json:
+        return jsonify({"Error": "Wrong request!"}), 400
+
+    module_id = request.json["module_id"]  # NB: module here is Crowd Density Global module
+    module_type = "Crowd-Density-Global"
+
+    if module is None: # NB: module here is a SCRALSecurityFusionNode module
+        return make_response(jsonify({"Error": "Internal server error"}), 500)
+
+    rc = module.get_resource_catalog()
+    if request.method == "POST":  # POST
+        if module_id not in rc:
+            logging.info("CDG: '" + str(module_id) + "' registration.")
+            ok = module.ogc_datastream_registration(module_id, module_type, request.json)
+            if not ok:
+                return make_response(jsonify({"Error": "Internal server error"}), 500)
+        else:
+            logging.error("Device already registered!")
+            return make_response(jsonify({"Error": "Duplicate request!"}), 422)
+
+        return make_response(jsonify({"result": "Ok"}), 201)
+
+    elif request.method == "PUT":  # PUT
+        logging.debug(new_cdg_request.__name__ + " PUT method called")
+        property_type = request.json["type_module"]
+        module_id = request.json["module_id"]
+        timestamp = request.json.pop("timestamp_1")  # forcing "timestamp_1" to be called "timestamp"
+        request.json["timestamp"] = timestamp
+        if property_type == "crowd_density_global":
+            observed_property = "CDG-Estimation"
+            # ToDO: add controls for other properties
+            # ToDo: look for a smart way to handle these controls
+        response = put_observation(observed_property, request.json, module_id)
+        return response
+
+
+def put_observation(observed_property, payload, resource_id):
+    if not payload:
+        return make_response(jsonify({"Error": "Wrong request!"}), 400)
+
+    if module is None:
+        return make_response(jsonify({"Error": "Internal server error"}), 500)
     else:
-        return make_response(jsonify({"Error": "Method not allowed!"}), 405)
+        result = module.ogc_observation_registration(observed_property, payload, resource_id)
+        if result is True:
+            return make_response(jsonify({"result": "Ok"}), 201)
+        elif result is None:
+            logging.error("Device: '" + str(resource_id) + "' was not registered.")
+            return make_response(jsonify({"Error": "Glasses not registered!"}), 400)
+        else:
+            logging.error("Impossible to publish on MQTT server.")
+            return make_response(jsonify({"Error": "Internal server error"}), 500)
 
 
 @flask_instance.route("/")
