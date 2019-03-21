@@ -1,0 +1,87 @@
+{
+  "camera_bearing": 150,
+  "frame_roi": [
+    3,
+    220,
+    1080,
+    768
+  ],
+  "ref_pt": [
+    [
+      545,
+      365
+    ],
+    [
+      660,
+      330
+    ],
+    [
+      620,
+      430
+    ],
+    [
+      742,
+      390
+    ],
+    [
+      125,
+      125
+    ]
+  ],
+  "ground_plane_position": [
+    51.40168,
+    -0.30271
+  ],
+  "module_types": [
+    "crowd_density_local",
+    "fight_detection",
+    "object_detection"
+  ],
+  "camera_height": 10.0,
+  "camera_position": [
+    45.09175,
+    7.66704
+  ],
+  "camera_tilt": 30,
+  "state": "active",
+  "camera_type": "RGB",
+  "image_2_ground_plane_matrix": [
+    [
+      3.4482308059367646,
+      1.1411237602290147,
+      1621.5073719960546
+    ],
+    [
+      2.233085080703656,
+      10.716472075065923,
+      -1211.2403426673734
+    ],
+    [
+      0.00019603957562326058,
+      0.0023337262962819555,
+      1.0
+    ]
+  ],
+  "ground_plane_size": [
+    25,
+    23
+  ],
+  "camera_id": "TEST123",
+  "ground_plane_orientation": 174,
+  "flow_rois": [
+    [
+      200,
+      300,
+      200,
+      300
+    ]
+  ],
+  "timestamp": "2018-06-12T09:49:14.491978+00:00",
+  "ground_plane_roi": [
+    758,
+    295,
+    3968,
+    2877
+  ],
+  "zone_id": "Food_Court"
+}

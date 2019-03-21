@@ -18,7 +18,7 @@ import sys
 import scral_module as scral
 from scral_module import util
 from scral_module.constants import END_MESSAGE
-from specific_scral_module import file as module
+from sound_level_meter import start_slm as module
 
 
 if __name__ == '__main__':
