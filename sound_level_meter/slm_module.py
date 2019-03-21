@@ -111,15 +111,15 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         logging.info("\n\n--- Active device discovery ---\n")
         locations_list = r.json()['value']
 
-        # Get location ids from active locations
-        logging.debug("Active locations list: ")
-        locations_id_list = []
-        for location in locations_list:
-            logging.debug(location)
-            locations_id_list.append(location["locationId"])
+        if len(locations_list) <= 0:
+            raise AttributeError("Impossible to retrieve active devices.")
 
         # Discover active devices from active location ids (assumption: 1 SLM x 1 location_id)
-        for location_id in locations_id_list:
+        logging.debug("Active locations list:")
+        for location in locations_list:
+            logging.debug(location)
+            location_id = location["locationId"]
+
             url_loc = url_locations + "/" + str(location_id)
             try:
                 r = requests.get(url_loc, headers=self._cloud_token)
@@ -132,7 +132,11 @@ class SCRALSoundLevelMeter(SCRALRestModule):
             device_name = location_item["assignedDevices"][0]["name"]
             device_description = location_item["assignedDevices"][0]["description"]
             location_coordinates = location_item["geoLocation"]
-            logging.debug("SLM id: "+str(device_id)+" / SLM name: "+device_name)
+            logging.debug("SLM id: " + str(device_id) + " / SLM name: " + device_name)
+
+            if not location_coordinates:
+                logging.error("Location coordinates of device " + device_name + " are not defined.")
+                location_coordinates = {"coordinates": [0.0, 0.0]}
 
             # Build active devices catalog
             self._active_devices[device_id] = {}
@@ -156,7 +160,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
 
             # Check whether device has been already registered
             if device_id in self._resource_catalog:
-                logging.debug("Device: "+device_name+" already registered with id: "+device_id)
+                logging.debug("Device: " + device_name + " already registered with id: " + device_id)
             else:
                 self._resource_catalog[device_id] = {}
                 # Iterate over ObservedProperties
@@ -167,6 +171,10 @@ class SCRALSoundLevelMeter(SCRALRestModule):
 
     def new_datastream(self, ogc_obs_property, device_id):
         """ """
+        if device_id not in self._active_devices:
+            logging.error("Device " + device_id + " is not active.")
+            return False
+
         obs_prop = self._ogc_config.add_observed_property(ogc_obs_property)
         device_coordinates = self._active_devices[device_id]["coordinates"]
         device_name = self._active_devices[device_id]["name"]
@@ -221,15 +229,20 @@ class SCRALSoundLevelMeter(SCRALRestModule):
             thread_pool.append(thread)
             thread_id += 1
 
-        logging.info("Threads detached")
-        if locking:
-            for thread in thread_pool:
-                thread.join()
-            logging.error("All threads have been interrupted!")
+        if len(thread_pool) <= 0:
+            logging.error("No thread detached, maybe no active devices.")
+        else:
+            logging.info("Threads detached")
+            if locking:
+                for thread in thread_pool:
+                    thread.join()
+                logging.error("All threads have been interrupted!")
 
     class SLMThread(Thread):
         def __init__(self, thread_id, thread_name, device_id, url_sequences, slm_module):
             super().__init__()
+
+            self._logger = logging.getLogger(thread_name)
 
             self._thread_name = thread_name
             self._thread_id = thread_id
@@ -238,23 +251,20 @@ class SCRALSoundLevelMeter(SCRALRestModule):
             self._slm_module = slm_module
 
         def run(self):
-            logging.debug("Starting Thread: " + self._thread_name)
-            self._fetch_sequences()
-            logging.debug("Exiting " + self._thread_name)
+            self._logger.debug("Starting Thread: " + self._thread_name)
 
-        def _fetch_sequences(self):
             r = None
             try:
                 r = requests.get(self._url_sequences, headers=self._slm_module.get_cloud_token())
             except Exception as ex:
-                logging.error(ex)
+                self._logger.error(ex)
             if not r or not r.ok:
                 raise ConnectionError("Connection status: " + str(r.status_code) +
                                       "\nImpossible to establish a connection with " + self._url_sequences)
 
             # ### LAeq values averaged on 5 minutes ###
             min5_in_seconds = 300  # this is the timer, new query triggered each 5 min (300 sec)
-            time_elapsed = 0       # counter for current time passed by
+            time_elapsed = 0  # counter for current time passed by
             start_timer = time.time()
 
             utc_now = arrow.utcnow()
@@ -263,8 +273,8 @@ class SCRALSoundLevelMeter(SCRALRestModule):
 
             sequences_data = []
             for sequence in r.json()['value']:
-                logging.debug(self._thread_name + " sequence:\n" + str(json.dumps(sequence)))
-                prefix = self._url_sequences+"/"+sequence["sequenceId"]+"/data"
+                self._logger.debug(self._thread_name + " sequence:\n" + str(json.dumps(sequence)))
+                prefix = self._url_sequences + "/" + sequence["sequenceId"] + "/data"
 
                 sequence_name = sequence["name"]
                 data = {"valueType": sequence_name, "time": time_token}
@@ -279,14 +289,14 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                 elif sequence_name == "CPBLZeq":
                     data["url_prefix"] = prefix + "/array"
                 else:
-                    logging.debug(sequence_name+" not yet integrated!")
+                    self._logger.debug(sequence_name + " not yet integrated!")
                     continue
 
                 sequences_data.append(data)
 
             time_elapsed = 300  # to force to perform request the first time
             rc = self._slm_module.get_resource_catalog()
-            logging.info("\n\n--- Start OGC OBSERVATIONs registration ---\n")
+            self._logger.info("\n\n--- Start OGC OBSERVATIONs registration ---\n")
             while True:
                 try:
                     for seq in sequences_data:
@@ -298,7 +308,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                         url = seq["url_prefix"] + seq["time"]
                         r = requests.get(url, headers=self._slm_module.get_cloud_token())
                         payload = r.json()  # ['value']
-                        logging.debug("Sequence: " + property_name+"\n"+json.dumps(payload))
+                        self._logger.debug("Sequence: " + property_name + "\n" + json.dumps(payload))
 
                         if payload["value"] and len(payload["value"]) >= 1:  # is the payload not empty?
                             datastream_id = rc[self._device_id][property_name]
@@ -308,7 +318,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                                 datastream_id, phenomenon_time, observation_result)
 
                     time.sleep(UPDATE_INTERVAL)
-                    logging.debug("\n")
+                    self._logger.debug("\n")
 
                     # UPDATE INTERVALS
                     time_elapsed = time.time() - start_timer
@@ -330,7 +340,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
 
                 except ValueError:
                     if r.status_code == 401:
-                        logging.info("\nAuthentication Token expired!\n")
+                        self._logger.info("\nAuthentication Token expired!\n")
                         self._slm_module.update_cloud_token()
 
     def ogc_observation_registration(self, datastream_id, phenomenon_time, observation_result):

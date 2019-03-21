@@ -115,11 +115,13 @@ def new_sound_event():
     device_id = payload["deviceId"]
 
     datastream_id = slm_module.new_datastream(obs_prop, device_id)
-    if not datastream_id:
+    if datastream_id is False:
+        return make_response(jsonify({"Error": "deviceId not recognized."}), 400)
+    elif datastream_id is None:
         return make_response(jsonify({"Error": "Internal server error."}), 500)
-
-    slm_module.ogc_observation_registration(datastream_id, payload["startTime"], payload)
-    return make_response(jsonify({"Result": "Ok"}), 201)
+    else:
+        slm_module.ogc_observation_registration(datastream_id, payload["startTime"], payload)
+        return make_response(jsonify({"Result": "Ok"}), 201)
 
 
 @flask_instance.route("/")
