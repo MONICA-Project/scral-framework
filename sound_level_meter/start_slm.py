@@ -38,7 +38,7 @@ import scral_module as scral
 import scral_ogc
 from scral_module import util
 from scral_module import mqtt_util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, ERROR_WRONG_PILOT_NAME
 from scral_module.ogc_configuration import OGCConfiguration
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
@@ -50,49 +50,22 @@ verbose = False
 
 
 def main():
-    # parsing command line parameters, it has to be the first instruction
-    args = util.parse_command_line("SLM integration instance")
+    module_description = "Sound Level Meter integration instance"
+    args = util.parse_command_line(module_description)
 
-    global verbose  # overwrite verbose flag from command line
-    if args.verbose:
-        verbose = True
-        logging_level = logging.DEBUG
-    else:
-        logging_level = logging.INFO
-        verbose = False
+    # OGC-Configuration
+    ogc_config = SCRALSoundLevelMeter.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
-    util.init_logger(logging_level)  # logging initialization
-
-    if not args.connection_file:  # has the connection_file been set?
-        logging.critical("Connection file is missing!")
-        exit(1)
-
-    if not args.ogc_file:  # has the ogc_file been set?
-        logging.critical("OGC configuration file is missing!")
-        exit(2)
-
-    pilot_mqtt_topic_prefix = mqtt_util.get_publish_mqtt_topic(args.pilot)  # 'local' is the default configuration value
+    # Retrieving pilot name --- 'local' is the default configuration value
+    pilot_mqtt_topic_prefix = mqtt_util.get_publish_mqtt_topic(args.pilot)
     if not pilot_mqtt_topic_prefix:
         logging.critical('Wrong pilot name: "' + args.pilot + '"!')
-        exit(3)
+        exit(ERROR_WRONG_PILOT_NAME)
+    else:
+        logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
 
-    logging.info("[PHASE-INIT] The connection file is: " + args.connection_file)
-    logging.debug("OGC file: " + args.ogc_file)
-    logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
-
-    # Storing the OGC server addresses
-    connection_config_file = util.load_from_file(args.connection_file)
-    ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
-
-    if not util.test_connectivity(ogc_server_address, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD):
-        logging.critical("Network connectivity to " + ogc_server_address + " not available!")
-        exit(4)
-
-    # OGC model configuration and discovery
-    ogc_config = OGCConfiguration(args.ogc_file, ogc_server_address)
-    ogc_config.discovery(verbose)
-
-    global slm_module  # Module initialization and runtime phase
+    # Module initialization and runtime phase
+    global slm_module
     slm_module = SCRALSoundLevelMeter(ogc_config, args.connection_file, pilot_mqtt_topic_prefix,
                                       URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX)
     slm_module.runtime(flask_instance)

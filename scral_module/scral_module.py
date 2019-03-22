@@ -18,7 +18,8 @@ from abc import abstractmethod
 
 import paho.mqtt.client as mqtt
 
-from scral_module.constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS
+from scral_module.constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, ERROR_MISSING_CONNECTION_FILE, \
+    ERROR_MISSING_OGC_FILE
 from scral_module.ogc_configuration import OGCConfiguration
 from scral_module import util
 from scral_module import mqtt_util
@@ -29,6 +30,41 @@ class SCRALModule(object):
         When you want to develop a new SCRAL module, you have to extend this class, extend (if necessary) the __init__
         initializer and to implement the runtime method (that actually does not have a default implementation.
     """
+
+    @staticmethod
+    def startup(cmd_line, ogc_server_username=None, ogc_server_password=None):
+        global verbose  # overwrite verbose flag from command line
+        if cmd_line.verbose:
+            verbose = True
+            logging_level = logging.DEBUG
+        else:
+            logging_level = logging.INFO
+            verbose = False
+
+        util.init_logger(logging_level)  # logging initialization
+
+        if not cmd_line.connection_file:  # has the connection_file been set?
+            logging.critical("Connection file is missing!")
+            exit(ERROR_MISSING_CONNECTION_FILE)
+        if not cmd_line.ogc_file:  # has the ogc_file been set?
+            logging.critical("OGC configuration file is missing!")
+            exit(ERROR_MISSING_OGC_FILE)
+
+        logging.info("[PHASE-INIT] The connection file is: " + cmd_line.connection_file)
+        logging.debug("OGC file: " + cmd_line.ogc_file)
+
+        # Storing the OGC server addresses
+        connection_config_file = util.load_from_file(cmd_line.connection_file)
+        ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
+
+        if not util.test_connectivity(ogc_server_address, ogc_server_username, ogc_server_password):
+            logging.critical("Network connectivity to " + ogc_server_address + " not available!")
+            exit(4)
+
+        # OGC model configuration and discovery
+        ogc_config = OGCConfiguration(cmd_line.ogc_file, ogc_server_address)
+        ogc_config.discovery(verbose)
+        return ogc_config
 
     def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pub_topic_prefix: str):
         """ Parses the connection file, instantiate an MQTT Client and stores all relevant connection information.

@@ -39,3 +39,8 @@ DEFAULT_MQTT_QOS = 2
 # Debug, graphic and similiar
 CREDITS = "(c) 2019, LINKS Foundation\ndeveloped by Jacopo Foglietti & Luca Mannella.\n"
 END_MESSAGE = "\nThat's all folks! Thanks for choosing SCRAL!\n"+CREDITS
+
+# ERROR CODES
+ERROR_MISSING_CONNECTION_FILE = 1
+ERROR_MISSING_OGC_FILE = 2
+ERROR_WRONG_PILOT_NAME = 3

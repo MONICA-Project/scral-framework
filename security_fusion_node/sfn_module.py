@@ -32,6 +32,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         thing_id = thing.get_id()
         thing_name = thing.get_name()
 
+        sensor_id = None
         for sensor in self._ogc_config.get_sensors():
             sensor_name = sensor.get_name()
             if sensor_name == sensor_type:
