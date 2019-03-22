@@ -35,14 +35,15 @@ from gps_tracker_poll.hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HA
 class SCRALGPSPoll(SCRALModule):
     """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
 
-    def __init__(self, ogc_config, connection_file, pub_topic_prefix):
+    def __init__(self, ogc_config, connection_file, pilot):
         """ Initialize MQTT Brokers for listening and publishing
 
         :param connection_file: A file containing connection information.
-        :param pub_topic_prefix: The MQTT topic prefix on which information will be published.
+        :param pilot: The pilot name,
+                      it will be used for generate the MQTT topic prefix on which information will be published.
         """
 
-        super().__init__(ogc_config, connection_file, pub_topic_prefix)
+        super().__init__(ogc_config, connection_file, pilot)
 
         # Creating an MQTT Subscriber
         self._mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
@@ -58,7 +59,7 @@ class SCRALGPSPoll(SCRALModule):
     def runtime(self, dynamic_discovery=True):
         """ This method retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
             These DATASTREAMS are published on MONICA OGC server.
-            This is a "blocking function"
+            This is a "blocking function".
 
         :param dynamic_discovery:  A boolean value that enable the dynamic discovery of new hamburg sensors
         """
@@ -74,6 +75,7 @@ class SCRALGPSPoll(SCRALModule):
             self._mqtt_subscriber.loop_forever()
 
     def ogc_datastream_registration(self):
+        """ This method registers new DATASTREAMs in the OGC model. """
         r = None
         try:
             r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER,
@@ -138,6 +140,9 @@ class SCRALGPSPoll(SCRALModule):
             self._mqtt_subscriber.subscribe(top, DEFAULT_MQTT_QOS)
 
     def dynamic_discovery(self):
+        """ This method implements the dynamic discovery.
+            This is a 'blocking function'.
+        """
         time_to_wait = 60*60*8  # hours
         while True:
             sleep(time_to_wait)

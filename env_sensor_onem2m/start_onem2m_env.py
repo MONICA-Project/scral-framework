@@ -33,19 +33,17 @@ import logging
 import signal
 import sys
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module import mqtt_util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, ERROR_WRONG_PILOT_NAME
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
 
 from env_sensor_onem2m.constants import URI_DEFAULT, URI_ENV_NODE, ONEM2M_CONTENT_TYPE
 from env_sensor_onem2m.env_onem2m_module import SCRALEnvOneM2M
 
 flask_instance = Flask(__name__)
 module: SCRALEnvOneM2M = None
-verbose = False
 
 
 def main():
@@ -55,22 +53,15 @@ def main():
     # OGC-Configuration
     ogc_config = SCRALEnvOneM2M.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
-    # Retrieving pilot name --- 'local' is the default configuration value
-    pilot_mqtt_topic_prefix = mqtt_util.get_publish_mqtt_topic(args.pilot)
-    if not pilot_mqtt_topic_prefix:
-        logging.critical('Wrong pilot name: "' + args.pilot + '"!')
-        exit(ERROR_WRONG_PILOT_NAME)
-    else:
-        logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
-
     # Module initialization and runtime phase
     global module
-    module = SCRALEnvOneM2M(ogc_config, args.connection_file, pilot_mqtt_topic_prefix)
+    module = SCRALEnvOneM2M(ogc_config, args.connection_file, args.pilot)
     module.runtime(flask_instance)
 
 
 @flask_instance.route(URI_ENV_NODE, methods=["POST"])
 def new_onem2m_request():
+    """ This function is called when a OneM2M post request is received. """
     logging.debug(new_onem2m_request.__name__ + " method called")
 
     container_path = str(request.json["m2m:sgn"]["sur"])
@@ -81,11 +72,12 @@ def new_onem2m_request():
             env_node_id = substrings[i]
             break
     if env_node_id is None:
-        return jsonify({"Error": "Environmental Node ID not found!"}), 400
+        return make_response(jsonify({"Error": "Environmental Node ID not found!"}), 400)
 
     content_type = request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["cnf"]
     if content_type != ONEM2M_CONTENT_TYPE:
-        raise TypeError("The content: <"+content_type+"> was not recognized! <"+ONEM2M_CONTENT_TYPE+"> is expected!")
+        # raise TypeError("The content: <"+content_type+"> was not recognized! <"+ONEM2M_CONTENT_TYPE+"> is expected!")
+        return make_response(jsonify({"Error": "Unrecognized content type!"}), 400)
 
     raw_content = request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["con"]
     if type(raw_content) is str:
@@ -93,21 +85,23 @@ def new_onem2m_request():
     elif type(raw_content) is dict:
         content = raw_content
     else:
-        raise TypeError("The content type is "+str(type(raw_content))+", it must be a String or a Dictionary")
+        # raise TypeError("The content type is "+str(type(raw_content))+", it must be a String or a Dictionary")
+        return make_response(jsonify({"Error": "Wrong content type format!"}), 400)
 
     if module is None:
-        return jsonify({"Error": "Internal server error"}), 500
+        return make_response(jsonify({"Error": "Internal server error"}), 500)
 
     # -> ### DATASTREAM REGISTRATION ###
     rc = module.get_resource_catalog()
     if env_node_id not in rc:
         logging.info("Node: " + str(env_node_id) + " registration.")
-        module.ogc_datastream_registration(env_node_id)
+        response = module.ogc_datastream_registration(env_node_id)
+        if response.status_code != 200:
+            return response
 
     # -> ### OBSERVATION REGISTRATION ###
-    module.ogc_observation_registration(env_node_id, content, request.json["m2m:sgn"])
-
-    return jsonify({"result": "Ok"}), 201
+    response = module.ogc_observation_registration(env_node_id, content, request.json["m2m:sgn"])
+    return response
 
 
 @flask_instance.route("/")

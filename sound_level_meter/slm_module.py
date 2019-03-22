@@ -33,14 +33,14 @@ app = Flask(__name__)
 class SCRALSoundLevelMeter(SCRALRestModule):
     """ Resource manager for integration of the SLM-GW (by usage of B&K's IoT Sound Level Meters). """
 
-    def __init__(self, ogc_config, connection_file, pub_topic_prefix,
+    def __init__(self, ogc_config, connection_file, pilot,
                  url_login, credentials, token_prefix="", token_suffix=""):
         """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
 
         :param connection_file: A file containing connection information.
-        :param pub_topic_prefix: The MQTT topic prefix on which information will be published.
+        :param pilot: The MQTT topic prefix on which information will be published.
         """
-        super().__init__(ogc_config, connection_file, pub_topic_prefix)
+        super().__init__(ogc_config, connection_file, pilot)
 
         self._sequences = []
         self._active_devices = {}

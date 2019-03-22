@@ -19,10 +19,12 @@ from abc import abstractmethod
 import paho.mqtt.client as mqtt
 
 from scral_module.constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, ERROR_MISSING_CONNECTION_FILE, \
-    ERROR_MISSING_OGC_FILE
+    ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_WRONG_PILOT_NAME
 from scral_module.ogc_configuration import OGCConfiguration
 from scral_module import util
 from scral_module import mqtt_util
+
+verbose = False
 
 
 class SCRALModule(object):
@@ -32,9 +34,9 @@ class SCRALModule(object):
     """
 
     @staticmethod
-    def startup(cmd_line, ogc_server_username=None, ogc_server_password=None):
+    def startup(args, ogc_server_username=None, ogc_server_password=None):
         global verbose  # overwrite verbose flag from command line
-        if cmd_line.verbose:
+        if args.verbose:
             verbose = True
             logging_level = logging.DEBUG
         else:
@@ -43,35 +45,35 @@ class SCRALModule(object):
 
         util.init_logger(logging_level)  # logging initialization
 
-        if not cmd_line.connection_file:  # has the connection_file been set?
+        if not args.connection_file:  # has the connection_file been set?
             logging.critical("Connection file is missing!")
             exit(ERROR_MISSING_CONNECTION_FILE)
-        if not cmd_line.ogc_file:  # has the ogc_file been set?
+        if not args.ogc_file:  # has the ogc_file been set?
             logging.critical("OGC configuration file is missing!")
             exit(ERROR_MISSING_OGC_FILE)
 
-        logging.info("[PHASE-INIT] The connection file is: " + cmd_line.connection_file)
-        logging.debug("OGC file: " + cmd_line.ogc_file)
+        logging.info("[PHASE-INIT] The connection file is: " + args.connection_file)
+        logging.debug("OGC file: " + args.ogc_file)
 
         # Storing the OGC server addresses
-        connection_config_file = util.load_from_file(cmd_line.connection_file)
+        connection_config_file = util.load_from_file(args.connection_file)
         ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
 
         if not util.test_connectivity(ogc_server_address, ogc_server_username, ogc_server_password):
             logging.critical("Network connectivity to " + ogc_server_address + " not available!")
-            exit(4)
+            exit(ERROR_NO_SERVER_CONNECTION)
 
         # OGC model configuration and discovery
-        ogc_config = OGCConfiguration(cmd_line.ogc_file, ogc_server_address)
+        ogc_config = OGCConfiguration(args.ogc_file, ogc_server_address)
         ogc_config.discovery(verbose)
         return ogc_config
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pub_topic_prefix: str):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str):
         """ Parses the connection file, instantiate an MQTT Client and stores all relevant connection information.
 
         :param ogc_config: An instance of an OGCConfiguration.
         :param connection_file: The path of the connection file, it has to contain the address of the MQTT broker.
-        :param pub_topic_prefix: The prefix of the MQTT topic used to publish information.
+        :param pilot: The prefix of the MQTT topic used to publish information.
         """
         # 1 Storing the OGC configuration
         self._ogc_config = ogc_config
@@ -87,7 +89,14 @@ class SCRALModule(object):
             self._resource_catalog = {}
 
         # 4 Creating an MQTT Publisher
-        self._topic_prefix = pub_topic_prefix
+        # Retrieving pilot name --- 'local' is the default configuration value
+        pilot_mqtt_topic_prefix = mqtt_util.get_publish_mqtt_topic(pilot)
+        if not pilot_mqtt_topic_prefix:
+            logging.critical('Wrong pilot name: "' + pilot + '"!')
+            exit(ERROR_WRONG_PILOT_NAME)
+        else:
+            logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
+        self._topic_prefix = pilot_mqtt_topic_prefix
         self._pub_broker_address = connection_config_file["mqtt"]["pub_broker"]
         self._pub_broker_port = connection_config_file["mqtt"]["pub_broker_port"]
 

@@ -17,4 +17,4 @@ RUN pip3 install -e smart_glasses
 # docker deploy - INTERNAL
 ENTRYPOINT python3 scral_startup.py -v -o smart_glasses/config/ogc_config_glasses.conf -c smart_glasses/config/leeds/connection_config_internal.json -p LEEDS
 # local testing:
-# ENTRYPOINT python3 scral_startup.py -v -o gps_tracker_poll/config/ogc_config_gps.conf -c gps_tracker_poll/config/connection_config_local.json -p local
+# ENTRYPOINT python3 scral_startup.py -v -o smart_glasses/config/ogc_config_glasses.conf -c smart_glasses/config/connection_config_local.json -p local

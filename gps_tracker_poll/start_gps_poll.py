@@ -30,18 +30,14 @@
 # #PHASE: DYNAMIC DISCOVERY
 #
 ####################################################################################################
-import logging
 import signal
 import sys
 
 from scral_module import util
-from scral_module import mqtt_util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, ERROR_WRONG_PILOT_NAME
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
 from scral_module import BANNER, VERSION
 
 from gps_tracker_poll.gps_poll_module import SCRALGPSPoll
-
-verbose = False
 
 
 def main():
@@ -51,17 +47,9 @@ def main():
     # OGC-Configuration
     ogc_config = SCRALGPSPoll.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
-    # Retrieving pilot name --- 'local' is the default configuration value
-    pilot_mqtt_topic_prefix = mqtt_util.get_publish_mqtt_topic(args.pilot)
-    if not pilot_mqtt_topic_prefix:
-        logging.critical('Wrong pilot name: "' + args.pilot + '"!')
-        exit(ERROR_WRONG_PILOT_NAME)
-    else:
-        logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
-
     # Module initialization and runtime phase
     global module
-    module = SCRALGPSPoll(ogc_config, args.connection_file, pilot_mqtt_topic_prefix)
+    module = SCRALGPSPoll(ogc_config, args.connection_file, args.pilot)
     module.runtime()
 
 

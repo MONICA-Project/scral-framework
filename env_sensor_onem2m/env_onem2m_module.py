@@ -14,7 +14,7 @@ import json
 import logging
 
 import arrow
-from flask import Flask, request, jsonify, make_response
+from flask import jsonify, make_response
 
 from scral_module.rest_module import SCRALRestModule
 import scral_module.util as util
@@ -25,6 +25,11 @@ class SCRALEnvOneM2M(SCRALRestModule):
     """ Resource manager for integration of the Environmental Nodes (through OneM2M platform). """
 
     def ogc_datastream_registration(self, env_node_id):
+        """ Given a Environmental Node ID, this method registers a new DATASTREAM in the OGC model.
+
+        :param env_node_id: The Environmental node ID.
+        :return: An HTTP response to be returned to the client.
+        """
         ogc_config = self.get_ogc_config()
         if ogc_config is None:
             return make_response(jsonify({"Error": "Internal server error"}), 500)
@@ -59,7 +64,16 @@ class SCRALEnvOneM2M(SCRALRestModule):
 
             rc[env_node_id][property_name] = datastream_id  # Store Hamburg to MONICA coupled information
 
+        return make_response(jsonify({"Result": "ok"}), 200)
+
     def ogc_observation_registration(self, env_node_id, content, onem2m_payload):
+        """ Given a Environmental Node ID, this method registers an OBSERVATION in the OGC model.
+
+        :param env_node_id: The Environmental node ID.
+        :param content: A content from which will be extracted the observation result and the phenomenon time.
+        :param onem2m_payload: A payload from which will be extracted the OBSERVATION id.
+        :return: An HTTP response to be returned to the client.
+        """
         observation_result = content["result"]  # Load the measure
         phenomenon_time = content["resultTime"]  # Time of the phenomenon
         observation_time = str(arrow.utcnow())
@@ -75,4 +89,8 @@ class SCRALEnvOneM2M(SCRALRestModule):
         ogc_observation = OGCObservation(datastream_id, phenomenon_time, observation_result, observation_time)
         observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
 
-        self.mqtt_publish(topic, observation_payload)
+        published = self.mqtt_publish(topic, observation_payload)
+        if published:
+            return make_response(jsonify({"result": "Ok"}), 201)
+        else:
+            return make_response(jsonify({"Error": "Internal server error"}), 500)

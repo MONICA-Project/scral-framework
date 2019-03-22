@@ -14,6 +14,7 @@ import json
 import logging
 
 import arrow
+from flask import make_response, jsonify
 
 from scral_ogc import OGCObservation
 from scral_ogc.ogc_datastream import OGCDatastream
@@ -22,10 +23,18 @@ from scral_module.rest_module import SCRALRestModule
 
 
 class SCRALSecurityFusionNode(SCRALRestModule):
+    """ Resource manager for integration of the Security Fusion Node. """
 
     def ogc_datastream_registration(self, resource_id, sensor_type, payload):
+        """ This function registers new datastream in the OGC model.
+
+        :param resource_id:
+        :param sensor_type:
+        :param payload:
+        :return:
+        """
         if self._ogc_config is None:
-            return False
+            return make_response(jsonify({"Error": "Internal server error"}), 500)
 
         # Collect OGC information needed to build DATASTREAMs payload
         thing = self._ogc_config.get_thing()
@@ -63,6 +72,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
                 self._ogc_config.add_datastream(datastream)
 
                 rc[resource_id][property_name] = datastream_id
+                return make_response(jsonify({"result": "Ok"}), 201)
 
             elif sensor_type == 'Crowd-Density-Global' and property_name == "CDG-Estimation":
                 datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + resource_id
@@ -78,10 +88,10 @@ class SCRALSecurityFusionNode(SCRALRestModule):
                 self._ogc_config.add_datastream(datastream)
 
                 rc[resource_id][property_name] = datastream_id
-            # else:
-            #     continue
+                return make_response(jsonify({"result": "Ok"}), 201)
 
-        return True
+            else:
+                return make_response(jsonify({"Error": "Wrong request"}), 400)
 
     def ogc_observation_registration(self, obs_property, payload, resource_id):
         if resource_id not in self._resource_catalog:
