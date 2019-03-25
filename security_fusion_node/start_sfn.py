@@ -155,7 +155,7 @@ def put_observation(observed_property, payload, resource_id):
         return make_response(jsonify({"result": "Ok"}), 201)
     elif result is None:
         logging.error("Device: '" + str(resource_id) + "' was not registered.")
-        return make_response(jsonify({"Error": "Security Fusion Node not registered!"}), 400)
+        return make_response(jsonify({"Error": "Device: '" + str(resource_id) + "' was not registered!"}), 400)
     else:
         logging.error("Impossible to publish on MQTT server.")
         return make_response(jsonify({"Error": "Internal server error"}), 500)

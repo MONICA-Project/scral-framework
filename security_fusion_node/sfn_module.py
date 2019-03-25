@@ -50,9 +50,6 @@ class SCRALSecurityFusionNode(SCRALRestModule):
                 if not ok:
                     return make_response(jsonify({"Error": "Internal server error."}), 500)
 
-            else:
-                return make_response(jsonify({"Error": "Wrong request"}), 400)
-
         return make_response(jsonify({"result": "Ok"}), 201)
 
     def _ogc_datastream_registration(self, sensor_type, resource_id, observed_property, payload,
