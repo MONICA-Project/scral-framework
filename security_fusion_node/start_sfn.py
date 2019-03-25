@@ -39,7 +39,7 @@ import scral_module as scral
 from scral_module import util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
 
-from security_fusion_node.constants import URI_DEFAULT, URI_CAMERA, URI_CDG
+from security_fusion_node.constants import URI_DEFAULT, URI_CAMERA, URI_CDG, CAMERA_SENSOR_TYPE, CDG_SENSOR_TYPE
 from security_fusion_node.sfn_module import SCRALSecurityFusionNode
 
 flask_instance = Flask(__name__)
@@ -69,17 +69,17 @@ def new_camera_request():
     camera_id = request.json["camera_id"]
 
     if not module:
+        logging.critical("No Security Fusion Node instantiated!")
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
-    rc = module.get_resource_catalog()
     if request.method == "POST":  # POST
-        sensor_type = "Camera"  # TO FIX
+        rc = module.get_resource_catalog()
         if camera_id not in rc:
             logging.info("Camera: '" + str(camera_id) + "' registration.")
-            response = module.ogc_datastream_registration(camera_id, sensor_type, request.json)
+            response = module.ogc_datastream_registration(camera_id, CAMERA_SENSOR_TYPE, request.json)
             return response
         else:
-            logging.error("Device already registered!")
+            logging.error("Camera already registered!")
             return make_response(jsonify({"Error": "Duplicate request!"}), 422)
 
     elif request.method == "PUT":  # PUT
@@ -88,8 +88,17 @@ def new_camera_request():
 
         if property_type == "fighting_detection":
             observed_property = "FD-Estimation"
-        else:  # ToDO: add controls for other properties and look for a smart way to handle these controls
-            observed_property = "unknown"
+        elif property_type == "crowd_density_local":
+            observed_property = "CDL-Estimation"
+        elif property_type == "flow_analysis":
+            observed_property = "FA-Estimation"
+        elif property_type == "object_detection":
+            observed_property = "OD-Estimation"
+        elif property_type == "gate_count ":
+            observed_property = "GC-Estimation"
+        else:
+            logging.error("Unknown property.")
+            return make_response(jsonify({"Error": "Unknown property."}), 400)
 
         response = put_observation(observed_property, request.json, camera_id)
         return response
@@ -102,35 +111,35 @@ def new_cdg_request():
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
 
-    module_id = request.json["module_id"]  # NB: module here is Crowd Density Global module
-    module_type = "Crowd-Density-Global"
+    cdg_module_id = request.json["module_id"]  # NB: module here is Crowd Density Global module
 
     if not module:
+        logging.critical("No Security Fusion Node instantiated!")
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
-    rc = module.get_resource_catalog()
     if request.method == "POST":  # POST
-        if module_id not in rc:
-            logging.info("CDG: '" + str(module_id) + "' registration.")
-            response = module.ogc_datastream_registration(module_id, module_type, request.json)
+        rc = module.get_resource_catalog()
+        if cdg_module_id not in rc:
+            logging.info("CDG: '" + str(cdg_module_id) + "' registration.")
+            response = module.ogc_datastream_registration(cdg_module_id, CDG_SENSOR_TYPE, request.json)
             return response
         else:
-            logging.error("Device already registered!")
+            logging.error("CDG module already registered!")
             return make_response(jsonify({"Error": "Duplicate request!"}), 422)
 
     elif request.method == "PUT":  # PUT
-        logging.info("New OBSERVATION from CDG: '" + str(module_id))
+        logging.info("New OBSERVATION from CDG: '" + str(cdg_module_id))
 
         property_type = request.json["type_module"]
-        timestamp = request.json.pop("timestamp_1")  # forcing "timestamp_1" to be called "timestamp"
-        request.json["timestamp"] = timestamp
+        request.json["timestamp"] = request.json.pop("timestamp_1")  # renaming "timestamp_1" to "timestamp"
 
         if property_type == "crowd_density_global":
             observed_property = "CDG-Estimation"
-        else:  # ToDO: add controls for other properties and look for a smart way to handle these controls
-            observed_property = "unknown"
+        else:
+            logging.error("Unknown property.")
+            return make_response(jsonify({"Error": "Unknown property."}), 400)
 
-        response = put_observation(observed_property, request.json, module_id)
+        response = put_observation(observed_property, request.json, cdg_module_id)
         return response
 
 
@@ -138,6 +147,7 @@ def put_observation(observed_property, payload, resource_id):
     if not payload:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
     if not module:
+        logging.critical("No Security Fusion Node instantiated!")
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
     result = module.ogc_observation_registration(observed_property, payload, resource_id)
@@ -145,7 +155,7 @@ def put_observation(observed_property, payload, resource_id):
         return make_response(jsonify({"result": "Ok"}), 201)
     elif result is None:
         logging.error("Device: '" + str(resource_id) + "' was not registered.")
-        return make_response(jsonify({"Error": "Glasses not registered!"}), 400)
+        return make_response(jsonify({"Error": "Security Fusion Node not registered!"}), 400)
     else:
         logging.error("Impossible to publish on MQTT server.")
         return make_response(jsonify({"Error": "Internal server error"}), 500)
