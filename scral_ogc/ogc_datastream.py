@@ -7,7 +7,7 @@ class OGCDatastream:
     """
 
     def __init__(self, name, description, ogc_property_id, ogc_sensor_id, ogc_thing_id,
-                 unit_of_measurement: json, x: float, y: float, observed_area_type="Point",
+                 unit_of_measurement: json, x=0.0, y=0.0, observed_area_type="Point",
                  observation_type="http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement"):
         # the id is assigned by the OGC Server
         self._id = None
