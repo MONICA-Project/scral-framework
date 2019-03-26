@@ -61,7 +61,7 @@ class SCRALSmartGlasses(SCRALRestModule):
         return True
 
     def ogc_observation_registration(self, obs_property, payload):
-        glasses_id = payload.pop("tagId")
+        glasses_id = payload["tagId"]
         if glasses_id not in self._resource_catalog:
             return None
 
