@@ -66,14 +66,14 @@ def new_camera_request():
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
 
-    camera_id = request.json["camera_id"]
-
     if not module:
         logging.critical("No Security Fusion Node instantiated!")
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
     if request.method == "POST":  # POST
+        camera_id = request.json["camera_id"]
         rc = module.get_resource_catalog()
+
         if camera_id not in rc:
             logging.info("Camera: '" + str(camera_id) + "' registration.")
             response = module.ogc_datastream_registration(camera_id, CAMERA_SENSOR_TYPE, request.json)
@@ -83,6 +83,7 @@ def new_camera_request():
             return make_response(jsonify({"Error": "Duplicate request!"}), 422)
 
     elif request.method == "PUT":  # PUT
+        camera_id = str(request.json['camera_ids'][0])
         logging.info("New OBSERVATION from camera: '" + str(camera_id))
         property_type = request.json["type_module"]
 
