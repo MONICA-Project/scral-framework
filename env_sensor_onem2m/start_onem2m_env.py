@@ -95,7 +95,7 @@ def new_onem2m_request():
     rc = module.get_resource_catalog()
     if env_node_id not in rc:
         logging.info("Node: " + str(env_node_id) + " registration.")
-        response = module.ogc_datastream_registration(env_node_id)
+        response = module.ogc_datastream_registration(env_node_id, (raw_content["lat"], raw_content["lon"]))
         if response.status_code != 200:
             return response
 

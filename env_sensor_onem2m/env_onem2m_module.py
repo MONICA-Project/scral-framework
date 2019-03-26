@@ -24,7 +24,7 @@ from scral_ogc import OGCDatastream, OGCObservation
 class SCRALEnvOneM2M(SCRALRestModule):
     """ Resource manager for integration of the Environmental Nodes (through OneM2M platform). """
 
-    def ogc_datastream_registration(self, env_node_id):
+    def ogc_datastream_registration(self, env_node_id, coordinates):
         """ Given a Environmental Node ID, this method registers a new DATASTREAM in the OGC model.
 
         :param env_node_id: The Environmental node ID.
@@ -55,7 +55,7 @@ class SCRALEnvOneM2M(SCRALRestModule):
 
             datastream = OGCDatastream(name=datastream_name, description="Datastream for " + property_description,
                                        ogc_property_id=property_id, ogc_sensor_id=sensor_id, ogc_thing_id=thing_id,
-                                       x=0.0, y=0.0, unit_of_measurement=uom)
+                                       x=coordinates[0], y=coordinates[1], unit_of_measurement=uom)
             datastream_id = ogc_config.entity_discovery(
                 datastream, ogc_config.URL_DATASTREAMS, ogc_config.FILTER_NAME)
 
@@ -77,7 +77,8 @@ class SCRALEnvOneM2M(SCRALRestModule):
         observation_result = content["result"]  # Load the measure
         phenomenon_time = content["resultTime"]  # Time of the phenomenon
         observation_time = str(arrow.utcnow())
-        obs_property = onem2m_payload["nev"]["rep"]["m2m:cin"]["lbl"][0]  # label
+        labels = onem2m_payload["nev"]["rep"]["m2m:cin"]["lbl"]
+        obs_property = labels[0]  # label
         logging.debug(
             "Node: '" + env_node_id + "', Property: '" + obs_property + "', Observation: '" + observation_result + "'.")
 

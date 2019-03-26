@@ -185,12 +185,16 @@ class OGCConfiguration:
                     if s.get_name() == virtual_sensor_name:
                         virtual_sensor_id = s.get_id()
                         break
+                if not virtual_sensor_id:
+                    raise ValueError("Sensor ID not defined for VIRTUAL PROPERTY: " + virtual_property_name)
 
                 virtual_property_id = None
                 for op in self._virtual_properties:
                     if op.get_name() == virtual_property_name:
                         virtual_property_id = op.get_id()
                         break
+                if not virtual_property_id:
+                    raise ValueError("Property ID not defined for VIRTUAL PROPERTY: "+virtual_property_name)
 
                 virtual_datastream = scral_ogc.OGCDatastream(v_datastream_name, v_datastream_description,
                                                              virtual_property_id, virtual_sensor_id, thing_id,
