@@ -93,7 +93,11 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         if resource_id not in self._resource_catalog:
             return None
 
-        phenomenon_time = payload.pop("timestamp")  # Retrieving and removing the phenomenon time
+        phenomenon_time = payload.pop("timestamp", False)  # Retrieving and removing the phenomenon time
+        if not phenomenon_time:
+            phenomenon_time = payload.pop("timestamp_1", False)
+            if not phenomenon_time:
+                phenomenon_time = str(arrow.utcnow())
         observation_time = str(arrow.utcnow())
 
         logging.debug("Device: '"+resource_id+"', Property: '"+obs_property+"', Observation:\n"+json.dumps(payload)+".")
