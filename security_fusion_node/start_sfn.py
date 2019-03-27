@@ -84,7 +84,7 @@ def new_camera_request():
 
     elif request.method == "PUT":  # PUT
         camera_id = str(request.json['camera_ids'][0])
-        logging.info("New OBSERVATION from camera: '" + str(camera_id))
+        logging.info("New OBSERVATION from camera: '"+str(camera_id)+"'.")
         property_type = request.json["type_module"]
 
         if property_type == "fighting_detection":
@@ -95,11 +95,11 @@ def new_camera_request():
             observed_property = "FA-Estimation"
         elif property_type == "object_detection":
             observed_property = "OD-Estimation"
-        elif property_type == "gate_count ":
+        elif property_type == "gate_count":
             observed_property = "GC-Estimation"
         else:
-            logging.error("Unknown property.")
-            return make_response(jsonify({"Error": "Unknown property."}), 400)
+            logging.error("Unknown property: <"+property_type+">.")
+            return make_response(jsonify({"Error": "Unknown property <"+property_type+">."}), 400)
 
         response = put_observation(observed_property, request.json, camera_id)
         return response
