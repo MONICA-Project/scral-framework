@@ -22,7 +22,7 @@ REST_HEADERS = {'Content-Type': 'application/json'}
 DEFAULT_CONFIG = "local"
 
 # Local catalog of the active DATASTREAM ID for each OBSERVEDPROPERTY associated to the registered Device IDs
-CATALOG_FILENAME = 'resource_catalog.json'
+CATALOG_FILENAME = "resource_catalog.json"
 
 OGC_SERVER_USERNAME = "scral"
 OGC_SERVER_PASSWORD = "A5_xYY#HqNiao_12#b"

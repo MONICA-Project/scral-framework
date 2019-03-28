@@ -83,10 +83,15 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         datastream_id = self._ogc_config.entity_discovery(
             datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
 
+        if not datastream_id:
+            return False
+
         datastream.set_id(datastream_id)
         self._ogc_config.add_datastream(datastream)
 
         self._resource_catalog[resource_id][property_name] = datastream_id
+        self.update_file_catalog()
+
         return datastream_id
 
     def ogc_observation_registration(self, obs_property, payload, resource_id):

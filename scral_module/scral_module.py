@@ -18,8 +18,8 @@ from abc import abstractmethod
 
 import paho.mqtt.client as mqtt
 
-from scral_module.constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, ERROR_MISSING_CONNECTION_FILE, \
-    ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_WRONG_PILOT_NAME
+from scral_module.constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, \
+    ERROR_MISSING_CONNECTION_FILE, ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_WRONG_PILOT_NAME
 from scral_module.ogc_configuration import OGCConfiguration
 from scral_module import util
 from scral_module import mqtt_util
@@ -68,7 +68,7 @@ class SCRALModule(object):
         ogc_config.discovery(verbose)
         return ogc_config
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str, catalog_name=CATALOG_FILENAME):
         """ Parses the connection file, instantiate an MQTT Client and stores all relevant connection information.
 
         :param ogc_config: An instance of an OGCConfiguration.
@@ -81,11 +81,12 @@ class SCRALModule(object):
         connection_config_file = util.load_from_file(connection_file)
 
         # 3 Load local resource catalog / TEMPORARY USELESS
-        if os.path.exists(CATALOG_FILENAME):
-            self._resource_catalog = util.load_from_file(CATALOG_FILENAME)
-            logging.info('[PHASE-INIT] Resource Catalog: ', json.dumps(self._resource_catalog))
+        self._catalog_name = catalog_name
+        if os.path.exists(self._catalog_name):
+            self._resource_catalog = util.load_from_file(self._catalog_name)
+            self.print_catalog()
         else:
-            logging.info("No resource catalog available on file.")
+            logging.info("No resource catalog <" + catalog_name + "> available.")
             self._resource_catalog = {}
 
         # 4 Creating an MQTT Publisher
@@ -105,7 +106,7 @@ class SCRALModule(object):
         self._mqtt_publisher.on_disconnect = mqtt_util.automatic_reconnection
 
         logging.info("Try to connect to broker: %s:%s for publishing" % (self._pub_broker_address, self._pub_broker_port))
-        logging.debug("Client ID is: "+str(self._mqtt_publisher._client_id))
+        logging.debug("MQTT Client ID is: " + str(self._mqtt_publisher._client_id))
         self._mqtt_publisher.connect(self._pub_broker_address, self._pub_broker_port, DEFAULT_KEEPALIVE)
         self._mqtt_publisher.loop_start()
 
@@ -131,14 +132,13 @@ class SCRALModule(object):
         :param payload: Data to send (according to Paho documentation could be: None, str, bytearray, int or float).
         :param qos: The desired quality of service (it has an hardcoded default value).
         """
-        logging.debug("\nOn topic '"+topic+"' will be send the following payload:\n"+str(payload))
+        logging.debug("\nOn topic '" + topic + "' will be send the following payload:\n" + str(payload))
         info = self._mqtt_publisher.publish(topic, payload, qos)
 
         if info.rc == mqtt.MQTT_ERR_SUCCESS:
             return True
         else:
             return False
-
 
     # def ogc_datastream_registration(self, ogc_devices_server_url, certificate_path=None):
     #     """ It manages the registration of the data inside OGC server. """
@@ -192,6 +192,21 @@ class SCRALModule(object):
     #                 self._ogc_config.add_datastream(datastream)
     #
     #                 self._resource_catalog[iot_id][property_name] = datastream_id
+
+    def print_catalog(self):
+        """ Print resource catalog on log. """
+
+        logging.info("[PHASE-INIT] Resource Catalog <" + self._catalog_name + ">:")
+        for key, value in self._resource_catalog.items():
+            logging.info(key + ": " + json.dumps(value))
+        logging.info("--- End of Resource Catalog ---\n")
+
+    def update_file_catalog(self):
+        """ Update the resource catalog on file. """
+
+        with open(self._catalog_name, 'w+') as outfile:
+            json.dump(self._resource_catalog, outfile)
+            outfile.write('\n')
 
     @abstractmethod
     def runtime(self):

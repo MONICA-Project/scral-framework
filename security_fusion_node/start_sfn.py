@@ -39,7 +39,8 @@ import scral_module as scral
 from scral_module import util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
 
-from security_fusion_node.constants import URI_DEFAULT, URI_CAMERA, URI_CDG, CAMERA_SENSOR_TYPE, CDG_SENSOR_TYPE
+from security_fusion_node.constants import \
+    URI_DEFAULT, URI_CAMERA, URI_CDG, CAMERA_SENSOR_TYPE, CDG_SENSOR_TYPE, CATALOG_NAME_SFN
 from security_fusion_node.sfn_module import SCRALSecurityFusionNode
 
 flask_instance = Flask(__name__)
@@ -55,7 +56,7 @@ def main():
 
     # Module initialization and runtime phase
     global module
-    module = SCRALSecurityFusionNode(ogc_config, args.connection_file, args.pilot)
+    module = SCRALSecurityFusionNode(ogc_config, args.connection_file, args.pilot, CATALOG_NAME_SFN)
     module.runtime(flask_instance)
 
 

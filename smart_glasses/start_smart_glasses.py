@@ -39,7 +39,7 @@ from scral_module import util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
 
 from smart_glasses.constants import URI_DEFAULT, URI_GLASSES_REGISTRATION, URI_GLASSES_LOCALIZATION, \
-                                    URI_GLASSES_INCIDENT, PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDENT_NAME
+    URI_GLASSES_INCIDENT, PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDENT_NAME, CATALOG_NAME_GLASSES
 from smart_glasses.smart_glasses_module import SCRALSmartGlasses
 
 flask_instance = Flask(__name__)
@@ -55,7 +55,7 @@ def main():
 
     # Module initialization and runtime phase
     global module
-    module = SCRALSmartGlasses(ogc_config, args.connection_file, args.pilot)
+    module = SCRALSmartGlasses(ogc_config, args.connection_file, args.pilot, CATALOG_NAME_GLASSES)
     module.runtime(flask_instance)
 
 
