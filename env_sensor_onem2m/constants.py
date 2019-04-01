@@ -11,7 +11,7 @@
 #                                                                           #
 #############################################################################
 
-URI_DEFAULT = "/scral/v1.0/onem2m/"
-URI_ENV_NODE = URI_DEFAULT + "env-node"
+URI_DEFAULT = "/scral/v1.0/onem2m"
+URI_ENV_NODE = URI_DEFAULT + "/env-node"
 
 ONEM2M_CONTENT_TYPE = "application/json:0"

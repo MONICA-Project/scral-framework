@@ -104,14 +104,14 @@ def new_onem2m_request():
     return response
 
 
-@flask_instance.route(URI_DEFAULT)
+@flask_instance.route(URI_DEFAULT, methods=["GET"])
 def test_module():
     """ Checking if SCRAL is running. """
     logging.debug(test_module.__name__ + " method called")
 
     to_ret = "<h1>SCRAL is running!</h1>\n"
-    to_ret += "<h2>SCRALEnvOneM2M is listening on address"+module.get_address()+":"+module.get_port()+"</h2>"
-    to_ret += "<h3>To send an OBSERVATION or to register a new device, send a POST request to:"\
+    to_ret += "<h2>SCRALEnvOneM2M is listening on address: "+module.get_address()+":"+str(module.get_port())+"</h2>"
+    to_ret += "<h3>To send an OBSERVATION or to register a new device, send a POST request to: "\
               + module.get_address() + URI_ENV_NODE + "</h3>"
     return to_ret
 
