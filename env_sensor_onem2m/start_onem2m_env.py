@@ -95,7 +95,7 @@ def new_onem2m_request():
     rc = module.get_resource_catalog()
     if env_node_id not in rc:
         logging.info("Node: " + str(env_node_id) + " registration.")
-        response = module.ogc_datastream_registration(env_node_id, (raw_content["lat"], raw_content["lon"]))
+        response = module.ogc_datastream_registration(env_node_id, (content["lat"], content["lon"]))
         if response.status_code != 200:
             return response
 
@@ -104,21 +104,15 @@ def new_onem2m_request():
     return response
 
 
-@flask_instance.route("/")
-def test():
-    """ Checking if Flask is working. """
-    logging.debug(test.__name__ + " method called")
-
-    return "<h1>Flask is running!</h1>"
-
-
 @flask_instance.route(URI_DEFAULT)
 def test_module():
     """ Checking if SCRAL is running. """
     logging.debug(test_module.__name__ + " method called")
 
-    to_ret = "<h1>SCRAL module is running!</h1>\n"
-    to_ret += "<h2> ToDo: Insert list of API here! </h2>"
+    to_ret = "<h1>SCRAL is running!</h1>\n"
+    to_ret += "<h2>SCRALEnvOneM2M is listening on address"+module.get_address()+":"+module.get_port()+"</h2>"
+    to_ret += "<h3>To send an OBSERVATION or to register a new device, send a POST request to:"\
+              + module.get_address() + URI_ENV_NODE + "</h3>"
     return to_ret
 
 

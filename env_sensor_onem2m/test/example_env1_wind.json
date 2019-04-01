@@ -23,7 +23,7 @@
           "cs": 221,
           "cr": "monica_prod",
           "cnf": "application/json:0",
-          "con": "{\"sensorId\":\"7\",\"sensorName\":\"TFA Dostmann Kombisender\",\"measureName\":\"Wind speed MONICA Environmental Node 1\",\"measureUnit\":\"meter per second\",\"measureSymbol\":\"m/s\",\"resultTime\":\"2019-01-25T10:06:46.734Z\",\"result\":\"2.0\"}"
+          "con": "{\"sensorId\":\"7\",\"sensorName\":\"TFA Dostmann Kombisender\",\"lat\": 11.11,\"lon\": 22.22,\"measureName\":\"Wind speed MONICA Environmental Node 1\",\"measureUnit\":\"meter per second\",\"measureSymbol\":\"m/s\",\"resultTime\":\"2019-01-25T10:06:46.734Z\",\"result\":\"2.0\"}"
         }
       }
     }

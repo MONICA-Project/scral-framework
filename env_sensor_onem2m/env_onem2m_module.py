@@ -22,12 +22,13 @@ from scral_ogc import OGCDatastream, OGCObservation
 
 
 class SCRALEnvOneM2M(SCRALRestModule):
-    """ Resource manager for integration of the Environmental Nodes (through OneM2M platform). """
+    """ Resource manager for integration of Environmental Nodes through OneM2M platform. """
 
     def ogc_datastream_registration(self, env_node_id, coordinates):
-        """ Given a Environmental Node ID, this method registers a new DATASTREAM in the OGC model.
+        """ Given a Environmental Node ID and its coordinates, this method registers a new DATASTREAM in the OGC model.
 
         :param env_node_id: The Environmental node ID.
+        :param coordinates: The coordinates of the environmental node.
         :return: An HTTP response to be returned to the client.
         """
         ogc_config = self.get_ogc_config()
@@ -39,7 +40,7 @@ class SCRALEnvOneM2M(SCRALRestModule):
         thing_id = thing.get_id()
         thing_name = thing.get_name()
 
-        sensor = ogc_config.get_sensors()[0]  # Assumption: only Environmental Node is defined for this adapter
+        sensor = ogc_config.get_sensors()[0]  # Assumption: only "Environmental Node sensor" is defined for this adapter
         sensor_id = sensor.get_id()
         sensor_name = sensor.get_name()
 
@@ -59,15 +60,19 @@ class SCRALEnvOneM2M(SCRALRestModule):
             datastream_id = ogc_config.entity_discovery(
                 datastream, ogc_config.URL_DATASTREAMS, ogc_config.FILTER_NAME)
 
-            datastream.set_id(datastream_id)
-            ogc_config.add_datastream(datastream)
+            if not datastream_id:
+                logging.error("No datastream ID for Env-Node: "+env_node_id+", property: "+property_name)
+                make_response(jsonify({"Error:": "Invalid DATASTREAM"}), 500)
+            else:
+                datastream.set_id(datastream_id)
+                ogc_config.add_datastream(datastream)
 
-            rc[env_node_id][property_name] = datastream_id  # Store Hamburg to MONICA coupled information
+                rc[env_node_id][property_name] = datastream_id  # Store Hamburg to MONICA coupled information
 
         return make_response(jsonify({"Result": "ok"}), 200)
 
     def ogc_observation_registration(self, env_node_id, content, onem2m_payload):
-        """ Given a Environmental Node ID, this method registers an OBSERVATION in the OGC model.
+        """ Given an Environmental Node ID, this method registers an OBSERVATION in the OGC model.
 
         :param env_node_id: The Environmental node ID.
         :param content: A content from which will be extracted the observation result and the phenomenon time.
@@ -79,7 +84,7 @@ class SCRALEnvOneM2M(SCRALRestModule):
         observation_time = str(arrow.utcnow())
         labels = onem2m_payload["nev"]["rep"]["m2m:cin"]["lbl"]
         obs_property = labels[0]  # label
-        logging.debug(
+        logging.info(
             "Node: '" + env_node_id + "', Property: '" + obs_property + "', Observation: '" + observation_result + "'.")
 
         topic_prefix = self._topic_prefix

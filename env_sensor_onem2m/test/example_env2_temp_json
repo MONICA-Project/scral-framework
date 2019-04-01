@@ -26,6 +26,8 @@
           "con": {
             "sensorId": "5",
             "sensorName": "TFA Dostmann Kombisender",
+            "lat": 11.11,
+            "lon": 22.22,
             "measureName": "Temperature MONICA Environmental Node 2",
             "measureUnit": "celsius",
             "measureSymbol": "C",
