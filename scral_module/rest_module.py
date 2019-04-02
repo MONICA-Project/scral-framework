@@ -10,6 +10,18 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
+
+"""
+ROADMAP: these are main steps in which REST SCRAL module processing is divided.
+
+PHASE PRELIMINARY:
+  0. SEE SCRALModule for previous steps.
+
+PHASE RUNTIME: INTEGRATION
+  1. Expose SCRAL endpoints and listen to incoming requests
+"""
+
+#############################################################################
 import cherrypy
 
 import scral_module.util as util
@@ -18,6 +30,12 @@ from scral_module.scral_module import SCRALModule
 
 
 class SCRALRestModule(SCRALModule):
+    """ This class is the base entity of all REST Modules.
+        When you want to develop a new Rest-SCRAL module, you have to extend this class and define what endpoints you
+        want to expose.
+        If necessary, you can also extend the __init__ initializer and the runtime method. In runtime, we should call
+        super().runtime() as last instruction to start the cherrypy service.
+    """
 
     def __init__(self, ogc_config, connection_file, pilot, catalog_name=CATALOG_FILENAME):
         """ Load OGC configuration model, initialize MQTT Broker for publishing Observations and prepare Flask.
@@ -46,3 +64,9 @@ class SCRALRestModule(SCRALModule):
                                 })
         cherrypy.engine.start()
         cherrypy.engine.block()
+
+    def get_address(self):
+        return self._listening_address
+
+    def get_port(self):
+        return self._listening_port

@@ -10,23 +10,19 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
-#
-# ROADMAP: these are main steps in which a SCRAL module is divided.
-#
-# PHASE: INIT + SETUP + BOOT
-#   1. Init variables and setup server and MQTT connections
-#   2. Read configuration File and load OGC scheme (exit if integrity not satisfied)
-#
-# #PHASE: DISCOVERY
-#   3. Check via discovery if loaded entities are already registered
-#   4. If needed, register new entities to OGC Server
-#   5. Retrieve corresponding @iot.id's
-#
-# #PHASE: INTEGRATION
-#   6. Get notified about new OneM2M "containers"
-#   7. Upload DATASTREAM entities to OGC Server
-#   8. Expose SCRAL endpoint and listen to incoming requests
-#
+
+"""
+ROADMAP: these are main steps in which this SCRAL module is divided.
+
+PHASE PRELIMINARY:
+  0. SEE SCRALRestModule for previous steps.
+
+PHASE: INTEGRATION
+  1. Get notified about new OneM2M "containers"
+  2. Upload DATASTREAM entities to OGC Server
+  3. Upload new OGC OBSERVATION through MQTT
+"""
+
 ##############################################################################
 import json
 import logging
@@ -106,7 +102,9 @@ def new_onem2m_request():
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
 def test_module():
-    """ Checking if SCRAL is running. """
+    """ Checking if SCRAL is running.
+    :return: A str containing some information about possible endpoints.
+    """
     logging.debug(test_module.__name__ + " method called")
 
     to_ret = "<h1>SCRAL is running!</h1>\n"

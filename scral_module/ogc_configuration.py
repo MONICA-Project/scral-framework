@@ -207,16 +207,15 @@ class OGCConfiguration:
 
     @staticmethod
     def entity_discovery(ogc_entity, url_entity, url_filter, verbose=False):
-        """ This method uploads an OGC entity on the OGC Server and retrieves its @iot.id assigned by the server.
-            If the entity is already registered, it is not overwritten (or registered twice)
-            and only its @iot.id is retrieved.
+        """ This method retrieves the @iot.id associated to an OGC resource automaticcaly assigned by the server.
+            If the entity was not already registered, it will be uploaded on the OGC Server and the @iot.id is returned.
 
-        :param ogc_entity: An object containing the data of the entity.
+        :param ogc_entity: An object from scral_ogc package containing the data of the OGC entity.
         :param url_entity: The URL of the request.
         :param url_filter: The filter to apply.
         :param verbose: Set it to true to have more logging prints.
         :return: Returns the @iot.id of the entity if it is correctly registered,
-                 if something goes wrong during registration, an exception can be generated.
+                 if something goes wrong during registration, an exception will be generated.
         """
         # Build URL for LOCATION discovery based on Location name
         ogc_entity_name = ogc_entity.get_name()
@@ -275,6 +274,9 @@ class OGCConfiguration:
 
     def add_observed_property(self, ogc_obs_property):
         obs_id = self.entity_discovery(ogc_obs_property, self.URL_PROPERTIES, self.FILTER_NAME)
+        if not obs_id:
+            raise ValueError("The OBSERVED PROPERTY does not have an ID")
+
         ogc_obs_property.set_id(obs_id)
 
         if ogc_obs_property not in self._observed_properties:
@@ -284,7 +286,7 @@ class OGCConfiguration:
 
     def add_datastream(self, datastream):
         datastream_id = datastream.get_id()
-        if datastream_id is None:
+        if not datastream_id:
             raise ValueError("The DATASTREAM does not have an ID")
         else:
             self._datastreams[datastream_id] = datastream

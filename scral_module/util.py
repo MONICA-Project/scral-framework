@@ -12,10 +12,9 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
-"""
-    SCRAL util
-    This file contains several utility functions that could be used in different modules.
-"""
+
+""" This file contains several utility functions that could be used in different modules. """
+
 import argparse
 import json
 import logging
@@ -40,6 +39,8 @@ def init_logger(debug_level):
 
 def parse_command_line(description):
     """ This function parses the command line.
+
+    :param description: The module description that you want to show in -h option.
     :return: a dictionary with all the parsed parameters.
     """
     example_text = "example: start_module.py -v -f ./my_conf.conf -c external -p MOVIDA"
@@ -69,8 +70,8 @@ def init_parser(file_to_parse):
 def load_from_file(filename):
     """ Read information about a specific configuration from a file and return a JSON object with the related data.
 
-        :param filename: the full-path of the configuration file
-        :return: a Dictionary containing the configuration data
+        :param filename: the full-path of the configuration file.
+        :return: a Dictionary containing the configuration data.
     """
 
     file_p = open(filename)
@@ -85,8 +86,8 @@ def load_from_file(filename):
 def write_to_file(filename, data):
     """ Update a configuration file (it will be created if does not exists.
 
-        :param filename: the full-path of the configuration file
-        :param data: a dictionary containing the configuration data
+        :param filename: the full-path of the configuration file.
+        :param data: a dictionary containing the configuration data.
     """
 
     with open(filename, 'w+') as outfile:
@@ -97,10 +98,10 @@ def write_to_file(filename, data):
 def test_connectivity(server_address, server_username=None, server_password=None):
     """ This function checks if a REST connection is correctly configured.
 
-    :param server_address: The address of the OGC server
-    :param server_username: The username necessary to be authenticated on the server
-    :param server_password: The password related to the given username
-    :return: True, if it is possible to establish a connection, False otherwise.
+    :param server_address: The address of the OGC server.
+    :param server_username: The username necessary to be authenticated on the server.
+    :param server_password: The password related to the given username.
+    :return: True if it is possible to establish a connection, False otherwise.
     """
 
     try:
@@ -121,12 +122,12 @@ def test_connectivity(server_address, server_username=None, server_password=None
 
 
 def get_server_access_token(url, credentials, headers, token_prefix="", token_suffix=""):
-    """ This function get authorized token from a target server
+    """ This function get authorized token from a target server.
 
-    :param: url: The URL of the target server
-    :param: credentials: available access credentials
-    :param: headers: REST query headers
-    :return: a dictionary with limited-time-available access credentials
+    :param: url: The URL of the target server.
+    :param: credentials: available access credentials.
+    :param: headers: REST query headers.
+    :return: A dictionary with limited-time-available access credentials.
     """
 
     auth = None
@@ -187,9 +188,9 @@ def build_ogc_unit_of_measure(property_name):
 def from_utc_to_query(utc_timestamp: Arrow, remove_milliseconds=True):
     """ This function convert an arrow UTC timestamp in a data format adapted for a REST request.
 
-    :param utc_timestamp: A timestamp in Arrow format (e.g. 2019-05-13T11:22:33+01:00)
-    :param remove_milliseconds: if set to True, milliseconds are removed from timestamp
-    :return: The timestamp adapted for a REST query (e.g. 2019-05-13T11%3A22%3A33Z)
+    :param utc_timestamp: A timestamp in Arrow format (e.g. 2019-05-13T11:22:33+01:00).
+    :param remove_milliseconds: if is set to True, milliseconds are removed from timestamp.
+    :return: A string timestamp adapted for a REST query (e.g. 2019-05-13T11%3A22%3A33Z).
     """
     time_stamp = str(utc_timestamp).split('+')[0]
     if remove_milliseconds:

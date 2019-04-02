@@ -24,13 +24,11 @@ DEFAULT_CONFIG = "local"
 # Local catalog of the active DATASTREAM ID for each OBSERVEDPROPERTY associated to the registered Device IDs
 CATALOG_FILENAME = "resource_catalog.json"
 
+# Username and password necessary for accessing OGC server
 OGC_SERVER_USERNAME = "scral"
 OGC_SERVER_PASSWORD = "A5_xYY#HqNiao_12#b"
 
-OGC_ID_KEY = "@iot.id"
-OGC_DEVICE_NAME_KEY = "name"
-GOST_RESULT_KEY = "value"
-
+# MQTT default values
 BROKER_PERT = "130.192.85.32"
 BROKER_DEFAULT_PORT = 1883
 DEFAULT_KEEPALIVE = 60
@@ -45,3 +43,8 @@ ERROR_MISSING_CONNECTION_FILE = 1
 ERROR_MISSING_OGC_FILE = 2
 ERROR_WRONG_PILOT_NAME = 3
 ERROR_NO_SERVER_CONNECTION = 4
+
+# Code keys constants
+OGC_ID_KEY = "@iot.id"
+OGC_DEVICE_NAME_KEY = "name"
+GOST_RESULT_KEY = "value"

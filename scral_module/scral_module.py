@@ -11,6 +11,24 @@
 #                                                                           #
 #############################################################################
 
+"""
+ROADMAP: these are main steps in which SCRAL module processing is divided.
+
+PHASE STARTUP: INIT + SETUP + BOOT
+  1. Init variables and setup server and MQTT connections
+  2. Read configuration File and load predefined OGC scheme
+     (abort if integrity not satisfied)
+
+PHASE INIT: DISCOVERY
+  3. Check via discovery if loaded entities are already registered
+  4. If needed, register new entities in OGC Server
+  5. Retrieve corresponding @iot.id's
+
+PHASE RUNTIME: INTEGRATION
+  To be implemented by extender
+"""
+
+#############################################################################
 import json
 import logging
 import os
@@ -35,6 +53,15 @@ class SCRALModule(object):
 
     @staticmethod
     def startup(args, ogc_server_username=None, ogc_server_password=None):
+        """ The startup method initializes an OGCConfiguration using some arguments.
+            The OGCConfiguration have to be passed to the SCRALModule initializer.
+
+        :param args: Some command line arguments, every module can extend this parameter, SCRALModule wants at least:
+                     {"verbose": bool, "connection_file": str, "ogc_file": str}
+        :param ogc_server_username: [OPT] The username of the OGC Server to use for OGC configuration.
+        :param ogc_server_password: [OPT] The password related to the username.
+        :return: An instance of OGCConfiguration.
+        """
         global verbose  # overwrite verbose flag from command line
         if args.verbose:
             verbose = True
@@ -69,7 +96,8 @@ class SCRALModule(object):
         return ogc_config
 
     def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str, catalog_name=CATALOG_FILENAME):
-        """ Parses the connection file, instantiate an MQTT Client and stores all relevant connection information.
+        """ Initialize the SCRALModule:
+            Preparing the catalog, instantiating tje MQTT Client and stores all relevant connection information.
 
         :param ogc_config: An instance of an OGCConfiguration.
         :param connection_file: The path of the connection file, it has to contain the address of the MQTT broker.
@@ -131,6 +159,7 @@ class SCRALModule(object):
         :param topic: The MQTT topic on which the client will publish the message.
         :param payload: Data to send (according to Paho documentation could be: None, str, bytearray, int or float).
         :param qos: The desired quality of service (it has an hardcoded default value).
+        :return: True if the data was successfully sent, False otherwise.
         """
         logging.debug("\nOn topic '" + topic + "' will be send the following payload:\n" + str(payload))
         info = self._mqtt_publisher.publish(topic, payload, qos)
@@ -140,7 +169,29 @@ class SCRALModule(object):
         else:
             return False
 
-    # def ogc_datastream_registration(self, ogc_devices_server_url, certificate_path=None):
+    def print_catalog(self):
+        """ Print resource catalog on log. """
+
+        logging.info("[PHASE-INIT] Resource Catalog <" + self._catalog_name + ">:")
+        for key, value in self._resource_catalog.items():
+            logging.info(key + ": " + json.dumps(value))
+        logging.info("--- End of Resource Catalog ---\n")
+
+    def update_file_catalog(self):
+        """ Update the resource catalog on file. """
+
+        with open(self._catalog_name, 'w+') as outfile:
+            json.dump(self._resource_catalog, outfile)
+            outfile.write('\n')
+
+    @abstractmethod
+    def runtime(self):
+        """ This is an abstract method that has to be overwritten.
+            It manages the runtime operation of the module.
+        """
+        raise NotImplementedError("Implement runtime method in subclasses")
+
+# def ogc_datastream_registration(self, ogc_devices_server_url, certificate_path=None):
     #     """ It manages the registration of the data inside OGC server. """
     #     r = None
     #     try:
@@ -192,25 +243,3 @@ class SCRALModule(object):
     #                 self._ogc_config.add_datastream(datastream)
     #
     #                 self._resource_catalog[iot_id][property_name] = datastream_id
-
-    def print_catalog(self):
-        """ Print resource catalog on log. """
-
-        logging.info("[PHASE-INIT] Resource Catalog <" + self._catalog_name + ">:")
-        for key, value in self._resource_catalog.items():
-            logging.info(key + ": " + json.dumps(value))
-        logging.info("--- End of Resource Catalog ---\n")
-
-    def update_file_catalog(self):
-        """ Update the resource catalog on file. """
-
-        with open(self._catalog_name, 'w+') as outfile:
-            json.dump(self._resource_catalog, outfile)
-            outfile.write('\n')
-
-    @abstractmethod
-    def runtime(self):
-        """ This is an abstract method that has to be overwritten.
-            It manages the runtime operation of the module.
-        """
-        raise NotImplementedError("Implement runtime method in subclasses")

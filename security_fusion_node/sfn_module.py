@@ -31,7 +31,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         :param resource_id:
         :param sensor_type:
         :param payload:
-        :return: An http response.
+        :return: An HTTP response.
         """
         if self._ogc_config is None:
             return make_response(jsonify({"Error": "Internal server error"}), 500)
@@ -41,7 +41,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
             property_name = op.get_name()
             if sensor_type == 'Camera' and property_name != "CDG-Estimation":
                 coordinates = payload['camera_position']
-                ok = self._ogc_datastream_registration(sensor_type, resource_id, op, payload, coordinates)
+                ok = self._ogc_datastream_registration(resource_id, sensor_type, op, payload, coordinates)
                 if not ok:
                     return make_response(jsonify({"Error": "Internal server error."}), 500)
 
@@ -52,7 +52,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
 
         return make_response(jsonify({"result": "Ok"}), 201)
 
-    def _ogc_datastream_registration(self, sensor_type, resource_id, observed_property, payload,
+    def _ogc_datastream_registration(self, resource_id, sensor_type, observed_property, payload,
                                      coordinates=(0.0, 0.0)):
         # Collect OGC information needed to build DATASTREAMs payload
         thing = self._ogc_config.get_thing()
@@ -94,7 +94,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
 
         return datastream_id
 
-    def ogc_observation_registration(self, obs_property, payload, resource_id):
+    def ogc_observation_registration(self, resource_id, obs_property, payload):
         if resource_id not in self._resource_catalog:
             return None
 
