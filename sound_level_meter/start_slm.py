@@ -10,24 +10,19 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
-#
-# ROADMAP: these are main steps in which a SCRAL module is divided.
-#
-# PHASE: INIT + SETUP + BOOT
-#   1. Init variables and setup server and MQTT connections
-#   2. Read configuration File and load predefined OGC scheme (exit if integrity not satisfied)
-#
-# #PHASE: DISCOVERY
-#   3. Check via discovery if loaded entities are already registered
-#   4. If needed, register new entities    to OGC Server
-#   5. Retrieve corresponding @iot.id's
-#
-# #PHASE: INTEGRATION
-#   6. Get notified about new OneM2M "containers"
-#   7. Upload DATASTREAM entities to OGC Server
-#   8. Expose SCRAL endpoint and listen to incoming requests
-#
-####################################################################################################
+
+"""
+ROADMAP: these are main steps in which this SCRAL module is divided.
+
+PHASE PRELIMINARY:
+  0. SEE SCRALRestModule for previous steps.
+
+PHASE: INTEGRATION
+  1. Get notified about new glasses registration and creates new DATASTREAM
+  2. Upload OGC Observation through MQTT
+"""
+
+#############################################################################
 import logging
 import sys
 import signal
@@ -37,10 +32,12 @@ from flask import Flask, request, jsonify, make_response
 import scral_module as scral
 import scral_ogc
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, ERROR_WRONG_PILOT_NAME
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, ERROR_WRONG_PILOT_NAME, \
+    VPN_URL
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
-from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, URI_DEFAULT, URI_SOUND_EVENT
+from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, URI_DEFAULT, URI_SOUND_EVENT, \
+    VPN_PORT
 
 flask_instance = Flask(__name__)
 module: SCRALSoundLevelMeter = None
@@ -62,6 +59,11 @@ def main():
 
 @flask_instance.route(URI_SOUND_EVENT, methods=["PUT"])
 def new_sound_event():
+    """ This function can register a new OBSERVATION in the OGC server.
+    :return: An HTTP Response.
+    """
+    logging.debug(new_sound_event.__name__ + " method called")
+
     payload = request.json
     property_name = payload["type"]
     try:
@@ -86,22 +88,13 @@ def new_sound_event():
         return make_response(jsonify({"Result": "Ok"}), 201)
 
 
-@flask_instance.route("/")
-def test():
-    """ Checking if Flask is working. """
-    logging.debug(test.__name__ + " method called \n")
-
-    return "<h1>Flask is running!</h1>"
-
-
-@flask_instance.route(URI_DEFAULT)
+@flask_instance.route(URI_DEFAULT, methods=["GET"])
 def test_module():
     """ Checking if SCRAL is running. """
     logging.debug(test_module.__name__ + " method called \n")
 
-    to_ret = "<h1>SCRAL module is running!</h1>\n"
-    to_ret += "<h2> ToDo: Insert list of API here! </h2>"
-    return to_ret
+    link = VPN_URL + ":" + str(VPN_PORT)
+    return util.to_html_documentation("SCRALSoundLevelMeter", link, [], [URI_SOUND_EVENT])
 
 
 if __name__ == '__main__':
