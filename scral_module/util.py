@@ -198,3 +198,21 @@ def from_utc_to_query(utc_timestamp: Arrow, remove_milliseconds=True):
     time_stamp += 'Z'
 
     return re.sub(':', '%3A', str(time_stamp))
+
+
+def to_html_documentation(module_name, link, posts, puts):
+    to_ret = "<h1>SCRAL is running!</h1>\n"
+    to_ret += "<h2> "+module_name+" is listening on address \""+link+"\"</h2>"
+    to_ret += "<h3>"
+    if len(posts) > 0:
+        to_ret += "To REGISTER a new device, please send a POST request to: <ul>"
+        for post_url in posts:
+            to_ret += "<li>" + link + post_url + "</li>"
+        to_ret += "</ul>"
+    if len(puts) > 0:
+        to_ret += "To send a new OBSERVATION, please send a PUT request to: <ul>"
+        for put_url in puts:
+            to_ret += "<li>" + link + put_url + "</li>"
+        to_ret += "</ul>"
+    to_ret += "</h3>"
+    return to_ret

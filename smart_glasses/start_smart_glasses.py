@@ -10,24 +10,19 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
-#
-# ROADMAP: these are main steps in which a SCRAL module is divided.
-#
-# PHASE: INIT + SETUP + BOOT
-#   1. Init variables and setup server and MQTT connections
-#   2. Read configuration File and load predefined OGC scheme (exit if integrity not satisfied)
-#
-# #PHASE: DISCOVERY
-#   3. Check via discovery if loaded entities are already registered
-#   4. If needed, register new entities    to OGC Server
-#   5. Retrieve corresponding @iot.id's
-#
-# #PHASE: INTEGRATION
-#   6. Get notified about new OneM2M "containers"
-#   7. Upload DATASTREAM entities to OGC Server
-#   8. Expose SCRAL endpoint and listen to incoming requests
-#
-####################################################################################################
+
+"""
+ROADMAP: these are main steps in which this SCRAL module is divided.
+
+PHASE PRELIMINARY:
+  0. SEE SCRALRestModule for previous steps.
+
+PHASE: INTEGRATION
+  1. Get notified about new glasses registration and creates new DATASTREAM
+  2. Upload OGC Observation through MQTT
+"""
+
+#############################################################################
 import logging
 import sys
 import signal
@@ -36,10 +31,10 @@ from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
 
 from smart_glasses.constants import URI_DEFAULT, URI_GLASSES_REGISTRATION, URI_GLASSES_LOCALIZATION, \
-    URI_GLASSES_INCIDENT, PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDENT_NAME, CATALOG_NAME_GLASSES
+    URI_GLASSES_INCIDENT, PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDENT_NAME, CATALOG_NAME_GLASSES, VPN_PORT
 from smart_glasses.smart_glasses_module import SCRALSmartGlasses
 
 flask_instance = Flask(__name__)
@@ -61,6 +56,9 @@ def main():
 
 @flask_instance.route(URI_GLASSES_REGISTRATION, methods=["POST"])
 def new_glasses_request():
+    """ This function can register new glasses in the OGC server.
+    :return: An HTTP Response.
+    """
     logging.debug(new_glasses_request.__name__ + " method called")
 
     if not request.json:
@@ -88,6 +86,9 @@ def new_glasses_request():
 
 @flask_instance.route(URI_GLASSES_LOCALIZATION, methods=["PUT"])
 def new_glasses_localization():
+    """ This function can register new glasses location in the OGC server.
+    :return: An HTTP Response.
+    """
     logging.debug(new_glasses_localization.__name__ + " method called")
     response = put_observation(PROPERTY_LOCALIZATION_NAME, request.json)
     return response
@@ -95,12 +96,21 @@ def new_glasses_localization():
 
 @flask_instance.route(URI_GLASSES_INCIDENT, methods=["PUT"])
 def new_glasses_incident():
+    """ This function can register new glasses incident in the OGC server.
+    :return: An HTTP Response.
+    """
     logging.debug(new_glasses_incident.__name__ + " method called")
     response = put_observation(PROPERTY_INCIDENT_NAME, request.json)
     return response
 
 
 def put_observation(observed_property, payload):
+    """ This function is used to store a new OBSERVATION in the OGC Server.
+
+    :param observed_property: The type of property
+    :param payload: The payload of the observation
+    :return: An HTTP request.
+    """
     if not payload:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
 
@@ -119,22 +129,15 @@ def put_observation(observed_property, payload):
             return make_response(jsonify({"Error": "Internal server error"}), 500)
 
 
-@flask_instance.route("/")
-def test():
-    """ Checking if Flask is working. """
-    logging.debug(test.__name__ + " method called \n")
-
-    return "<h1>Flask is running!</h1>"
-
-
-@flask_instance.route(URI_DEFAULT)
+@flask_instance.route(URI_DEFAULT, methods=["GET"])
 def test_module():
     """ Checking if SCRAL is running. """
     logging.debug(test_module.__name__ + " method called \n")
 
-    to_ret = "<h1>SCRAL module is running!</h1>\n"
-    to_ret += "<h2> ToDo: Insert list of API here! </h2>"
-    return to_ret
+    link = VPN_URL + ":" + str(VPN_PORT)
+    posts = [URI_GLASSES_REGISTRATION]
+    puts = [URI_GLASSES_LOCALIZATION, URI_GLASSES_INCIDENT]
+    return util.to_html_documentation("SCRALSmartGlasses", link, posts, puts)
 
 
 if __name__ == '__main__':

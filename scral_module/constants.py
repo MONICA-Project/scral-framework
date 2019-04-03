@@ -28,6 +28,9 @@ CATALOG_FILENAME = "resource_catalog.json"
 OGC_SERVER_USERNAME = "scral"
 OGC_SERVER_PASSWORD = "A5_xYY#HqNiao_12#b"
 
+# HTTP
+VPN_URL = "monappdwp3.monica-cloud.eu"
+
 # MQTT default values
 BROKER_PERT = "130.192.85.32"
 BROKER_DEFAULT_PORT = 1883

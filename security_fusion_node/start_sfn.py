@@ -32,10 +32,10 @@ from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
 
 from security_fusion_node.constants import \
-    URI_DEFAULT, URI_CAMERA, URI_CDG, CAMERA_SENSOR_TYPE, CDG_SENSOR_TYPE, CATALOG_NAME_SFN
+    URI_DEFAULT, URI_CAMERA, URI_CDG, CAMERA_SENSOR_TYPE, CDG_SENSOR_TYPE, CATALOG_NAME_SFN, VPN_PORT
 from security_fusion_node.sfn_module import SCRALSecurityFusionNode
 
 flask_instance = Flask(__name__)
@@ -180,16 +180,8 @@ def test_module():
     """
     logging.debug(test_module.__name__ + " method called \n")
 
-    to_ret = "<h1>SCRAL is running!</h1>\n"
-    if module:
-        link = module.get_address()+":"+str(module.get_port())
-        to_ret += "<h2>SCRALSecurityFusionNode is listening on address "+link+"</h2>"
-        to_ret += "<h3>To register a new device, please send a POST request to: <br>"\
-                  + link + URI_CAMERA + "<br>" \
-                  + link + URI_CDG + "</h3>"
-        to_ret += "<h3>To send a new OBSERVATION, please send a PUT request to: <br>" \
-                  + link + URI_CAMERA + "<br>" \
-                  + link + URI_CDG + "</h3>"
+    link = VPN_URL+":"+str(VPN_PORT)
+    to_ret = util.to_html_documentation("SCRALSecurityFusionNode", link, [URI_CAMERA, URI_CDG], [URI_CAMERA, URI_CDG])
     return to_ret
 
 

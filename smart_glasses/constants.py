@@ -3,6 +3,7 @@ URI_DEFAULT = "/scral/v1.0/monicora"
 URI_GLASSES_REGISTRATION = URI_DEFAULT + "/glasses"
 URI_GLASSES_LOCALIZATION = URI_GLASSES_REGISTRATION + "/localization"
 URI_GLASSES_INCIDENT = URI_GLASSES_REGISTRATION + "/incident"
+VPN_PORT = 8110
 
 # filters
 FILTER_VIRTUAL_PROPERTY = "?$filter=startswith(name,'Incident-Notification')"

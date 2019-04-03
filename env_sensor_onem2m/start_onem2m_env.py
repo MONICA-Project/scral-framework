@@ -33,9 +33,9 @@ from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
 
-from env_sensor_onem2m.constants import URI_DEFAULT, URI_ENV_NODE, ONEM2M_CONTENT_TYPE
+from env_sensor_onem2m.constants import URI_DEFAULT, URI_ENV_NODE, ONEM2M_CONTENT_TYPE, VPN_PORT
 from env_sensor_onem2m.env_onem2m_module import SCRALEnvOneM2M
 
 flask_instance = Flask(__name__)
@@ -108,9 +108,10 @@ def test_module():
     logging.debug(test_module.__name__ + " method called")
 
     to_ret = "<h1>SCRAL is running!</h1>\n"
-    to_ret += "<h2>SCRALEnvOneM2M is listening on address: "+module.get_address()+":"+str(module.get_port())+"</h2>"
+    link = VPN_URL+":"+str(VPN_PORT)
+    to_ret += "<h2>SCRALEnvOneM2M is listening on address: "+link+"</h2>"
     to_ret += "<h3>To send an OBSERVATION or to register a new device, send a POST request to: "\
-              + module.get_address() + URI_ENV_NODE + "</h3>"
+              + link + URI_ENV_NODE + "</h3>"
     return to_ret
 
 
