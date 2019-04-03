@@ -78,8 +78,7 @@ class SCRALGPSPoll(SCRALModule):
         """ This method registers new DATASTREAMs in the OGC model. """
         r = None
         try:
-            r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER,
-                             verify="./gps_tracker_poll/config/hamburg/hamburg_cert.cer")
+            r = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER)
         except SSLError as tls_exception:
             logging.error("Error during TLS connection, the connection could be insecure or "
                           "the certificate could be self-signed...\n" + str(tls_exception))
@@ -122,11 +121,15 @@ class SCRALGPSPoll(SCRALModule):
                 datastream_id = self._ogc_config.entity_discovery(
                                     datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
 
-                datastream.set_id(datastream_id)
-                datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC + "(" + iot_id + ")/Locations")
-                self._ogc_config.add_datastream(datastream)
+                if not datastream_id:
+                    logging.critical("No DATASTREAM ID for: "+datastream_name)
+                else:
+                    datastream.set_id(datastream_id)
+                    datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC + "(" + iot_id + ")/Locations")
+                    self._ogc_config.add_datastream(datastream)
 
-                self._resource_catalog[iot_id] = datastream_id  # Store Hamburg to MONICA coupled information
+                    self._resource_catalog[iot_id] = datastream_id  # Store Hamburg to MONICA coupled information
+                    self.update_file_catalog()
 
     def update_mqtt_subscription(self, datastreams):
         """ This method updates the lists of MQTT subscription topics.

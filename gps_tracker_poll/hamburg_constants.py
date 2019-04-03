@@ -16,8 +16,8 @@ BROKER_HAMBURG_ADDRESS = "test.geoportal-hamburg.de"  # testing address: "broker
 BROKER_HAMBURG_CLIENT_ID = "MONICA_GPS_"+str(random.randint(0, 1000000))
 
 # HAMBURG OGC SERVER
-OGC_HAMBURG_URL = "https://51.5.242.162/itsLGVhackathon/v1.0/"
-# OGC_HAMBURG_URL = "https://test.geoportal-hamburg.de/itsLGVhackathon/v1.0/"
+OGC_HAMBURG_URL = "https://test.geoportal-hamburg.de/itsLGVhackathon/v1.0/"
+# OGC_HAMBURG_URL = "https://51.5.242.162/itsLGVhackathon/v1.0/"
 OGC_HAMBURG_THING_URL = OGC_HAMBURG_URL+"Things"
 OGC_HAMBURG_FILTER = "?$filter=startswith(name,'MONICA_HAMBURG_GPS')"
 
