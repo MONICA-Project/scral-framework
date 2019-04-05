@@ -70,6 +70,7 @@ def new_onem2m_request():
     if env_node_id is None:
         return make_response(jsonify({"Error": "Environmental Node ID not found!"}), 400)
 
+    logging.critical(request.json)
     content_type = request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["cnf"]
     if content_type != ONEM2M_CONTENT_TYPE:
         # raise TypeError("The content: <"+content_type+"> was not recognized! <"+ONEM2M_CONTENT_TYPE+"> is expected!")
@@ -91,7 +92,15 @@ def new_onem2m_request():
     rc = module.get_resource_catalog()
     if env_node_id not in rc:
         logging.info("Node: " + str(env_node_id) + " registration.")
-        response = module.ogc_datastream_registration(env_node_id, (content["lat"], content["lon"]))
+        try:
+            latitude = content["lat"]
+        except KeyError:
+            latitude = content["latitude"]
+        try:
+            longitude = content["lon"]
+        except KeyError:
+            longitude = content["longitude"]
+        response = module.ogc_datastream_registration(env_node_id, (latitude, longitude))
         if response.status_code != 200:
             return response
 
