@@ -78,13 +78,13 @@ def new_sound_event():
     obs_prop = scral_ogc.OGCObservedProperty(property_name, property_description, property_definition)
     device_id = payload["deviceId"]
 
-    datastream_id = module.new_datastream(obs_prop, device_id)
+    datastream_id = module.new_datastream(device_id, obs_prop)
     if datastream_id is False:
         return make_response(jsonify({"Error": "deviceId not recognized."}), 400)
     elif datastream_id is None:
         return make_response(jsonify({"Error": "Internal server error."}), 500)
     else:
-        module.ogc_observation_registration(datastream_id, payload["startTime"], payload)
+        module.ogc_observation_registration(datastream_id, paylStoad["startTime"], payload)
         return make_response(jsonify({"Result": "Ok"}), 201)
 
 
