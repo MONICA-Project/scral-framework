@@ -10,26 +10,27 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
-#
-# ROADMAP: these are main steps in which a SCRAL module is divided.
-#
-# PHASE: INIT + SETUP + BOOT
-#   1. Init variables and setup server and MQTT connections
-#   2. Read configuration File and load predefined OGC scheme (exit if integrity not satisfied)
-#
-# #PHASE: DISCOVERY
-#   3. Check via discovery if loaded entities are already registered
-#   4. If needed, register new entities to OGC Server
-#   5. Retrieve corresponding @iot.id's
-#
-# #PHASE: INTEGRATION
-#   6. Discovery of physical devices through external platform
-#   7. Upload DATASTREAM entities to OGC Server
-#   8. Subscribe to MQTT topics, listen to incoming data and publish OBSERVATIONS to OGC Broker
-#
-# #PHASE: DYNAMIC DISCOVERY
-#
-####################################################################################################
+
+"""
+ROADMAP: these are main steps in which this SCRAL module is divided.
+
+PHASE PRELIMINARY:
+  0. SEE SCRALModule for previous steps.
+
+PHASE STARTUP: INIT
+  1. Init variables and setup an MQTT publisher connections
+
+PHASE RUNTIME: INTEGRATION
+  2. Discovery of physical devices through external platform
+  3. Upload DATASTREAM entities to OGC Server
+  4. Subscribe to MQTT topics
+  5. Launching dynamic discovery thread
+  6. Listen to incoming data and publish OBSERVATIONS to OGC Broker
+
+PHASE DYNAMIC DISCOVERY
+  7. After a certain amount of time, if new devices are registered, new MQTT Subscriptions are executed
+"""
+#############################################################################
 import signal
 import sys
 

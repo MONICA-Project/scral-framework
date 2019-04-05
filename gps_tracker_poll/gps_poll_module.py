@@ -28,8 +28,8 @@ from scral_module import mqtt_util
 from scral_module import util
 from scral_module.scral_module import SCRALModule
 
-from gps_tracker_poll.hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL,\
-                              OGC_HAMBURG_FILTER, HAMBURG_UNIT_OF_MEASURE, THINGS_SUBSCRIBE_TOPIC
+from gps_tracker_poll.hamburg_constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL, \
+    OGC_HAMBURG_FILTER, HAMBURG_UNIT_OF_MEASURE, THINGS_SUBSCRIBE_TOPIC, DATASTREAM_ID_KEY, DEVICE_ID_KEY
 
 
 class SCRALGPSPoll(SCRALModule):
@@ -128,7 +128,10 @@ class SCRALGPSPoll(SCRALModule):
                     datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC + "(" + iot_id + ")/Locations")
                     self._ogc_config.add_datastream(datastream)
 
-                    self._resource_catalog[iot_id] = datastream_id  # Store Hamburg to MONICA coupled information
+                    self._resource_catalog[iot_id] = {
+                        DATASTREAM_ID_KEY: datastream_id,
+                        DEVICE_ID_KEY: device_id
+                    }  # Associating HAMBURG THING id to MONICA DATASTREAM id (plus HAMBURG device_id)
                     self.update_file_catalog()
 
     def update_mqtt_subscription(self, datastreams):
@@ -155,15 +158,25 @@ class SCRALGPSPoll(SCRALModule):
 
     def on_message_received(self, client, userdata, msg):
         logging.debug("\nOn topic: "+msg.topic + " - message received:\n" + str(msg.payload))
-        observation_result = json.loads(msg.payload)["location"]["geometry"]  # Load the received message
         observation_time = str(arrow.utcnow())
         thing_id = str(msg.topic.split('(')[1].split(')')[0])  # Get the thing_id associated to the physical device
 
-        datastream_id = self._resource_catalog[thing_id]  # Get the datastream_id from the resource catalog
+        datastream_id = self._resource_catalog[thing_id][DATASTREAM_ID_KEY]
+        device_id = self._resource_catalog[thing_id][DEVICE_ID_KEY]
         topic_prefix = self._topic_prefix
         topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
+
+        # OBSERVATION result
+        hamburg_obs_result = json.loads(msg.payload)["location"]["geometry"]  # Load the received message
+        observation_result = {
+            "tagId": device_id,
+            "lon": hamburg_obs_result["coordinates"][0],
+            "lat": hamburg_obs_result["coordinates"][1]
+        }
 
         # Create OGC Observation and publish
         ogc_observation = OGCObservation(datastream_id, observation_time, observation_result, observation_time)
         observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
-        self.mqtt_publish(topic, observation_payload)
+        ok = self.mqtt_publish(topic, observation_payload)
+        if not ok:
+            logging.error("Impossible to send MQTT message")
