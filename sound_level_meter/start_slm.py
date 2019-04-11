@@ -84,7 +84,7 @@ def new_sound_event():
     elif datastream_id is None:
         return make_response(jsonify({"Error": "Internal server error."}), 500)
     else:
-        module.ogc_observation_registration(datastream_id, paylStoad["startTime"], payload)
+        module.ogc_observation_registration(datastream_id, payload["startTime"], payload)
         return make_response(jsonify({"Result": "Ok"}), 201)
 
 

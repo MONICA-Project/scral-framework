@@ -280,8 +280,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                                       "\nImpossible to establish a connection with " + self._url_sequences)
 
             # ### LAeq values averaged on 5 minutes ###
-            time_elapsed_avg_laeq = 0  # counter for current time passed by
-            start_timer = time.time()
+            start_timer_avg5min = start_timer_annoyance = time.time()
 
             utc_now = arrow.utcnow()
             query_ts_end = util.from_utc_to_query(utc_now)
@@ -298,13 +297,14 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                     data["url_prefix"] = prefix + "/single"
                 elif sequence_name == "Annoyance":
                     data["url_prefix"] = prefix + "/single"
-                    data["time"] = build_time_token(arrow.utcnow(), 60)
+
+                    min2_ago_in_seconds = arrow.utcnow() - timedelta(seconds=120)
+                    data["time"] = build_time_token(min2_ago_in_seconds, 60)
                 elif sequence_name == "Avg5minLAeq":
                     data["url_prefix"] = prefix + "/single"
 
                     min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
-                    time_token = build_time_token(min10_ago_in_seconds, MIN5_IN_SECONDS)
-                    data["time"] = time_token
+                    data["time"] = build_time_token(min10_ago_in_seconds, MIN5_IN_SECONDS)
                 elif sequence_name == "CPBLZeq":
                     data["url_prefix"] = prefix + "/array"
                 else:
@@ -313,8 +313,9 @@ class SCRALSoundLevelMeter(SCRALRestModule):
 
                 sequences_data.append(data)
 
-            time_elapsed_avg_laeq = MIN5_IN_SECONDS  # forcing to perform request the first time
-            time_elapsed_annoyance = 60  # forcing to perform request the first time
+            # These variables should be initialized to 0. The following values are used to force first requests.
+            time_elapsed_avg_laeq = MIN5_IN_SECONDS
+            time_elapsed_annoyance = 60
 
             rc = self._slm_module.get_resource_catalog()
             self._logger.info("\n\n--- Start OGC OBSERVATIONs registration ---\n")
@@ -331,9 +332,10 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                         url = seq["url_prefix"] + seq["time"]
                         r = requests.get(url, headers=self._slm_module.get_cloud_token())
                         payload = r.json()  # ['value']
-                        self._logger.debug("Sequence: " + property_name + "\n" + json.dumps(payload))
 
                         if payload["value"] and len(payload["value"]) >= 1:  # is the payload not empty?
+                            self._logger.info("Sequence: " + property_name + "\n" + json.dumps(payload))
+
                             datastream_id = rc[self._device_id][property_name]
                             observation_result = {"valueType": property_name, "response": payload}
                             phenomenon_time = payload["value"][0]["startTime"]
@@ -341,25 +343,29 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                                 datastream_id, phenomenon_time, observation_result)
 
                     time.sleep(UPDATE_INTERVAL)  # ## # ### # #### # ##### #
-                    self._logger.debug("\n")     # ## # ### # #### # ##### #
+                    self._logger.info("\n")     # ## # ### # #### # ##### #
 
                     # UPDATE INTERVALS
-                    time_elapsed_avg_laeq = time.time() - start_timer
+                    time_elapsed_avg_laeq = time.time() - start_timer_avg5min
+                    time_elapsed_annoyance = time.time() - start_timer_annoyance
                     query_ts_start = query_ts_end
                     query_ts_end = util.from_utc_to_query(arrow.utcnow())
 
                     for seq in sequences_data:
                         property_name = seq["valueType"]
 
-                        if time_elapsed_avg_laeq >= MIN5_IN_SECONDS and property_name == "Avg5minLAeq":
+                        if property_name == "Avg5minLAeq" and time_elapsed_avg_laeq >= MIN5_IN_SECONDS:
                             time_elapsed_avg_laeq = 0
-                            start_timer = time.time()
+                            start_timer_avg5min = time.time()
 
                             min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
                             seq["time"] = build_time_token(min10_ago_in_seconds, MIN5_IN_SECONDS)
-                        elif time_elapsed_annoyance >= 60 and property_name == "Annoyance":
+                        elif property_name == "Annoyance" and time_elapsed_annoyance >= 60:
                             time_elapsed_annoyance = 0
-                            seq["time"] = build_time_token(arrow.utcnow(), 60)
+                            start_timer_annoyance = time.time()
+
+                            min2_ago_in_seconds = arrow.utcnow() - timedelta(seconds=120)
+                            seq["time"] = build_time_token(min2_ago_in_seconds, 60)
                         else:
                             seq["time"] = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
 
@@ -378,7 +384,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         # Publishing
         self._publish_mutex.acquire()
         try:
-            self.mqtt_publish(topic, json.dumps(observation.get_rest_payload()))
+            self.mqtt_publish(topic, json.dumps(observation.get_rest_payload()), to_print=False)
         finally:
             self._publish_mutex.release()
 

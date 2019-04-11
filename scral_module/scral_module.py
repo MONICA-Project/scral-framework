@@ -108,7 +108,7 @@ class SCRALModule(object):
         # 2 Load connection configuration file
         connection_config_file = util.load_from_file(connection_file)
 
-        # 3 Load local resource catalog / TEMPORARY USELESS
+        # 3 Load local resource catalog
         self._catalog_name = catalog_name
         if os.path.exists(self._catalog_name):
             self._resource_catalog = util.load_from_file(self._catalog_name)
@@ -153,15 +153,17 @@ class SCRALModule(object):
     def get_topic_prefix(self):
         return self._topic_prefix
 
-    def mqtt_publish(self, topic, payload, qos=DEFAULT_MQTT_QOS):
+    def mqtt_publish(self, topic, payload, qos=DEFAULT_MQTT_QOS, to_print=True):
         """ Publish the payload given as parameter to the MQTT publisher
 
         :param topic: The MQTT topic on which the client will publish the message.
         :param payload: Data to send (according to Paho documentation could be: None, str, bytearray, int or float).
         :param qos: The desired quality of service (it has an hardcoded default value).
+        :param to_print: To enable or not a debug print.
         :return: True if the data was successfully sent, False otherwise.
         """
-        logging.debug("\nOn topic '" + topic + "' will be send the following payload:\n" + str(payload))
+        if to_print:
+            logging.info("\nOn topic '" + topic + "' will be send the following payload:\n" + str(payload))
         info = self._mqtt_publisher.publish(topic, payload, qos)
 
         if info.rc == mqtt.MQTT_ERR_SUCCESS:
