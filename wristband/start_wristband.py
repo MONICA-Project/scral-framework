@@ -1,4 +1,4 @@
-###################################################################################################
+#############################################################################
 #      _____ __________  ___    __                                          #
 #     / ___// ____/ __ \/   |  / /                                          #
 #     \__ \/ /   / /_/ / /| | / /                                           #
@@ -10,24 +10,10 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
-#
-# ROADMAP: these are main steps in which a SCRAL module is divided.
-#
-# PHASE: INIT + SETUP + BOOT
-#   1. Init variables and setup server and MQTT connections
-#   2. Read configuration File and load predefined OGC scheme (exit if integrity not satisfied)
-#
-# #PHASE: DISCOVERY
-#   3. Check via discovery if loaded entities are already registered
-#   4. If needed, register new entities    to OGC Server
-#   5. Retrieve corresponding @iot.id's
-#
-# #PHASE: INTEGRATION
-#   6. Get notified about new OneM2M "containers"
-#   7. Upload DATASTREAM entities to OGC Server
-#   8. Expose SCRAL endpoint and listen to incoming requests
-#
-####################################################################################################
+"""
+
+"""
+#############################################################################
 import logging
 import sys
 import signal

@@ -70,7 +70,7 @@ def new_onem2m_request():
     if env_node_id is None:
         return make_response(jsonify({"Error": "Environmental Node ID not found!"}), 400)
 
-    logging.critical(request.json)
+    # logging.debug(request.json)
     content_type = request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["cnf"]
     if content_type != ONEM2M_CONTENT_TYPE:
         # raise TypeError("The content: <"+content_type+"> was not recognized! <"+ONEM2M_CONTENT_TYPE+"> is expected!")

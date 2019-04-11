@@ -95,7 +95,7 @@ class SCRALEnvOneM2M(SCRALRestModule):
         ogc_observation = OGCObservation(datastream_id, phenomenon_time, observation_result, observation_time)
         observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
 
-        published = self.mqtt_publish(topic, observation_payload)
+        published = self.mqtt_publish(topic, observation_payload, to_print=False)
         if published:
             return make_response(jsonify({"result": "Ok"}), 201)
         else:
