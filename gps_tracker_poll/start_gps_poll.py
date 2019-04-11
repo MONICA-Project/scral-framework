@@ -18,7 +18,7 @@ PHASE PRELIMINARY:
   0. SEE SCRALModule for previous steps.
 
 PHASE STARTUP: INIT
-  1. Init variables and setup an MQTT publisher connections
+  1. Init variables and setup an MQTT listener connection
 
 PHASE RUNTIME: INTEGRATION
   2. Discovery of physical devices through external platform
