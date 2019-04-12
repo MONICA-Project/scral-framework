@@ -84,3 +84,21 @@ class SCRALWristband(SCRALRestModule):
         observation_payload = json.dumps(ogc_observation.get_rest_payload())
 
         return self.mqtt_publish(topic, observation_payload)
+
+    def ogc_service_observation_registration(self, datastream, payload):
+        phenomenon_time = payload.pop("timestamp", False)  # Retrieving and removing the phenomenon time
+        if not phenomenon_time:
+            phenomenon_time = str(arrow.utcnow())
+        observation_time = str(arrow.utcnow())
+
+        logging.debug(
+            "Service: '" + datastream.get_name() + "', Observation:\n" + json.dumps(payload) + ".")
+
+        topic_prefix = self._topic_prefix
+        topic = topic_prefix + "Datastreams(" + str(datastream.get_id()) + ")/Observations"
+
+        # Create OGC Observation and publish
+        ogc_observation = OGCObservation(datastream.get_id(), phenomenon_time, payload, observation_time)
+        observation_payload = json.dumps(ogc_observation.get_rest_payload())
+
+        return self.mqtt_publish(topic, observation_payload)

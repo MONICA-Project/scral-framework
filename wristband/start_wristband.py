@@ -22,9 +22,10 @@ from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
 from wristband.constants import PROPERTY_BUTTON_NAME, PROPERTY_LOCALIZATION_NAME, \
-    URI_DEFAULT, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
+    URI_DEFAULT, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_REGISTRATION, \
+    URI_WRISTBAND_ASSOCIATION, SENSOR_ASSOCIATION_NAME, VPN_PORT
 
 from wristband.wristband_module import SCRALWristband
 
@@ -77,7 +78,7 @@ def new_wristband_association_request():
     logging.debug(new_wristband_association_request.__name__ + " method called")
 
     if not request.json:
-        return jsonify({"Error": "Wrong request!"}), 400
+        return make_response(jsonify({"Error": "Wrong request!"}), 400)
     if module is None:
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
@@ -87,13 +88,15 @@ def new_wristband_association_request():
     rc = module.get_resource_catalog()
     if wristband_id_1 not in rc or wristband_id_2 not in rc:
         logging.error("One of the wristbands is not registered.")
-        return jsonify({"Error": "One of the wristbands is not registered!"}), 400
+        return make_response(jsonify({"Error": "One of the wristbands is not registered!"}), 400)
 
-    module.get_ogc_config().get_virtual_datastream("")  #ToDo: qua
-    if not ok:
+    vds = module.get_ogc_config().get_virtual_datastream(SENSOR_ASSOCIATION_NAME)
+    if not vds:
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
-    return make_response(jsonify({"result": "Ok"}), 201)
+    response = put_service_observation(vds, request.json)
+
+    return response
 
 
 @flask_instance.route(URI_WRISTBAND_LOCALIZATION, methods=["PUT"])
@@ -128,14 +131,29 @@ def put_observation(observed_property, payload):
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
 
+def put_service_observation(datastream, payload):
+    if not payload:
+        return make_response(jsonify({"Error": "Wrong request!"}), 400)
+    if not module:
+        return make_response(jsonify({"Error": "Internal server error"}), 500)
+
+    result = module.ogc_service_observation_registration(datastream, payload)
+    if result is True:
+        return make_response(jsonify({"result": "Ok"}), 201)
+    else:
+        logging.error("Impossible to publish on MQTT server.")
+        return make_response(jsonify({"Error": "Internal server error"}), 500)
+
+
 @flask_instance.route(URI_DEFAULT)
 def test_module():
     """ Checking if SCRAL is running. """
     logging.debug(test_module.__name__ + " method called \n")
 
-    to_ret = "<h1>SCRAL module is running!</h1>\n"
-    to_ret += "<h2> ToDo: Insert list of API here! </h2>"
-    return to_ret
+    link = VPN_URL + ":" + str(VPN_PORT)
+    posts = [URI_WRISTBAND_REGISTRATION]
+    puts = [URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON]
+    return util.to_html_documentation("SCRALWristband", link, posts, puts)
 
 
 if __name__ == '__main__':
