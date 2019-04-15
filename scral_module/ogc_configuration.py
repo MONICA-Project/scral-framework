@@ -115,7 +115,7 @@ class OGCConfiguration:
                     scral_ogc.OGCObservedProperty(property_name, property_description, property_definition))
 
         self._datastreams = {}
-        self._virtual_datastream = {}
+        self._virtual_datastreams = {}
 
     def discovery(self, verbose=False):
         """ This method uploads the OGC model on the OGC Server and retrieves the @iot.id assigned by the server.
@@ -201,7 +201,7 @@ class OGCConfiguration:
                                                              v_ds_unit_of_measure, v_ds_coord_x, v_ds_coord_y)
                 vds_id = self.entity_discovery(virtual_datastream, self.URL_DATASTREAMS, self.FILTER_NAME, verbose)
                 logging.info('Virtual DATASTREAM: "' + v_datastream_name + '" with id: ' + str(vds_id))
-                self._virtual_datastream[vds_id] = virtual_datastream
+                self._virtual_datastreams[vds_id] = virtual_datastream
 
         logging.info("--- End of OGC discovery---\n")
 
@@ -265,6 +265,13 @@ class OGCConfiguration:
 
     def get_properties_number(self):
         return len(self._observed_properties)
+
+    def get_virtual_datastream(self, name):
+        for vds in self._virtual_datastreams:
+            if vds.get_name() == name:
+                return vds
+
+        return False
 
     def get_datastreams(self):
         return self._datastreams
