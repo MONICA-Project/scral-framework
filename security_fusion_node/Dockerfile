@@ -14,9 +14,12 @@ ADD security_fusion_node /monica-scral/security_fusion_node
 RUN pip3 install --no-cache-dir -r security_fusion_node/requirements.txt
 RUN pip3 install -e security_fusion_node
 
-# docker deploy DOM - INTERNAL
-ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/hamburg/connection_config_internal.json -p DOM
-# docker deploy LEEDS - INTERNAL
-# ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/leeds/connection_config_internal.json -p LEEDS
-# local testing:
+### local testing:
 # ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/connection_config_local.json -p local
+
+### docker deploy - INTERNAL - TIVOLI
+ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/tivoli/connection_config_internal.json -p TIVOLI
+### docker deploy - INTERNAL - DOM
+# ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/hamburg/connection_config_internal.json -p DOM
+### docker deploy - INTERNAL - LEEDS
+# ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/leeds/connection_config_internal.json -p LEEDS

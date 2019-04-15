@@ -2,7 +2,9 @@
 URI_DEFAULT = "/scral/v1.0/sfn"
 URI_CAMERA = URI_DEFAULT + "/camera"
 URI_CDG = URI_DEFAULT + "/crowd-density-global"
-VPN_PORT = 8330
+
+# Port
+VPN_PORT = 8340
 
 # Types
 CAMERA_SENSOR_TYPE = "Camera"
