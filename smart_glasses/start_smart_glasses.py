@@ -62,7 +62,7 @@ def new_glasses_request():
     logging.debug(new_glasses_request.__name__ + " method called")
 
     if not request.json:
-        return jsonify({"Error": "Wrong request!"}), 400
+        return make_response(jsonify({"Error": "Wrong request!"}), 400)
 
     glasses_id = request.json["tagId"]
     type = request.json["type"]
