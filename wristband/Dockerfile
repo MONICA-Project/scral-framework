@@ -15,6 +15,6 @@ RUN pip3 install --no-cache-dir -r wristband/requirements.txt
 RUN pip3 install -e wristband
 
 # docker deploy - INTERNAL
-ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wearable.conf -c wristband/config/tivoli/connection_config_internal.json -p TIVOLI
+ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/tivoli/connection_config_internal.json -p TIVOLI
 # local testing:
-# ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wearable.conf -c wristband/config/connection_config_local.json -p local
+# ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/connection_config_local.json -p local
