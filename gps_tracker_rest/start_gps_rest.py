@@ -33,7 +33,9 @@ import scral_module as scral
 from scral_module import util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
 
-from gps_tracker_rest.constants import VPN_PORT, URI_GPS_TAG_REGISTRATION, URI_GPS_TAG_LOCALIZATION, URI_DEFAULT
+from gps_tracker.constants import ALERT, LOCALIZATION
+from gps_tracker_rest.constants import VPN_PORT, \
+    URI_GPS_TAG_REGISTRATION, URI_GPS_TAG_LOCALIZATION, URI_DEFAULT, URI_GPS_TAG_ALERT
 from gps_tracker_rest.gps_rest_module import SCRALGPSRest
 
 flask_instance = Flask(__name__)
@@ -58,7 +60,7 @@ def new_gps_tag_request():
     logging.debug(new_gps_tag_request.__name__ + " method called")
 
     if not request.json:
-        return jsonify({"Error": "Wrong request!"}), 400
+        return make_response(jsonify({"Error": "Wrong request!"}), 400)
     if module is None:
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
@@ -81,16 +83,26 @@ def new_gps_tag_request():
 
 @flask_instance.route(URI_GPS_TAG_LOCALIZATION, methods=["PUT"])
 def new_gps_tag_localization():
-    logging.debug(new_gps_tag_localization.__name__ + " method called")
-    payload = request.json
+    logging.debug(new_gps_tag_alert.__name__ + " method called")
+    response = put_observation(LOCALIZATION, request.json)
+    return response
 
+
+@flask_instance.route(URI_GPS_TAG_ALERT, methods=["PUT"])
+def new_gps_tag_alert():
+    logging.debug(new_gps_tag_alert.__name__ + " method called")
+    response = put_observation(ALERT, request.json)
+    return response
+
+
+def put_observation(observed_property, payload):
     if not payload:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
     if not module:
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
     gps_tag_id = payload["tagId"]
-    result = module.ogc_observation_registration(payload)
+    result = module.ogc_observation_registration(observed_property, payload)
     if result is True:
         return make_response(jsonify({"result": "Ok"}), 201)
     elif result is None:
@@ -107,7 +119,9 @@ def test_module():
     logging.debug(test_module.__name__ + " method called \n")
 
     link = VPN_URL+":"+str(VPN_PORT)
-    to_ret = util.to_html_documentation("SCRALGPSRest", link, [URI_GPS_TAG_REGISTRATION], [URI_GPS_TAG_LOCALIZATION])
+    posts = (URI_GPS_TAG_REGISTRATION, )
+    puts = (URI_GPS_TAG_LOCALIZATION, URI_GPS_TAG_ALERT)
+    to_ret = util.to_html_documentation("SCRALGPSRest", link, posts, puts)
     return to_ret
 
 

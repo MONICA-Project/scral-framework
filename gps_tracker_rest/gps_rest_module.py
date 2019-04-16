@@ -25,23 +25,22 @@ class SCRALGPSRest(SCRALRestModule, SCRALGPS):
         device_id = payload["tagId"]
         description = payload["type"]
         datastream = self.ogc_datastream_registration(device_id, description, "position")
-        if datastream:
-            device_id = payload["tagId"]
-            self._resource_catalog[device_id] = datastream.get_id()
-
         return datastream
 
-    def ogc_observation_registration(self, payload):
+    def ogc_observation_registration(self, observed_property, payload):
         gps_tag_id = payload["tagId"]
         if gps_tag_id not in self._resource_catalog:
             return None
 
-        phenomenon_time = observation_time = str(arrow.utcnow())
+        observation_time = str(arrow.utcnow())
+        try:
+            phenomenon_time = payload["timestamp"]
+        except KeyError:
+            phenomenon_time = str(arrow.utcnow())
 
-        logging.info(
-            "GPS: '"+gps_tag_id+"', Observation:\n"+json.dumps(payload)+".")
+        logging.info("GPS: '"+gps_tag_id+"', Observation:\n"+json.dumps(payload)+".")
 
-        datastream_id = self._resource_catalog[gps_tag_id]
+        datastream_id = self._resource_catalog[gps_tag_id][observed_property]
         topic_prefix = self._topic_prefix
         topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
 

@@ -28,5 +28,4 @@ THINGS_SUBSCRIBE_TOPIC = "v1.0/Things"
 HAMBURG_UNIT_OF_MEASURE = "position"
 
 # KEYS
-DATASTREAM_ID_KEY = "datastream_id"
 DEVICE_ID_KEY = "device_id"

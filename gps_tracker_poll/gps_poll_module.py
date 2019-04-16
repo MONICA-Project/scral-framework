@@ -22,13 +22,13 @@ import arrow
 from requests.exceptions import SSLError
 
 from scral_ogc import OGCObservation
-
 from scral_module.constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, OGC_ID_KEY
 from scral_module import mqtt_util
-from gps_tracker.gps_module import SCRALGPS
 
+from gps_tracker.constants import LOCALIZATION
+from gps_tracker.gps_module import SCRALGPS
 from gps_tracker_poll.constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL, \
-    OGC_HAMBURG_FILTER, DATASTREAM_ID_KEY, DEVICE_ID_KEY, THINGS_SUBSCRIBE_TOPIC, HAMBURG_UNIT_OF_MEASURE
+    OGC_HAMBURG_FILTER, DEVICE_ID_KEY, THINGS_SUBSCRIBE_TOPIC, HAMBURG_UNIT_OF_MEASURE
 
 
 class SCRALGPSPoll(SCRALGPS):
@@ -55,7 +55,7 @@ class SCRALGPSPoll(SCRALGPS):
         self._mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
 
     # noinspection PyMethodOverriding
-    def runtime(self, dynamic_discovery=True):
+    def runtime(self, dynamic_discovery=False):
         """ This method retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
             These DATASTREAMS are published on MONICA OGC server.
             This is a "blocking function".
@@ -87,15 +87,14 @@ class SCRALGPSPoll(SCRALGPS):
 #           if iot_id in self._resource_catalog:
 #               logging.info("Device: " + device_id + " already registered with id: " + iot_id)
 #           else:
-            datastream = self.ogc_datastream_registration(device_id, device_description, HAMBURG_UNIT_OF_MEASURE)
-            if datastream:
-                self._resource_catalog[iot_id] = {
-                    DATASTREAM_ID_KEY: datastream.get_id(),
-                    DEVICE_ID_KEY: device_id
-                }  # Associating HAMBURG THING id to MONICA DATASTREAM id (plus HAMBURG device_id)
+            datastreams = self.ogc_datastream_registration(device_id, device_description, HAMBURG_UNIT_OF_MEASURE, iot_id)
+            if len(datastreams) > 0:
+                # Associating HAMBURG THING id to MONICA DATASTREAM id (plus HAMBURG device_id)
+                self._resource_catalog[iot_id][DEVICE_ID_KEY] = device_id
                 self.update_file_catalog()
 
-                datastream.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC + "(" + iot_id + ")/Locations")
+                for ds in datastreams:  # right now there is only 1 Datastream for each hamburg device
+                    ds.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC + "(" + iot_id + ")/Locations")
 
         self.update_mqtt_subscription(self._ogc_config.get_datastreams())
 
@@ -134,7 +133,7 @@ class SCRALGPSPoll(SCRALGPS):
         observation_time = str(arrow.utcnow())
         thing_id = str(msg.topic.split('(')[1].split(')')[0])  # Get the thing_id associated to the physical device
 
-        datastream_id = self._resource_catalog[thing_id][DATASTREAM_ID_KEY]
+        datastream_id = self._resource_catalog[thing_id][LOCALIZATION]
         device_id = self._resource_catalog[thing_id][DEVICE_ID_KEY]
         topic_prefix = self._topic_prefix
         topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"

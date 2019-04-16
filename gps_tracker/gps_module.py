@@ -29,8 +29,12 @@ class SCRALGPS(SCRALModule):
         """
         raise NotImplementedError("Implement runtime method in subclasses")
 
-    def ogc_datastream_registration(self, device_id, description, unit_of_measure=None):
+    def ogc_datastream_registration(self, device_id, description, unit_of_measure=None, catalog_key=None):
         """ This method registers new DATASTREAMs in the OGC model. """
+
+        if catalog_key is None:
+            catalog_key = device_id
+        self._resource_catalog[catalog_key] = {}
 
         # Collect OGC information needed to build DATASTREAMs payload
         thing = self._ogc_config.get_thing()
@@ -41,20 +45,25 @@ class SCRALGPS(SCRALModule):
         sensor_id = sensor.get_id()
         sensor_name = sensor.get_name()
 
-        # Assumption: only 1 observed property registered
-        property_id = self._ogc_config.get_observed_properties()[0].get_id()
-        property_name = self._ogc_config.get_observed_properties()[0].get_name()
+        datastreams = []
+        for observed_property in self._ogc_config.get_observed_properties():
+            property_id = observed_property.get_id()
+            property_name = observed_property.get_name()
 
-        datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + device_id
-        datastream = OGCDatastream(name=datastream_name, description=description, ogc_property_id=property_id,
-                                   ogc_sensor_id=sensor_id, ogc_thing_id=thing_id, x=0.0, y=0.0,
-                                   unit_of_measurement=util.build_ogc_unit_of_measure(unit_of_measure))
-        datastream_id = self._ogc_config.entity_discovery(
-                            datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
-        if not datastream_id:
-            logging.error("No datastream ID for device: " + device_id + ", property: " + property_name)
-            return False
-        else:
-            datastream.set_id(datastream_id)
-            self._ogc_config.add_datastream(datastream)
-            return datastream
+            datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + device_id
+            ds = OGCDatastream(name=datastream_name, description=description, ogc_property_id=property_id,
+                                       ogc_sensor_id=sensor_id, ogc_thing_id=thing_id, x=0.0, y=0.0,
+                                       unit_of_measurement=util.build_ogc_unit_of_measure(unit_of_measure))
+            datastream_id = self._ogc_config.entity_discovery(
+                                ds, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
+
+            if not datastream_id:
+                logging.error("No datastream ID for device: " + device_id + ", property: " + property_name)
+
+            else:
+                ds.set_id(datastream_id)
+                datastreams.append(ds)
+                self._ogc_config.add_datastream(ds)
+                self._resource_catalog[catalog_key][property_name] = ds.get_id()
+
+        return datastreams
