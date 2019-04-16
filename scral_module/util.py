@@ -29,12 +29,41 @@ from scral_module.constants import DEFAULT_CONFIG, CREDITS
 
 
 def init_logger(debug_level):
-    """ This function configure the logger according to af specified debug_level taken from logging class. """
+    """ This function configure the logger according to the specified debug_level taken from logging class. """
 
     logging.basicConfig(format="%(message)s")
     logging.getLogger().setLevel(level=debug_level)
     logging.getLogger().handlers[0].setFormatter(logging.Formatter(
         "%(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S"))
+
+
+def init_mirrored_logger(log_name, debug_level, output_filename=None):
+    """ This function configure the logger according to the specified debug_level taken from logging class.
+        It is possible also to specify a filename on which the log will be mirrored.
+
+    :param log_name: The name assigned to the new generated log.
+    :param output_file: A filename (or filepath) on which the log will be mirrored.
+    :param debug_level: A debug value taken from logging class.
+    :return: An entity of logging class.
+    """
+
+    logger = logging.getLogger(log_name)
+
+    formatter = logging.Formatter(
+        "("+log_name+") - %(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S")
+
+    ch = logging.StreamHandler()
+    ch.setLevel(level=debug_level)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+    if output_filename:
+        fh = logging.FileHandler(output_filename)
+        fh.setLevel(level=debug_level)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+    return logger
 
 
 def parse_command_line(description):

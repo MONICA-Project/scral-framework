@@ -86,10 +86,10 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         super().runtime(flask_instance)
 
     def ogc_datastream_registration(self, url):
-        """
-        This method discovers active SLMs for a given site_id and registers a new OGC Datastream for
-        each couple SLM-ObservedProperty.
-        :param url: server address
+        """ This method receive a target URL as parameter and discovers active SLMs.
+            A new OGC Datastream for each couple SLM-ObservedProperty is registered.
+
+        :param url: Target server address.
         """
 
         url_locations = url + "/tenants/" + str(self._tenant_id) + "/sites/" + str(self._site_id) + "/locations"
@@ -167,11 +167,11 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         logging.info("--- End of OGC DATASTREAMs registration ---\n")
 
     def new_datastream(self, device_id, ogc_obs_property):
-        """
+        """ This method have to be called when you want to add a new DATASTREAM.
 
-        :param device_id:
-        :param ogc_obs_property:
-        :return:
+        :param device_id: The ID of the device for which you want to create the DATASTREAMs.
+        :param ogc_obs_property: The OBSERVED PROPERTY for which you want to create the DATASTREAMs.
+        :return: The datastream_id of the new generated DATASTREAM.
         """
         if device_id not in self._active_devices:
             logging.error("Device " + device_id + " is not active.")
@@ -186,14 +186,14 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         return datastream_id
 
     def _new_datastream(self, ogc_property, device_id, device_name, device_coordinates, device_description):
-        """
+        """ This method creates a new DATASTREAM. It is a private method, externally you should call "new_datastream".
 
-        :param ogc_property:
-        :param device_id:
-        :param device_name:
-        :param device_coordinates:
-        :param device_description:
-        :return:
+        :param ogc_property: The OBSERVED PROPERTY.
+        :param device_id: The physical device ID.
+        :param device_name: A name associated to the device.
+        :param device_coordinates: An array (or tuple) of coordinates
+        :param device_description: A device description
+        :return: The DATASTREAM ID of the new created device.
         """
         # Collect OGC information needed to build Datastreams payload
         thing = self._ogc_config.get_thing()
@@ -229,10 +229,9 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         return datastream_id
 
     def _start_thread_pool(self, locking=False):
-        """
+        """ This method starts a thread for each active microphone (Sound Level Meter).
 
-        :param locking:
-        :return:
+        :param locking: True if you would like to return from this methods only after all threads are completed.
         """
         thread_pool = []
         thread_id = 1
@@ -259,7 +258,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         def __init__(self, thread_id, thread_name, device_id, url_sequences, slm_module):
             super().__init__()
 
-            self._logger = logging.getLogger(thread_name)
+            self._logger = util.init_mirrored_logger(str(thread_id), logging.DEBUG, "microphone"+str(thread_id)+".log")
 
             self._thread_name = thread_name
             self._thread_id = thread_id
@@ -268,7 +267,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
             self._slm_module = slm_module
 
         def run(self):
-            self._logger.debug("Starting Thread: " + self._thread_name)
+            self._logger.info("Starting Thread: " + self._thread_name)
 
             r = None
             try:
@@ -279,39 +278,12 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                 raise ConnectionError("Connection status: " + str(r.status_code) +
                                       "\nImpossible to establish a connection with " + self._url_sequences)
 
+            sequences_data = self._init_sequences(r)
+            query_ts_end = util.from_utc_to_query(arrow.utcnow())
+
             # ### LAeq values averaged on 5 minutes ###
-            start_timer_avg5min = start_timer_annoyance = time.time()
-
-            utc_now = arrow.utcnow()
-            query_ts_end = util.from_utc_to_query(utc_now)
-            time_token = build_time_token(utc_now, UPDATE_INTERVAL)
-
-            sequences_data = []
-            for sequence in r.json()['value']:
-                self._logger.debug(self._thread_name + " sequence:\n" + str(json.dumps(sequence)))
-                prefix = self._url_sequences + "/" + sequence["sequenceId"] + "/data"
-
-                sequence_name = sequence["name"]
-                data = {"valueType": sequence_name, "time": time_token}
-                if sequence_name == "LAeq" or sequence_name == "LCeq":
-                    data["url_prefix"] = prefix + "/single"
-                elif sequence_name == "Annoyance":
-                    data["url_prefix"] = prefix + "/single"
-
-                    min2_ago_in_seconds = arrow.utcnow() - timedelta(seconds=120)
-                    data["time"] = build_time_token(min2_ago_in_seconds, 60)
-                elif sequence_name == "Avg5minLAeq":
-                    data["url_prefix"] = prefix + "/single"
-
-                    min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
-                    data["time"] = build_time_token(min10_ago_in_seconds, MIN5_IN_SECONDS)
-                elif sequence_name == "CPBLZeq":
-                    data["url_prefix"] = prefix + "/array"
-                else:
-                    self._logger.debug(sequence_name + " not yet integrated!")
-                    continue
-
-                sequences_data.append(data)
+            start_timer_avg5min = time.time()
+            start_timer_annoyance = time.time()
 
             # These variables should be initialized to 0. The following values are used to force first requests.
             time_elapsed_avg_laeq = MIN5_IN_SECONDS
@@ -341,55 +313,119 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                             phenomenon_time = payload["value"][0]["startTime"]
                             self._slm_module.ogc_observation_registration(
                                 datastream_id, phenomenon_time, observation_result)
+                        else:
+                            self._logger.error("Property: '"+property_name+"' has NULL payload!")
+                            self._logger.info("Timestamp: " + seq["time"])
 
-                    time.sleep(UPDATE_INTERVAL)  # ## # ### # #### # ##### #
-                    self._logger.info("\n")     # ## # ### # #### # ##### #
+                    time.sleep(UPDATE_INTERVAL)  # ## # ### # #### # ##### # ######
+                    self._logger.info("")        # ## # ### # #### # ##### # ######
+                    self._logger.info("Time elapsed: "+str(int(time_elapsed_annoyance)))
 
                     # UPDATE INTERVALS
-                    time_elapsed_avg_laeq = time.time() - start_timer_avg5min
-                    time_elapsed_annoyance = time.time() - start_timer_annoyance
                     query_ts_start = query_ts_end
                     query_ts_end = util.from_utc_to_query(arrow.utcnow())
 
                     for seq in sequences_data:
                         property_name = seq["valueType"]
 
-                        if property_name == "Avg5minLAeq" and time_elapsed_avg_laeq >= MIN5_IN_SECONDS:
-                            time_elapsed_avg_laeq = 0
-                            start_timer_avg5min = time.time()
+                        if property_name == "Avg5minLAeq":
+                            if time_elapsed_avg_laeq >= MIN5_IN_SECONDS:  # updates only if time is elapsed
+                                start_timer_avg5min = time.time()
 
-                            min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
-                            seq["time"] = build_time_token(min10_ago_in_seconds, MIN5_IN_SECONDS)
-                        elif property_name == "Annoyance" and time_elapsed_annoyance >= 60:
-                            time_elapsed_annoyance = 0
-                            start_timer_annoyance = time.time()
+                                min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
+                                seq["time"] = build_time_token(min10_ago_in_seconds, MIN5_IN_SECONDS)
+                        elif property_name == "Annoyance":                # updates only if time is elapsed
+                            if time_elapsed_annoyance >= 60:
+                                start_timer_annoyance = time.time()
 
-                            min2_ago_in_seconds = arrow.utcnow() - timedelta(seconds=120)
-                            seq["time"] = build_time_token(min2_ago_in_seconds, 60)
+                                # min2_ago_in_seconds = arrow.utcnow() - timedelta(seconds=120)
+                                min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
+                                seq["time"] = build_time_token(min10_ago_in_seconds, 60)
                         else:
                             seq["time"] = '?startTime=' + query_ts_start + '&endTime=' + query_ts_end
+
+                    time_elapsed_avg_laeq = time.time() - start_timer_avg5min
+                    time_elapsed_annoyance = time.time() - start_timer_annoyance
+                    self._logger.info("Time elapsed: "+str(int(time_elapsed_annoyance))+"\n\n")
 
                 except ValueError:
                     if r.status_code == 401:
                         self._logger.info("\nAuthentication Token expired!\n")
                         self._slm_module.update_cloud_token()
 
+        def _init_sequences(self, r):
+            """ This method builds and initializes an array of data sequences using the result of an HTTP request.
+
+            :param r: The result of the http request.
+            :return: An array of sequences properly initialized.
+            """
+
+            time_token = build_time_token(arrow.utcnow(), UPDATE_INTERVAL)
+
+            sequences_data = []
+            for sequence in r.json()['value']:
+                self._logger.info(self._thread_name + " sequence:\n" + str(json.dumps(sequence)))
+                prefix = self._url_sequences + "/" + sequence["sequenceId"] + "/data"
+
+                sequence_name = sequence["name"]
+                data = {"valueType": sequence_name, "time": time_token}
+                if sequence_name == "LAeq" or sequence_name == "LCeq":
+                    data["url_prefix"] = prefix + "/single"
+                elif sequence_name == "Annoyance":
+                    data["url_prefix"] = prefix + "/single"
+
+                    # min2_ago_in_seconds = arrow.utcnow() - timedelta(seconds=120)
+                    # data["time"] = build_time_token(min2_ago_in_seconds, 60)
+
+                    min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
+                    data["time"] = build_time_token(min10_ago_in_seconds, 60)
+                elif sequence_name == "Avg5minLAeq":
+                    data["url_prefix"] = prefix + "/single"
+
+                    min10_ago_in_seconds = arrow.utcnow() - timedelta(seconds=600)
+                    data["time"] = build_time_token(min10_ago_in_seconds, MIN5_IN_SECONDS)
+                elif sequence_name == "CPBLZeq":
+                    data["url_prefix"] = prefix + "/array"
+                else:
+                    self._logger.info(sequence_name + " not yet integrated!")
+                    continue
+
+                sequences_data.append(data)
+
+            return sequences_data
+
     def ogc_observation_registration(self, datastream_id, phenomenon_time, observation_result):
+        """ This method sends an OBSERVATION to the MQTT broker.
+
+        :param datastream_id: The DATASTREAM ID to be used.
+        :param phenomenon_time: The time on which the OBSERVATION was recorded.
+        :param observation_result: The time on which you are processing the OBSERVATION.
+        :return: True if the message was send, False otherwise.
+        """
         # Preparing MQTT topic
         topic = self._topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
 
         # Preparing Payload
         observation = OGCObservation(datastream_id, phenomenon_time, observation_result, str(arrow.utcnow()))
 
+        to_ret = False
         # Publishing
         self._publish_mutex.acquire()
         try:
-            self.mqtt_publish(topic, json.dumps(observation.get_rest_payload()), to_print=False)
+            to_ret = self.mqtt_publish(topic, json.dumps(observation.get_rest_payload()), to_print=False)
         finally:
             self._publish_mutex.release()
 
+        return to_ret
+
 
 def build_time_token(utc_ts_end, update_interval):
+    """ This function build a time_token according to HTTP request format.
+
+    :param utc_ts_end: An arrow timestamp
+    :param update_interval: An amount of second that you want to subtract from the "utc_ts_end"
+    :return: A string like this: '?startTime=<start_time>&endTime=<end_time>'
+    """
     # Set time-window size in order to define the number of values you retrieve for each request (in UTC)
     utc_ts_start = utc_ts_end - timedelta(seconds=update_interval)
 
