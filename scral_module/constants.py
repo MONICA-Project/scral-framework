@@ -51,3 +51,6 @@ ERROR_NO_SERVER_CONNECTION = 4
 OGC_ID_KEY = "@iot.id"
 OGC_DEVICE_NAME_KEY = "name"
 GOST_RESULT_KEY = "value"
+
+# log
+DEFAULT_LOG_FORMATTER = "%(asctime)s.%(msecs)04d %(name)-7s %(levelname)s: %(message)s"

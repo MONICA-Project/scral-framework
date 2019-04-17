@@ -25,7 +25,7 @@ import configparser
 import requests
 from arrow.arrow import Arrow
 
-from scral_module.constants import DEFAULT_CONFIG, CREDITS
+from scral_module.constants import DEFAULT_CONFIG, CREDITS, DEFAULT_LOG_FORMATTER
 
 
 def init_logger(debug_level):
@@ -33,8 +33,7 @@ def init_logger(debug_level):
 
     logging.basicConfig(format="%(message)s")
     logging.getLogger().setLevel(level=debug_level)
-    logging.getLogger().handlers[0].setFormatter(logging.Formatter(
-        "%(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S"))
+    logging.getLogger().handlers[0].setFormatter(logging.Formatter(DEFAULT_LOG_FORMATTER, datefmt="%H:%M:%S"))
 
 
 def init_mirrored_logger(log_name, debug_level, output_filename=None):
@@ -42,25 +41,17 @@ def init_mirrored_logger(log_name, debug_level, output_filename=None):
         It is possible also to specify a filename on which the log will be mirrored.
 
     :param log_name: The name assigned to the new generated log.
-    :param output_file: A filename (or filepath) on which the log will be mirrored.
+    :param output_filename: A filename (or filepath) on which the log will be mirrored.
     :param debug_level: A debug value taken from logging class.
     :return: An entity of logging class.
     """
 
     logger = logging.getLogger(log_name)
 
-    formatter = logging.Formatter(
-        "("+log_name+") - %(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S")
-
-    ch = logging.StreamHandler()
-    ch.setLevel(level=debug_level)
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-
     if output_filename:
         fh = logging.FileHandler(output_filename)
         fh.setLevel(level=debug_level)
-        fh.setFormatter(formatter)
+        fh.setFormatter(logging.Formatter(DEFAULT_LOG_FORMATTER, datefmt="%H:%M:%S"))
         logger.addHandler(fh)
 
     return logger
