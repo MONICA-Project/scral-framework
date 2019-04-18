@@ -16,4 +16,4 @@ URI_ENV_NODE = URI_DEFAULT + "/env-node"
 
 ONEM2M_CONTENT_TYPE = "application/json:0"
 
-VPN_PORT = 8010
+VPN_PORT = 8760
