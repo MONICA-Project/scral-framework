@@ -13,7 +13,7 @@
 
 URI_DEFAULT = "/scral/v1.0/slm-gw"
 URI_SOUND_EVENT = URI_DEFAULT + "/sound-event"
-VPN_PORT = 8540
+VPN_PORT = 8550
 
 # CLOUD URLS and IDs
 URL_SLM_CLOUD = "https://bkcluster-test.bksv.com/monica/api/v1"

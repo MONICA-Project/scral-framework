@@ -258,7 +258,11 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         def __init__(self, thread_id, thread_name, device_id, url_sequences, slm_module):
             super().__init__()
 
-            self._logger = util.init_mirrored_logger(str(thread_id), logging.DEBUG, "microphone"+str(thread_id)+".log")
+            # Init Thread logger
+            self._logger = util.init_mirrored_logger(str(thread_id), logging.DEBUG)
+
+            # Enable log storage in file
+            #self._logger = util.init_mirrored_logger(str(thread_id), logging.DEBUG, "microphone"+str(thread_id)+".log")
 
             self._thread_name = thread_name
             self._thread_id = thread_id

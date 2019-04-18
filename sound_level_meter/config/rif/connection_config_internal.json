@@ -1,0 +1,19 @@
+{
+  "mqtt": {
+    "pub_broker": "mosquitto",
+    "pub_broker_port": 1883,
+    "broker_keepalive": 60
+  },
+  "REST": {
+    "ogc_server_address": "http://bgw-http-proxy:5050/gost_tivoli/v1.0",
+    "listening_address": {
+      "address": "0.0.0.0",
+      "port": "8000"
+    }
+  },
+  "cloud": {
+      "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
+      "SiteName": "Rhein in flammen 2019",
+      "SiteID": "18d65629-d57b-4787-ac79-592d1d0aec85"
+  }
+}
