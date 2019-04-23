@@ -201,6 +201,7 @@ class OGCConfiguration:
                                                              v_ds_unit_of_measure, v_ds_coord_x, v_ds_coord_y)
                 vds_id = self.entity_discovery(virtual_datastream, self.URL_DATASTREAMS, self.FILTER_NAME, verbose)
                 logging.info('Virtual DATASTREAM: "' + v_datastream_name + '" with id: ' + str(vds_id))
+                virtual_datastream.set_id(vds_id)
                 self._virtual_datastreams[vds_id] = virtual_datastream
 
         logging.info("--- End of OGC discovery---\n")
@@ -267,9 +268,9 @@ class OGCConfiguration:
         return len(self._observed_properties)
 
     def get_virtual_datastream(self, name):
-        for vds in self._virtual_datastreams:
-            if vds.get_name() == name:
-                return vds
+        for vds_key, vds_value in self._virtual_datastreams.items():
+            if vds_value.get_name() == name:
+                return vds_value
 
         return False
 
