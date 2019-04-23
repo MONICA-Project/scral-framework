@@ -119,7 +119,7 @@ def test_module():
     to_ret = "<h1>SCRAL is running!</h1>\n"
     link = VPN_URL+":"+str(VPN_PORT)
     to_ret += "<h2>SCRALEnvOneM2M is listening on address: "+link+"</h2>"
-    to_ret += "<h3>To send an OBSERVATION or to register a new device, send a POST request to: "\
+    to_ret += "<h3>To send an OBSERVATION or to REGISTER a new device, send a POST request to: " \
               + link + URI_ENV_NODE + "</h3>"
     return to_ret
 
