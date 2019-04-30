@@ -33,7 +33,7 @@ def init_logger(debug_level):
 
     logging.basicConfig(format="%(message)s")
     logging.getLogger().setLevel(level=debug_level)
-    logging.getLogger().handlers[0].setFormatter(logging.Formatter(DEFAULT_LOG_FORMATTER, datefmt="%H:%M:%S"))
+    logging.getLogger().handlers[0].setFormatter(logging.Formatter(DEFAULT_LOG_FORMATTER, datefmt="(%b-%d) %H:%M:%S"))
 
 
 def init_mirrored_logger(log_name, debug_level, output_filename=None):
@@ -51,7 +51,7 @@ def init_mirrored_logger(log_name, debug_level, output_filename=None):
     if output_filename:
         fh = logging.FileHandler(output_filename)
         fh.setLevel(level=debug_level)
-        fh.setFormatter(logging.Formatter(DEFAULT_LOG_FORMATTER, datefmt="%H:%M:%S"))
+        fh.setFormatter(logging.Formatter(DEFAULT_LOG_FORMATTER, datefmt="(%b-%d) %H:%M:%S"))
         logger.addHandler(fh)
 
     return logger
