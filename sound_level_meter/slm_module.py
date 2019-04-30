@@ -19,12 +19,14 @@ import requests
 import json
 import logging
 
+from urllib3.exceptions import NewConnectionError, MaxRetryError
+
 from scral_ogc import OGCDatastream, OGCObservation
 from scral_module.constants import REST_HEADERS
 from scral_module import util
 from scral_module.rest_module import SCRALRestModule
 
-from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, MIN5_IN_SECONDS
+from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, MIN5_IN_SECONDS, RETRY_INTERVAL
 
 
 class SCRALSoundLevelMeter(SCRALRestModule):
@@ -259,10 +261,10 @@ class SCRALSoundLevelMeter(SCRALRestModule):
             super().__init__()
 
             # Init Thread logger
-            self._logger = util.init_mirrored_logger(str(thread_id), logging.DEBUG)
+            self._logger = util.init_mirrored_logger("("+str(thread_id)+")", logging.DEBUG)
 
             # Enable log storage in file
-            #self._logger = util.init_mirrored_logger(str(thread_id), logging.DEBUG, "microphone"+str(thread_id)+".log")
+            # self._logger = util.init_mirrored_logger(str(thread_id), logging.DEBUG, "mic_"+str(thread_id)+".log")
 
             self._thread_name = thread_name
             self._thread_id = thread_id
@@ -307,6 +309,9 @@ class SCRALSoundLevelMeter(SCRALRestModule):
 
                         url = seq["url_prefix"] + seq["time"]
                         r = requests.get(url, headers=self._slm_module.get_cloud_token())
+                        if not r or not r.ok:
+                            raise Exception("Something wrong retrieving data!")
+
                         payload = r.json()  # ['value']
 
                         if payload["value"] and len(payload["value"]) >= 1:  # is the payload not empty?
@@ -323,7 +328,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
 
                     time.sleep(UPDATE_INTERVAL)  # ## # ### # #### # ##### # ######
                     self._logger.info("")        # ## # ### # #### # ##### # ######
-                    self._logger.info("Time elapsed: "+str(int(time_elapsed_annoyance)))
+                    self._logger.info("Time elapsed: " + str(int(time_elapsed_annoyance)))
 
                     # UPDATE INTERVALS
                     query_ts_start = query_ts_end
@@ -352,10 +357,22 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                     time_elapsed_annoyance = time.time() - start_timer_annoyance
                     self._logger.info("Time elapsed: "+str(int(time_elapsed_annoyance))+"\n\n")
 
-                except ValueError:
+                except ValueError as ve:
                     if r.status_code == 401:
                         self._logger.info("\nAuthentication Token expired!\n")
                         self._slm_module.update_cloud_token()
+                    else:
+                        self._logger.error("Unknown ValueError exception: " + str(ve))
+                except Exception as ex:
+                    if isinstance(ex, NewConnectionError):
+                        self._logger.error("Connection error: " + str(ex))
+                    elif isinstance(ex, MaxRetryError):
+                        self._logger.error("Too many connection attempts: " + str(ex))
+                    else:
+                        self._logger.error(str(ex))
+
+                    self._logger.info("Retrying after " + str(RETRY_INTERVAL) + " seconds.")
+                    time.sleep(RETRY_INTERVAL)
 
         def _init_sequences(self, r):
             """ This method builds and initializes an array of data sequences using the result of an HTTP request.
