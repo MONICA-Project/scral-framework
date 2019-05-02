@@ -13,6 +13,7 @@
 
 URI_DEFAULT = "/scral/v1.0/slm-gw"
 URI_SOUND_EVENT = URI_DEFAULT + "/sound-event"
+# RIF = 8550 --- Tivoli = 8540 --- Movida (to change?) = 8510
 VPN_PORT = 8550
 
 # CLOUD URLS and IDs

@@ -310,7 +310,11 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                         url = seq["url_prefix"] + seq["time"]
                         r = requests.get(url, headers=self._slm_module.get_cloud_token())
                         if not r or not r.ok:
-                            raise Exception("Something wrong retrieving data!")
+                            # ToDo: check with Jacopo. Value error exception is not automatically raised anymore...
+                            if r.status_code == 401:
+                                raise ValueError("Authentication token expired!")
+                            else:
+                                raise Exception("Something wrong retrieving data!")
 
                         payload = r.json()  # ['value']
 
