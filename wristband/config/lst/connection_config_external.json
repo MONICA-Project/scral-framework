@@ -1,0 +1,14 @@
+{
+  "mqtt": {
+    "pub_broker": "monapp-lst.monica-cloud.eu",
+    "pub_broker_port": 1883,
+    "broker_keepalive": 60
+  },
+  "REST": {
+    "ogc_server_address": "http://monapp-lst.monica-cloud.eu:8090/v1.0",
+    "listening_address": {
+      "address": "0.0.0.0",
+      "port": "8000"
+    }
+  }
+}

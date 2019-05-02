@@ -14,7 +14,13 @@ ADD wristband /monica-scral/wristband
 RUN pip3 install --no-cache-dir -r wristband/requirements.txt
 RUN pip3 install -e wristband
 
-# docker deploy - INTERNAL
-ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/tivoli/connection_config_internal.json -p TIVOLI
+### docker deploy - INTERNAL - TIVOLI
+# ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/tivoli/connection_config_internal.json -p TIVOLI
+
+# docker deploy - INTERNAL - LST
+ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/lst/connection_config_internal.json -p LST
+# docker deploy - EXTERNAL - LST
+ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/lst/connection_config_external.json -p LST
+
 # local testing:
 # ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/connection_config_local.json -p local
