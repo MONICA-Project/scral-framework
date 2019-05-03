@@ -11,7 +11,7 @@
       "port": "8000"
     }
   },
-    "cloud": {
+  "cloud": {
       "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
       "SiteName": "Rhein in flammen 2019",
       "SiteID": "18d65629-d57b-4787-ac79-592d1d0aec85"
