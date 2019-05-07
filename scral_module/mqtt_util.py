@@ -23,7 +23,7 @@ from paho.mqtt.client import MQTT_ERR_SUCCESS
 
 def on_connect(client, userdata, flags, rc):
     if rc == MQTT_ERR_SUCCESS:
-        logging.info("Connection with MQTT broker: '" + str(client._host) + "' successfully established|")
+        logging.info("Connection with MQTT broker: '" + str(client._host) + "' successfully established!")
     else:
         logging.critical("Connection failed, error code: "+str(rc))
 

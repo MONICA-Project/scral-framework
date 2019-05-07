@@ -20,7 +20,7 @@ RUN pip3 install -e wristband
 # docker deploy - INTERNAL - LST
 ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/lst/connection_config_internal.json -p LST
 # docker deploy - EXTERNAL - LST
-ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/lst/connection_config_external.json -p LST
+# ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/lst/connection_config_external.json -p LST
 
 # local testing:
 # ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/connection_config_local.json -p local
