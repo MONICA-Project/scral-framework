@@ -179,12 +179,18 @@ class SCRALSoundLevelMeter(SCRALRestModule):
             logging.error("Device " + device_id + " is not active.")
             return False
 
-        obs_prop = self._ogc_config.add_observed_property(ogc_obs_property)
-        device_coordinates = self._active_devices[device_id]["coordinates"]
-        device_name = self._active_devices[device_id]["name"]
-        device_description = self._active_devices[device_id]["description"]
+        if ogc_obs_property not in self.get_ogc_config().get_observed_properties():
+            ogc_obs_property = self._ogc_config.add_observed_property(ogc_obs_property)
 
-        datastream_id = self._new_datastream(obs_prop, device_id, device_name, device_coordinates, device_description)
+        try:
+            datastream_id = self._resource_catalog[device_id][ogc_obs_property.get_name()]
+        except KeyError:
+            device_coordinates = self._active_devices[device_id]["coordinates"]
+            device_name = self._active_devices[device_id]["name"]
+            device_description = self._active_devices[device_id]["description"]
+
+            datastream_id = self._new_datastream(
+                ogc_obs_property, device_id, device_name, device_coordinates, device_description)
         return datastream_id
 
     def _new_datastream(self, ogc_property, device_id, device_name, device_coordinates, device_description):
@@ -310,7 +316,6 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                         url = seq["url_prefix"] + seq["time"]
                         r = requests.get(url, headers=self._slm_module.get_cloud_token())
                         if not r or not r.ok:
-                            # ToDo: check with Jacopo. Value error exception is not automatically raised anymore...
                             if r.status_code == 401:
                                 raise ValueError("Authentication token expired!")
                             else:

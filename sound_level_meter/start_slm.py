@@ -59,7 +59,10 @@ def main():
 
 @flask_instance.route(URI_SOUND_EVENT, methods=["PUT"])
 def new_sound_event():
-    """ This function can register a new OBSERVATION in the OGC server.
+    """ This function can register an OBSERVATION in the OGC server.
+        It is able to accept any new OBSERVED PROPERTY according to the content of "type" field.
+        This new property is run-time generated.
+
     :return: An HTTP Response.
     """
     logging.debug(new_sound_event.__name__ + " method called")

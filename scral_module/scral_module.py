@@ -62,6 +62,7 @@ class SCRALModule(object):
         :param ogc_server_password: [OPT] The password related to the username.
         :return: An instance of OGCConfiguration.
         """
+
         global verbose  # overwrite verbose flag from command line
         if args.verbose:
             verbose = True
@@ -86,6 +87,7 @@ class SCRALModule(object):
         connection_config_file = util.load_from_file(args.connection_file)
         ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
 
+        # Testing OGC server connectivity
         if not util.test_connectivity(ogc_server_address, ogc_server_username, ogc_server_password):
             logging.critical("Network connectivity to " + ogc_server_address + " not available!")
             exit(ERROR_NO_SERVER_CONNECTION)
@@ -103,6 +105,7 @@ class SCRALModule(object):
         :param connection_file: The path of the connection file, it has to contain the address of the MQTT broker.
         :param pilot: The prefix of the MQTT topic used to publish information.
         """
+
         # 1 Storing the OGC configuration
         self._ogc_config = ogc_config
         # 2 Load connection configuration file
