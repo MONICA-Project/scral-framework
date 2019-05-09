@@ -19,7 +19,7 @@ import requests
 
 from scral_module import util
 from scral_module.scral_module import SCRALModule
-from phonometer.constants import URL_TENANT, ACTIVE_DEVICES
+from phonometer.constants import URL_TENANT, ACTIVE_DEVICES, FILTER_SDN_1, URL_CLOUD
 from scral_ogc import OGCObservation, OGCDatastream
 
 
@@ -85,7 +85,8 @@ class SCRALPhonometer(SCRALModule):
                         self._new_datastream(
                             ogc_property, device_id, device_coordinates, device_description)
 
-                self._active_devices[device_id]["location_sequences"] = url_sequences
+                url_sequence = URL_CLOUD + device_id + FILTER_SDN_1
+                self._active_devices[device_id]["sequence"] = url_sequence
 
             logging.info("--- End of OGC DATASTREAMs registration ---\n")
 
@@ -140,7 +141,7 @@ class SCRALPhonometer(SCRALModule):
 
         for device_id, values in self._active_devices.items():
             thread = SCRALPhonometer.PhonoThread(
-                thread_id, "Thread-" + str(thread_id), device_id, values["location_sequences"], self)
+                thread_id, "Thread-" + str(thread_id), device_id, values["sequence"], self)
             thread.start()
             thread_pool.append(thread)
             thread_id += 1
