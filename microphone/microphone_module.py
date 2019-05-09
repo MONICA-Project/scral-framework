@@ -24,17 +24,6 @@ from microphone.constants import SEQUENCES_KEY
 class SCRALMicrophone(SCRALModule):
     """ Resource manager for integration of Phonometers. """
 
-    def __init__(self, ogc_config, connection_file, pilot):
-        """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
-
-        :param connection_file: A file containing connection information.
-        :param pilot: The MQTT topic prefix on which information will be published.
-        """
-        super().__init__(ogc_config, connection_file, pilot)
-
-        self._publish_mutex = Lock()
-        self._active_devices = {}
-
     def _start_thread_pool(self, microphone_thread, locking=False):
         """ This method starts a thread for each active microphone (Sound Level Meter).
 

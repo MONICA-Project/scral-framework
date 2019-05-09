@@ -27,6 +27,8 @@ from scral_module import util
 from scral_module.rest_module import SCRALRestModule
 
 from microphone.microphone_module import SCRALMicrophone
+from microphone.constants import SEQUENCES_KEY
+
 from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, MIN5_IN_SECONDS, RETRY_INTERVAL
 
 
@@ -41,6 +43,9 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         :param pilot: The MQTT topic prefix on which information will be published.
         """
         super().__init__(ogc_config, connection_file, pilot)
+
+        self._publish_mutex = Lock()
+        self._active_devices = {}
 
         self._sequences = []
 
@@ -143,7 +148,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
 
             url_sequences = url + "/tenants/" + str(self._tenant_id) + "/sites/" + str(
                 self._site_id) + "/locations/" + str(location_id) + "/sequences"
-            self._active_devices[device_id]["location_sequences"] = url_sequences
+            self._active_devices[device_id][SEQUENCES_KEY] = url_sequences
         logging.info("\n\n--- End of active device discovery ---\n")
 
         # Start OGC Datastreams registration

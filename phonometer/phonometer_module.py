@@ -14,7 +14,7 @@ import time
 
 import arrow
 import logging
-from threading import Thread
+from threading import Thread, Lock
 
 import requests
 from datetime import timedelta
@@ -33,8 +33,19 @@ from phonometer.constants import URL_TENANT, ACTIVE_DEVICES, FILTER_SDN_1, URL_C
     SPECTRA_KEY, RETRY_INTERVAL, FREQ_INTERVALS, FILTER_SDN_2, FILTER_SDN_3
 
 
-class SCRALPhonometer(SCRALModule, SCRALMicrophone):
+class SCRALPhonometer(SCRALMicrophone):
     """ Resource manager for integration of Phonometers. """
+
+    def __init__(self, ogc_config, connection_file, pilot):
+        """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
+
+        :param connection_file: A file containing connection information.
+        :param pilot: The MQTT topic prefix on which information will be published.
+        """
+        super().__init__(ogc_config, connection_file, pilot)
+
+        self._publish_mutex = Lock()
+        self._active_devices = {}
 
     def runtime(self):
         """ This method discovers active Phonometers from SDN cloud, registers them as OGC Datastreams into the MONICA
@@ -44,7 +55,7 @@ class SCRALPhonometer(SCRALModule, SCRALMicrophone):
         self.ogc_datastream_registration(URL_TENANT)
 
         # Start thread pool for Observations
-        self._start_thread_pool(SCRALPhonometer.PhonoThread)
+        self._start_thread_pool(SCRALPhonometer.PhonoThread, True)
 
     def ogc_datastream_registration(self, url):
         """ This method receives a target URL as parameter and discovers active Phonometers.
@@ -79,12 +90,13 @@ class SCRALPhonometer(SCRALModule, SCRALMicrophone):
                     logging.debug("Device: " + device_name + " already registered with id: " + device_id)
                 else:
                     self._resource_catalog[device_id] = {}
+                    self._active_devices[device_id] = {}
                     # Iterate over ObservedProperties
                     for ogc_property in self._ogc_config.get_observed_properties():
                         self._new_datastream(
                             ogc_property, device_id, device_coordinates, device_description)
 
-                url_sequence = URL_CLOUD + device_id + FILTER_SDN_1
+                url_sequence = URL_CLOUD + '/' + device_id + '/' + FILTER_SDN_1
                 self._active_devices[device_id][SEQUENCES_KEY] = url_sequence
 
             logging.info("--- End of OGC DATASTREAMs registration ---\n")
@@ -156,8 +168,8 @@ class SCRALPhonometer(SCRALModule, SCRALMicrophone):
             while True:
                 try:
                     now = arrow.utcnow()
-                    query_ts_start = util.from_utc_to_query(now - timedelta(seconds=UPDATE_INTERVAL), False, False)
-                    query_ts_end = util.from_utc_to_query(arrow.utcnow(), False, False)
+                    query_ts_start = util.from_utc_to_query(now - timedelta(seconds=UPDATE_INTERVAL), True, False)
+                    query_ts_end = util.from_utc_to_query(arrow.utcnow(), True, False)
 
                     time_token = query_ts_start + FILTER_SDN_2 + query_ts_end + FILTER_SDN_3
                     url_data_seq = self._url_sequence + time_token
