@@ -10,32 +10,31 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
+import time
+
 import arrow
-import json
 import logging
-from threading import Thread, Lock
+from threading import Thread
 
 import requests
+from datetime import timedelta
+
+from urllib3.exceptions import NewConnectionError, MaxRetryError
 
 from scral_module import util
+from scral_module.constants import REST_HEADERS
 from scral_module.scral_module import SCRALModule
-from phonometer.constants import URL_TENANT, ACTIVE_DEVICES, FILTER_SDN_1, URL_CLOUD
-from scral_ogc import OGCObservation, OGCDatastream
+from scral_ogc import OGCDatastream
+
+from microphone.microphone_module import SCRALMicrophone
+from microphone.constants import SEQUENCES_KEY
+
+from phonometer.constants import URL_TENANT, ACTIVE_DEVICES, FILTER_SDN_1, URL_CLOUD, UPDATE_INTERVAL, LAEQ_KEY, \
+    SPECTRA_KEY, RETRY_INTERVAL, FREQ_INTERVALS, FILTER_SDN_2, FILTER_SDN_3
 
 
-class SCRALPhonometer(SCRALModule):
+class SCRALPhonometer(SCRALModule, SCRALMicrophone):
     """ Resource manager for integration of Phonometers. """
-
-    def __init__(self, ogc_config, connection_file, pilot):
-        """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
-
-        :param connection_file: A file containing connection information.
-        :param pilot: The MQTT topic prefix on which information will be published.
-        """
-        super().__init__(ogc_config, connection_file, pilot)
-
-        self._publish_mutex = Lock()
-        self._active_devices = {}
 
     def runtime(self):
         """ This method discovers active Phonometers from SDN cloud, registers them as OGC Datastreams into the MONICA
@@ -45,7 +44,7 @@ class SCRALPhonometer(SCRALModule):
         self.ogc_datastream_registration(URL_TENANT)
 
         # Start thread pool for Observations
-        self._start_thread_pool()
+        self._start_thread_pool(SCRALPhonometer.PhonoThread)
 
     def ogc_datastream_registration(self, url):
         """ This method receives a target URL as parameter and discovers active Phonometers.
@@ -86,7 +85,7 @@ class SCRALPhonometer(SCRALModule):
                             ogc_property, device_id, device_coordinates, device_description)
 
                 url_sequence = URL_CLOUD + device_id + FILTER_SDN_1
-                self._active_devices[device_id]["sequence"] = url_sequence
+                self._active_devices[device_id][SEQUENCES_KEY] = url_sequence
 
             logging.info("--- End of OGC DATASTREAMs registration ---\n")
 
@@ -131,34 +130,10 @@ class SCRALPhonometer(SCRALModule):
 
         return datastream_id
 
-    def _start_thread_pool(self, locking=False):
-        """ This method starts a thread for each active microphone.
-
-        :param locking: True if you would like to return from this methods only after all threads are completed.
-        """
-        thread_pool = []
-        thread_id = 1
-
-        for device_id, values in self._active_devices.items():
-            thread = SCRALPhonometer.PhonoThread(
-                thread_id, "Thread-" + str(thread_id), device_id, values["sequence"], self)
-            thread.start()
-            thread_pool.append(thread)
-            thread_id += 1
-
-        if len(thread_pool) <= 0:
-            logging.error("No thread detached, maybe no active devices.")
-        else:
-            logging.info("Threads detached")
-            if locking:
-                for thread in thread_pool:
-                    thread.join()
-                logging.error("All threads have been interrupted!")
-
     class PhonoThread(Thread):
         """ Each instance of this class manage a different microphone. """
 
-        def __init__(self, thread_id, thread_name, device_id, url_sequences, phonometer_module):
+        def __init__(self, thread_id, thread_name, device_id, url_sequence, phonometer_module):
             super().__init__()
 
             # Init Thread logger
@@ -170,32 +145,75 @@ class SCRALPhonometer(SCRALModule):
             self._thread_name = thread_name
             self._thread_id = thread_id
             self._device_id = device_id
-            self._url_sequences = url_sequences
+            self._url_sequence = url_sequence
             self._phonometer_module = phonometer_module
 
         def run(self):
             self._logger.info("Starting Thread: " + self._thread_name)
 
-    def ogc_observation_registration(self, datastream_id, phenomenon_time, observation_result):
-        """ This method sends an OBSERVATION to the MQTT broker.
+            rc = self._phonometer_module.get_resource_catalog()
+            self._logger.info("\n\n--- Start OGC OBSERVATIONs registration ---\n")
+            while True:
+                try:
+                    now = arrow.utcnow()
+                    query_ts_start = util.from_utc_to_query(now - timedelta(seconds=UPDATE_INTERVAL), False, False)
+                    query_ts_end = util.from_utc_to_query(arrow.utcnow(), False, False)
 
-        :param datastream_id: The DATASTREAM ID to be used.
-        :param phenomenon_time: The time on which the OBSERVATION was recorded.
-        :param observation_result: The time on which you are processing the OBSERVATION.
-        :return: True if the message was send, False otherwise.
-        """
-        # Preparing MQTT topic
-        topic = self._topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
+                    time_token = query_ts_start + FILTER_SDN_2 + query_ts_end + FILTER_SDN_3
+                    url_data_seq = self._url_sequence + time_token
 
-        # Preparing Payload
-        observation = OGCObservation(datastream_id, phenomenon_time, observation_result, str(arrow.utcnow()))
+                    r = requests.get(url_data_seq, headers=REST_HEADERS)
+                    if not r or not r.ok:
+                        raise Exception("Something wrong retrieving data!")
 
-        to_ret = False
-        # Publishing
-        self._publish_mutex.acquire()
-        try:
-            to_ret = self.mqtt_publish(topic, json.dumps(observation.get_rest_payload()), to_print=False)
-        finally:
-            self._publish_mutex.release()
+                    payload = r.json()["d"]["results"]
 
-        return to_ret
+                    if payload and len(payload) >= 1:  # is the payload not empty?
+                        data_laeq = []
+                        data_spectra = []
+
+                        for result in payload:
+                            data_laeq.append(float(result[LAEQ_KEY]))
+
+                            spectra = [0]
+                            for interval in FREQ_INTERVALS:
+                                band = 'b_' + interval + '_Hz'
+                                freq_value = result[band]
+                                # freq_value might be NULL or negative
+                                if not freq_value or float(freq_value) < 0:
+                                    spectra.append(0)
+                                else:
+                                    spectra.append(float(freq_value))
+
+                            data_spectra.append(spectra)
+
+                            # Registering LAEq value in GOST
+                            datastream_id = rc[self._device_id][LAEQ_KEY]
+                            phenomenon_time = query_ts_start
+                            observation_result = {"valueType": LAEQ_KEY, "response": data_laeq}
+                            self._phonometer_module.ogc_observation_registration(
+                                datastream_id, phenomenon_time, observation_result)
+
+                            # Registering spectra value in GOST
+                            datastream_id = rc[self._device_id][SPECTRA_KEY]
+                            phenomenon_time = query_ts_start
+                            observation_result = {"valueType": SPECTRA_KEY, "response": data_spectra}
+                            self._phonometer_module.ogc_observation_registration(
+                                datastream_id, phenomenon_time, observation_result)
+
+                    else:
+                        self._logger.error("Empty Payload!")
+
+                    time.sleep(UPDATE_INTERVAL)
+                # Loop End
+
+                except Exception as ex:
+                    if isinstance(ex, NewConnectionError):
+                        self._logger.error("Connection error: " + str(ex))
+                    elif isinstance(ex, MaxRetryError):
+                        self._logger.error("Too many connection attempts: " + str(ex))
+                    else:
+                        self._logger.error(str(ex))
+
+                    self._logger.info("Retrying after " + str(RETRY_INTERVAL) + " seconds.")
+                    time.sleep(RETRY_INTERVAL)

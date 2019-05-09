@@ -21,15 +21,16 @@ import logging
 
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
-from scral_ogc import OGCDatastream, OGCObservation
+from scral_ogc import OGCDatastream
 from scral_module.constants import REST_HEADERS
 from scral_module import util
 from scral_module.rest_module import SCRALRestModule
 
+from microphone.microphone_module import SCRALMicrophone
 from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, MIN5_IN_SECONDS, RETRY_INTERVAL
 
 
-class SCRALSoundLevelMeter(SCRALRestModule):
+class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
     """ Resource manager for integration of the SLM-GW (by usage of B&K's IoT Sound Level Meters). """
 
     def __init__(self, ogc_config, connection_file, pilot,
@@ -42,9 +43,6 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         super().__init__(ogc_config, connection_file, pilot)
 
         self._sequences = []
-        self._active_devices = {}
-
-        self._publish_mutex = Lock()
 
         self._url_login = url_login
         self._credential = credentials
@@ -82,7 +80,7 @@ class SCRALSoundLevelMeter(SCRALRestModule):
         self.ogc_datastream_registration(URL_SLM_CLOUD)
 
         # Start thread pool for Observations
-        self._start_thread_pool()
+        self._start_thread_pool(SCRALSoundLevelMeter.SLMThread)
 
         # starting REST web server
         super().runtime(flask_instance)
@@ -235,30 +233,6 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                           + device_id + " and property: " + property_name)
 
         return datastream_id
-
-    def _start_thread_pool(self, locking=False):
-        """ This method starts a thread for each active microphone (Sound Level Meter).
-
-        :param locking: True if you would like to return from this methods only after all threads are completed.
-        """
-        thread_pool = []
-        thread_id = 1
-
-        for device_id, values in self._active_devices.items():
-            thread = SCRALSoundLevelMeter.SLMThread(
-                thread_id, "Thread-" + str(thread_id), device_id, values["location_sequences"], self)
-            thread.start()
-            thread_pool.append(thread)
-            thread_id += 1
-
-        if len(thread_pool) <= 0:
-            logging.error("No thread detached, maybe no active devices.")
-        else:
-            logging.info("Threads detached")
-            if locking:
-                for thread in thread_pool:
-                    thread.join()
-                logging.error("All threads have been interrupted!")
 
     class SLMThread(Thread):
         """ Each instance of thiss class manage a different microphone. """
@@ -423,30 +397,6 @@ class SCRALSoundLevelMeter(SCRALRestModule):
                 sequences_data.append(data)
 
             return sequences_data
-
-    def ogc_observation_registration(self, datastream_id, phenomenon_time, observation_result):
-        """ This method sends an OBSERVATION to the MQTT broker.
-
-        :param datastream_id: The DATASTREAM ID to be used.
-        :param phenomenon_time: The time on which the OBSERVATION was recorded.
-        :param observation_result: The time on which you are processing the OBSERVATION.
-        :return: True if the message was send, False otherwise.
-        """
-        # Preparing MQTT topic
-        topic = self._topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
-
-        # Preparing Payload
-        observation = OGCObservation(datastream_id, phenomenon_time, observation_result, str(arrow.utcnow()))
-
-        to_ret = False
-        # Publishing
-        self._publish_mutex.acquire()
-        try:
-            to_ret = self.mqtt_publish(topic, json.dumps(observation.get_rest_payload()), to_print=False)
-        finally:
-            self._publish_mutex.release()
-
-        return to_ret
 
 
 def build_time_token(utc_ts_end, update_interval):

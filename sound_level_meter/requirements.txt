@@ -4,3 +4,4 @@ requests
 configparser
 flask
 cherrypy
+urllib3
