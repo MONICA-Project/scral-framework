@@ -9,6 +9,7 @@ EXPOSE 8000
 ADD scral_startup.py /monica-scral
 ADD scral_ogc /monica-scral/scral_ogc
 ADD scral_module /monica-scral/scral_module
+ADD microphone /monica-scral/microphone
 ADD sound_level_meter /monica-scral/sound_level_meter
 
 RUN pip3 install --no-cache-dir -r sound_level_meter/requirements.txt

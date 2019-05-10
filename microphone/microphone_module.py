@@ -68,7 +68,7 @@ class SCRALMicrophone(SCRALModule):
         # Publishing
         self._publish_mutex.acquire()
         try:
-            to_ret = self.mqtt_publish(topic, json.dumps(observation.get_rest_payload()), to_print=False)
+            to_ret = self.mqtt_publish(topic, json.dumps(observation.get_rest_payload()), to_print=True)
         finally:
             self._publish_mutex.release()
 
