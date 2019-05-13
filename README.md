@@ -29,20 +29,31 @@ pip3 install -r requirements.txt
 
 ### How to use SCRAL
 ```
-        _____ _____ ____  ___    __
-       / ___// ____/ __ \/   |  / /
-       \__ \/ /   / /_/ / /| | / /
-      ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer
+        _____ __________  ___    __                                     
+       / ___// ____/ __ \/   |  / /                                     
+       \__ \/ /   / /_/ / /| | / /                                      
+      ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer                                 
      /____/\____/_/ |_/_/  |_/_____/   v2.0 - enhanced by Python 3
 
      (c) 2019, LINKS Foundation
      developed by Jacopo Foglietti & Luca Mannella
 
 
+usage: SCRAL [-h] [-v] [-o OGC_FILE] [-c CONNECTION_FILE] [-p PILOT]
+
 Smart City Resource Adaptation Layer
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v, --verbose         enable verbose mode
+  -o OGC_FILE, --ogc OGC_FILE
+                        the path of the OGC configuration file
+  -c CONNECTION_FILE, --conn CONNECTION_FILE
+                        the path of the connection configuration
+  -p PILOT, --pilot PILOT
+                        the name of the desired pilot
+
+example: start_module.py -v -f ./my_conf.conf -c external -p MOVIDA
   
 ```
 

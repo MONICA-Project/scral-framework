@@ -11,7 +11,6 @@
 #                                                                           #
 #############################################################################
 import logging
-from threading import Lock
 
 import arrow
 import json
