@@ -131,7 +131,8 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
             # Get device id, name, description and coordinates information stored in location item
             location_item = r.json()
             device_id = location_item["assignedDevices"][0]["deviceId"]
-            device_name = location_item["assignedDevices"][0]["name"]
+            # device_name = location_item["assignedDevices"][0]["name"]  # sometimes is apparently wrong
+            device_name = location_item["name"]
             device_description = location_item["assignedDevices"][0]["description"]
             location_coordinates = location_item["geoLocation"]
             logging.debug("SLM id: " + str(device_id) + " / SLM name: " + device_name)
@@ -149,12 +150,14 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
             url_sequences = url + "/tenants/" + str(self._tenant_id) + "/sites/" + str(
                 self._site_id) + "/locations/" + str(location_id) + "/sequences"
             self._active_devices[device_id][SEQUENCES_KEY] = url_sequences
-        logging.info("\n\n--- End of active device discovery ---\n")
+        logging.info("\n\n--- End of active device discovery. "
+                     "There are "+str(len(self._active_devices))+" active devices. ---\n")
 
         # Start OGC Datastreams registration
         logging.info("\n\n--- Start OGC DATASTREAMs registration ---\n")
 
         # Iterate over active devices
+        i = 0
         for device_id, values in self._active_devices.items():
             device_name = values["name"]
             device_coordinates = values["coordinates"]
@@ -169,7 +172,8 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
                 for ogc_property in self._ogc_config.get_observed_properties():
                     self._new_datastream(ogc_property, device_id, device_name, device_coordinates, device_description)
 
-        logging.info("--- End of OGC DATASTREAMs registration ---\n")
+        logging.info("\n\n--- End of OGC DATASTREAMs registration. "
+                     + str(len(self._ogc_config.get_datastreams()))+" datastreams were registered. ---\n")
 
     def new_datastream(self, device_id, ogc_obs_property):
         """ This method have to be called when you want to add a new DATASTREAM.
