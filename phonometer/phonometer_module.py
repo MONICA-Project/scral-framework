@@ -169,7 +169,7 @@ class SCRALPhonometer(SCRALMicrophone):
                 try:
                     now = arrow.utcnow()
                     query_ts_start = util.from_utc_to_query(now - timedelta(seconds=UPDATE_INTERVAL), True, False)
-                    query_ts_end = util.from_utc_to_query(arrow.utcnow(), True, False)
+                    query_ts_end = util.from_utc_to_query(now, True, False)
 
                     time_token = query_ts_start + FILTER_SDN_2 + query_ts_end + FILTER_SDN_3
                     url_data_seq = self._url_sequence + time_token
@@ -187,7 +187,7 @@ class SCRALPhonometer(SCRALMicrophone):
                         for result in payload:
                             data_laeq.append(float(result[LAEQ_KEY]))
 
-                            spectra = [0]
+                            spectra = [0]  # adding a leading 0 to uniform with SLM microphones
                             for interval in FREQ_INTERVALS:
                                 band = 'b_' + interval + '_Hz'
                                 freq_value = result[band]
@@ -199,20 +199,19 @@ class SCRALPhonometer(SCRALMicrophone):
 
                             data_spectra.append(spectra)
 
-                            # Registering LAEq value in GOST
-                            datastream_id = rc[self._device_id][LAEQ_KEY]
-                            phenomenon_time = query_ts_start
-                            observation_result = {"valueType": LAEQ_KEY, "response": data_laeq}
-                            self._phonometer_module.ogc_observation_registration(
-                                datastream_id, phenomenon_time, observation_result)
+                        # Registering LAEq value in GOST
+                        datastream_id = rc[self._device_id][LAEQ_KEY]
+                        phenomenon_time = query_ts_start
+                        observation_result = {"valueType": LAEQ_KEY, "response": data_laeq}
+                        self._phonometer_module.ogc_observation_registration(
+                            datastream_id, phenomenon_time, observation_result)
 
-                            # Registering spectra value in GOST
-                            datastream_id = rc[self._device_id][SPECTRA_KEY]
-                            phenomenon_time = query_ts_start
-                            observation_result = {"valueType": SPECTRA_KEY, "response": data_spectra}
-                            self._phonometer_module.ogc_observation_registration(
-                                datastream_id, phenomenon_time, observation_result)
-
+                        # Registering spectra value in GOST
+                        datastream_id = rc[self._device_id][SPECTRA_KEY]
+                        phenomenon_time = query_ts_start
+                        observation_result = {"valueType": SPECTRA_KEY, "response": data_spectra}
+                        self._phonometer_module.ogc_observation_registration(
+                            datastream_id, phenomenon_time, observation_result)
                     else:
                         self._logger.error("Empty Payload!")
 

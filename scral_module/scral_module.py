@@ -166,7 +166,9 @@ class SCRALModule(object):
         :return: True if the data was successfully sent, False otherwise.
         """
         if to_print:
-            logging.info("\nOn topic '" + topic + "' will be send the following payload:\n" + str(payload))
+            msg = "\nOn topic '" + topic + "' will be send the following payload:\n" + str(payload)
+            logging.info(msg)
+
         info = self._mqtt_publisher.publish(topic, payload, qos)
 
         if info.rc == mqtt.MQTT_ERR_SUCCESS:
