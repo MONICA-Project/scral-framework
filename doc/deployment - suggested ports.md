@@ -22,6 +22,7 @@ Leeds modules       use port xx10. \
 DOM modules         use port xx30. \
 TIVOLI modules      use port xx40. \
 RIF modules         use port xx50. \
-Nuits Sonores       use port xx60.
+Nuits Sonores       use port xx60. \
+Movida modules      use port xx70. 
 
 FUTURE USES modules use port xx99.

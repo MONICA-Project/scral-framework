@@ -4,7 +4,8 @@ URI_CAMERA = URI_DEFAULT + "/camera"
 URI_CDG = URI_DEFAULT + "/crowd-density-global"
 
 # Port
-VPN_PORT = 8350
+# Movida = 8370 --- RIF = 8350 --- Tivoli = 8340
+VPN_PORT = 8370
 
 # Types
 CAMERA_SENSOR_TYPE = "Camera"

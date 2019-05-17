@@ -13,8 +13,8 @@
 
 URI_DEFAULT = "/scral/v1.0/slm-gw"
 URI_SOUND_EVENT = URI_DEFAULT + "/sound-event"
-# RIF = 8550 --- Tivoli = 8540 --- Movida (to change?) = 8510
-VPN_PORT = 8550
+# Movida = 8570 --- NS = 8560 --- RIF = 8550 --- Tivoli = 8540
+VPN_PORT = 8560
 
 # CLOUD URLS and IDs
 URL_SLM_CLOUD = "https://bkcluster-test.bksv.com/monica/api/v1"
