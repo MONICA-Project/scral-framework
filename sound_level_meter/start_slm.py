@@ -23,6 +23,7 @@ PHASE: INTEGRATION
 """
 
 #############################################################################
+import copy
 import logging
 import sys
 import signal
@@ -37,7 +38,7 @@ from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
 from sound_level_meter.constants import VPN_PORT, URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, \
-    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT
+    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT, DEVICE_NAME_KEY
 
 flask_instance = Flask(__name__)
 module: SCRALSoundLevelMeter = None
@@ -97,8 +98,14 @@ def get_active_devices():
     :return: A JSON containing thr resource catalog.
     """
     logging.debug(get_active_devices.__name__ + " method called")
-    to_ret = jsonify(module.get_resource_catalog())
-    return make_response(to_ret, 200)
+
+    rc_copy = copy.deepcopy(module.get_resource_catalog())
+    new_rc = {}
+    for item in rc_copy.values():
+        key = item.pop(DEVICE_NAME_KEY)
+        new_rc[key] = item
+
+    return make_response(jsonify(new_rc), 200)
 
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
