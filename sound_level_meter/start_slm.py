@@ -36,8 +36,8 @@ from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END
     VPN_URL
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
-from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, URI_DEFAULT, URI_SOUND_EVENT, \
-    VPN_PORT
+from sound_level_meter.constants import VPN_PORT, URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, \
+    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT
 
 flask_instance = Flask(__name__)
 module: SCRALSoundLevelMeter = None
@@ -91,13 +91,29 @@ def new_sound_event():
         return make_response(jsonify({"Result": "Ok"}), 201)
 
 
+@flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
+def get_active_devices():
+    """ This endpoint gives access to the resource catalog.
+    :return: A JSON containing thr resource catalog.
+    """
+    logging.debug(get_active_devices.__name__ + " method called")
+    to_ret = jsonify(module.get_resource_catalog())
+    return make_response(to_ret, 200)
+
+
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
 def test_module():
-    """ Checking if SCRAL is running. """
+    """ Checking if SCRAL is running.
+    :return: A str containing some information about possible endpoints.
+    """
     logging.debug(test_module.__name__ + " method called \n")
 
-    link = VPN_URL + ":" + str(VPN_PORT)
-    return util.to_html_documentation("SCRALSoundLevelMeter", link, [], [URI_SOUND_EVENT])
+    link = VPN_URL+":"+str(VPN_PORT)
+    posts = ()
+    puts = (URI_SOUND_EVENT, )
+    gets = (URI_ACTIVE_DEVICES, )
+    to_ret = util.to_html_documentation("SCRALSmartGlasses", link, posts, puts, gets)
+    return to_ret
 
 
 if __name__ == '__main__':

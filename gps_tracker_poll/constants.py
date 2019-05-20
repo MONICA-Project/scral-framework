@@ -10,6 +10,10 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
+"""
+    SCRAL - constants
+    This file contains useful constants for this module.
+"""
 import random
 
 BROKER_HAMBURG_ADDRESS = "test.geoportal-hamburg.de"  # testing address: "broker.mqttdashboard.com"

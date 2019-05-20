@@ -157,7 +157,6 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         logging.info("\n\n--- Start OGC DATASTREAMs registration ---\n")
 
         # Iterate over active devices
-        i = 0
         for device_id, values in self._active_devices.items():
             device_name = values["name"]
             device_coordinates = values["coordinates"]
@@ -168,6 +167,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
                 logging.debug("Device: " + device_name + " already registered with id: " + device_id)
             else:
                 self._resource_catalog[device_id] = {}
+                self._resource_catalog[device_id]["device_name"] = device_name
                 # Iterate over ObservedProperties
                 for ogc_property in self._ogc_config.get_observed_properties():
                     self._new_datastream(ogc_property, device_id, device_name, device_coordinates, device_description)

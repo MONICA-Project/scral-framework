@@ -10,6 +10,11 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
+"""
+    SCRAL - constants
+    This file contains useful constants for this module.
+"""
+
 URL_CLOUD = "https://api.smartdatanet.it/api"
 URL_TENANT = "https://api.smartdatanet.it/metadataapi/api/v02/search?tenant=cittato_rumore&top=1000"
 

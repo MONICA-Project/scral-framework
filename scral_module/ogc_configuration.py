@@ -280,10 +280,13 @@ class OGCConfiguration:
     def get_datastream(self, datastream_id):
         return self._datastreams[datastream_id]
 
-    def num_active_devices(self):
-        return len(self._datastreams)/len(self._observed_properties)
-
     def add_observed_property(self, ogc_obs_property):
+        """ This method adds a new observed property inside the OGCConfiguration.
+            If something wrong during the entity discovery of this new property a ValueError exception is raised.
+
+        :param ogc_obs_property: The observed property that you want to add. It must have an ID.
+        :return: The observed property with the GOST id.
+        """
         obs_id = self.entity_discovery(ogc_obs_property, self.URL_PROPERTIES, self.FILTER_NAME)
         if not obs_id:
             raise ValueError("The OBSERVED PROPERTY does not have an ID")
@@ -296,6 +299,11 @@ class OGCConfiguration:
         return ogc_obs_property
 
     def add_datastream(self, datastream):
+        """ This method adds a new datastream inside the OGCConfiguration.
+            If the datastream does not have an ID, a ValueError exception is raised.
+
+        :param datastream: The datastream that you want to add. It must have an ID.
+        """
         datastream_id = datastream.get_id()
         if not datastream_id:
             raise ValueError("The DATASTREAM does not have an ID")

@@ -10,11 +10,20 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
+"""
+    SCRAL - constants
+    This file contains useful constants for this module.
+"""
 
-URI_DEFAULT = "/scral/v1.0/slm-gw"
-URI_SOUND_EVENT = URI_DEFAULT + "/sound-event"
+# PORT
 # Movida = 8570 --- NS = 8560 --- RIF = 8550 --- Tivoli = 8540
 VPN_PORT = 8560
+
+# URI
+URI_DEFAULT = "/scral/v1.0/slm-gw"
+URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"
+URI_SOUND_EVENT = URI_DEFAULT + "/sound-event"
+
 
 # CLOUD URLS and IDs
 URL_SLM_CLOUD = "https://bkcluster-test.bksv.com/monica/api/v1"

@@ -35,7 +35,7 @@ from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END
 
 from gps_tracker.constants import ALERT, LOCALIZATION
 from gps_tracker_rest.constants import VPN_PORT, \
-    URI_GPS_TAG_REGISTRATION, URI_GPS_TAG_LOCALIZATION, URI_DEFAULT, URI_GPS_TAG_ALERT
+    URI_GPS_TAG_REGISTRATION, URI_GPS_TAG_LOCALIZATION, URI_DEFAULT, URI_ACTIVE_DEVICES, URI_GPS_TAG_ALERT
 from gps_tracker_rest.gps_rest_module import SCRALGPSRest
 
 flask_instance = Flask(__name__)
@@ -113,6 +113,16 @@ def put_observation(observed_property, payload):
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
 
+@flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
+def get_active_devices():
+    """ This endpoint gives access to the resource catalog.
+    :return: A JSON containing thr resource catalog.
+    """
+    logging.debug(get_active_devices.__name__ + " method called")
+    to_ret = jsonify(module.get_resource_catalog())
+    return make_response(to_ret, 200)
+
+
 @flask_instance.route(URI_DEFAULT)
 def test_module():
     """ Checking if SCRAL is running. """
@@ -121,7 +131,8 @@ def test_module():
     link = VPN_URL+":"+str(VPN_PORT)
     posts = (URI_GPS_TAG_REGISTRATION, )
     puts = (URI_GPS_TAG_LOCALIZATION, URI_GPS_TAG_ALERT)
-    to_ret = util.to_html_documentation("SCRALGPSRest", link, posts, puts)
+    gets = (URI_ACTIVE_DEVICES, )
+    to_ret = util.to_html_documentation("SCRALGPSRest", link, posts, puts, gets)
     return to_ret
 
 

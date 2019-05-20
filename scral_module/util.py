@@ -224,9 +224,19 @@ def from_utc_to_query(utc_timestamp: Arrow, remove_milliseconds=True, html_forma
     return time_stamp
 
 
-def to_html_documentation(module_name, link, posts, puts):
+def to_html_documentation(module_name, link, posts, puts, gets):
+    """ This function create a piece of HTML containing the list of the desired endpoints.
+
+    :param module_name: The name of the SCRAL module, it will be visualized in the generated HTML.
+    :param link: The base link of the endpoints.
+    :param posts: All the available POST endpoints, if not available please provide an empty list.
+    :param puts: All the available PUT endpoints, if not available please provide an empty list.
+    :param gets: All the available GET endpoints, if not available please provide an empty list.
+    :return: Some HTML code properly formatted.
+    """
     to_ret = "<h1>SCRAL is running!</h1>\n"
     to_ret += "<h2> "+module_name+" is listening on address \""+link+"\"</h2>"
+
     to_ret += "<h3>"
     if len(posts) > 0:
         to_ret += "To REGISTER a new device, please send a POST request to: <ul>"
@@ -238,5 +248,11 @@ def to_html_documentation(module_name, link, posts, puts):
         for put_url in puts:
             to_ret += "<li>" + link + put_url + "</li>"
         to_ret += "</ul>"
+    if len(gets) > 0:
+        to_ret += "To retrieve a particular resource, please send a GET request to: <ul>"
+        for get_url in gets:
+            to_ret += "<li>" + link + get_url + "</li>"
+        to_ret += "</ul>"
     to_ret += "</h3>"
+
     return to_ret

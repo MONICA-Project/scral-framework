@@ -10,5 +10,9 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
+"""
+    SCRAL - constants
+    This file contains useful constants for this module.
+"""
 
 SEQUENCES_KEY = "sequences"

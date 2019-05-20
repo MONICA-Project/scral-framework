@@ -47,8 +47,9 @@ verbose = False
 
 class SCRALModule(object):
     """ This class is the base entity of SCRAL framework.
-        When you want to develop a new SCRAL module, you have to extend this class, extend (if necessary) the __init__
-        initializer and to implement the runtime method (that actually does not have a default implementation.
+        When you want to develop a new SCRAL module, you have to extend this class (or one of the realted subclasses
+        e.g., SCRALRESTModule), extend (if necessary) the __init__ initializer and
+        to implement the runtime method (that actually does not have a default implementation).
     """
 
     @staticmethod

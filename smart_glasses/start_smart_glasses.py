@@ -33,8 +33,9 @@ import scral_module as scral
 from scral_module import util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
 
-from smart_glasses.constants import URI_DEFAULT, URI_GLASSES_REGISTRATION, URI_GLASSES_LOCALIZATION, \
-    URI_GLASSES_INCIDENT, PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDENT_NAME, CATALOG_NAME_GLASSES, VPN_PORT
+from smart_glasses.constants import URI_DEFAULT, CATALOG_NAME_GLASSES, VPN_PORT, \
+    URI_ACTIVE_DEVICES, URI_GLASSES_REGISTRATION, URI_GLASSES_LOCALIZATION, \
+    URI_GLASSES_INCIDENT, PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDENT_NAME
 from smart_glasses.smart_glasses_module import SCRALSmartGlasses
 
 flask_instance = Flask(__name__)
@@ -129,15 +130,29 @@ def put_observation(observed_property, payload):
             return make_response(jsonify({"Error": "Internal server error"}), 500)
 
 
+@flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
+def get_active_devices():
+    """ This endpoint gives access to the resource catalog.
+    :return: A JSON containing thr resource catalog.
+    """
+    logging.debug(get_active_devices.__name__ + " method called")
+    to_ret = jsonify(module.get_resource_catalog())
+    return make_response(to_ret, 200)
+
+
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
 def test_module():
-    """ Checking if SCRAL is running. """
+    """ Checking if SCRAL is running.
+    :return: A str containing some information about possible endpoints.
+    """
     logging.debug(test_module.__name__ + " method called \n")
 
-    link = VPN_URL + ":" + str(VPN_PORT)
-    posts = [URI_GLASSES_REGISTRATION]
-    puts = [URI_GLASSES_LOCALIZATION, URI_GLASSES_INCIDENT]
-    return util.to_html_documentation("SCRALSmartGlasses", link, posts, puts)
+    link = VPN_URL+":"+str(VPN_PORT)
+    posts = (URI_GLASSES_REGISTRATION, )
+    puts = (URI_GLASSES_LOCALIZATION, URI_GLASSES_INCIDENT)
+    gets = (URI_ACTIVE_DEVICES, )
+    to_ret = util.to_html_documentation("SCRALSmartGlasses", link, posts, puts, gets)
+    return to_ret
 
 
 if __name__ == '__main__':
