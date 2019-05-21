@@ -60,7 +60,7 @@ def new_glasses_request():
     """ This function can register new glasses in the OGC server.
     :return: An HTTP Response.
     """
-    logging.debug(new_glasses_request.__name__ + " method called")
+    logging.debug(new_glasses_request.__name__ + " method called from: "+request.remote_addr+" \n")
 
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
@@ -90,7 +90,7 @@ def new_glasses_localization():
     """ This function can register new glasses location in the OGC server.
     :return: An HTTP Response.
     """
-    logging.debug(new_glasses_localization.__name__ + " method called")
+    logging.debug(new_glasses_localization.__name__ + " method called from: "+request.remote_addr+" \n")
     response = put_observation(PROPERTY_LOCALIZATION_NAME, request.json)
     return response
 
@@ -100,7 +100,8 @@ def new_glasses_incident():
     """ This function can register new glasses incident in the OGC server.
     :return: An HTTP Response.
     """
-    logging.debug(new_glasses_incident.__name__ + " method called")
+    logging.debug(new_glasses_incident.__name__ + " method called from: "+request.remote_addr+" \n")
+
     response = put_observation(PROPERTY_INCIDENT_NAME, request.json)
     return response
 
@@ -135,7 +136,8 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug(get_active_devices.__name__ + " method called")
+    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr+" \n")
+
     to_ret = jsonify(module.get_resource_catalog())
     return make_response(to_ret, 200)
 
@@ -145,7 +147,7 @@ def test_module():
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug(test_module.__name__ + " method called \n")
+    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
 
     link = VPN_URL+":"+str(VPN_PORT)
     posts = (URI_GLASSES_REGISTRATION, )

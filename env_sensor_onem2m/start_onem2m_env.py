@@ -58,7 +58,7 @@ def main():
 @flask_instance.route(URI_ENV_NODE, methods=["POST"])
 def new_onem2m_request():
     """ This function is called when a OneM2M post request is received. """
-    logging.debug(new_onem2m_request.__name__ + " method called")
+    logging.debug(new_onem2m_request.__name__ + " method called from: "+request.remote_addr+" \n")
 
     container_path = str(request.json["m2m:sgn"]["sur"])
     substrings = container_path.split("/")
@@ -114,7 +114,8 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug(get_active_devices.__name__ + " method called")
+    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr+" \n")
+
     to_ret = jsonify(module.get_resource_catalog())
     return make_response(to_ret, 200)
 
@@ -124,7 +125,7 @@ def test_module():
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug(test_module.__name__ + " method called")
+    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
 
     to_ret = "<h1>SCRAL is running!</h1>\n"
     link = VPN_URL+":"+str(VPN_PORT)

@@ -66,7 +66,7 @@ def new_sound_event():
 
     :return: An HTTP Response.
     """
-    logging.debug(new_sound_event.__name__ + " method called")
+    logging.debug(new_sound_event.__name__ + " method called from: "+request.remote_addr+" \n")
 
     payload = request.json
     property_name = payload["type"]
@@ -97,7 +97,7 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug(get_active_devices.__name__ + " method called")
+    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr+" \n")
 
     rc_copy = copy.deepcopy(module.get_resource_catalog())
     new_rc = {}
@@ -113,7 +113,7 @@ def test_module():
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug(test_module.__name__ + " method called \n")
+    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
 
     link = VPN_URL+":"+str(VPN_PORT)
     posts = ()

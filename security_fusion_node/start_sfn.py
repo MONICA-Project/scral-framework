@@ -61,7 +61,7 @@ def new_camera_request():
 
     :return: An HTTP Response.
     """
-    logging.debug(new_camera_request.__name__ + ", " + request.method + " method called")
+    logging.debug(new_camera_request.__name__ + ", " + request.method + " method called from: "+request.remote_addr+" \n")
 
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
@@ -111,7 +111,7 @@ def new_cdg_request():
 
     :return: An HTTP Response.
     """
-    logging.debug(new_cdg_request.__name__ + ", " + request.method + " method called")
+    logging.debug(new_cdg_request.__name__ + ", " + request.method + " method called from: "+request.remote_addr+" \n")
 
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
@@ -178,7 +178,8 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug(get_active_devices.__name__ + " method called")
+    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr+" \n")
+
     to_ret = jsonify(module.get_resource_catalog())
     return make_response(to_ret, 200)
 
@@ -188,7 +189,7 @@ def test_module():
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug(test_module.__name__ + " method called \n")
+    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
 
     link = VPN_URL+":"+str(VPN_PORT)
     posts = (URI_CAMERA, URI_CDG)

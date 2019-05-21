@@ -48,7 +48,7 @@ def main():
 
 @flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST"])
 def new_wristband_request():
-    logging.debug(new_wristband_request.__name__ + " method called")
+    logging.debug(new_wristband_request.__name__ + " method called from: "+request.remote_addr+" \n")
 
     if not request.json:
         return jsonify({"Error": "Wrong request!"}), 400
@@ -75,7 +75,7 @@ def new_wristband_request():
 
 @flask_instance.route(URI_WRISTBAND_ASSOCIATION, methods=["PUT"])
 def new_wristband_association_request():
-    logging.debug(new_wristband_association_request.__name__ + " method called")
+    logging.debug(new_wristband_association_request.__name__ + " method called from: "+request.remote_addr+" \n")
 
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
@@ -101,14 +101,14 @@ def new_wristband_association_request():
 
 @flask_instance.route(URI_WRISTBAND_LOCALIZATION, methods=["PUT"])
 def new_wristband_localization():
-    logging.debug(new_wristband_localization.__name__ + " method called")
+    logging.debug(new_wristband_localization.__name__ + " method called from: "+request.remote_addr+" \n")
     response = put_observation(PROPERTY_LOCALIZATION_NAME, request.json)
     return response
 
 
 @flask_instance.route(URI_WRISTBAND_BUTTON, methods=["PUT"])
 def new_wristband_button():
-    logging.debug(new_wristband_button.__name__ + " method called")
+    logging.debug(new_wristband_button.__name__ + " method called from: "+request.remote_addr+" \n")
     response = put_observation(PROPERTY_BUTTON_NAME, request.json)
     return response
 
@@ -144,12 +144,13 @@ def put_service_observation(datastream, payload):
         logging.error("Impossible to publish on MQTT server.")
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
+
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
 def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug(get_active_devices.__name__ + " method called")
+    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr+" \n")
     to_ret = jsonify(module.get_resource_catalog())
     return make_response(to_ret, 200)
 
@@ -159,7 +160,7 @@ def test_module():
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug(test_module.__name__ + " method called \n")
+    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
 
     link = VPN_URL+":"+str(VPN_PORT)
     posts = (URI_WRISTBAND_REGISTRATION, )
