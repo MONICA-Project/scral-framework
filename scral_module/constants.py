@@ -35,7 +35,12 @@ VPN_URL = "monappdwp3.monica-cloud.eu"
 BROKER_PERT = "130.192.85.32"
 BROKER_DEFAULT_PORT = 1883
 DEFAULT_KEEPALIVE = 60
-DEFAULT_MQTT_QOS = 2
+# MQTT quality of service:
+# 0 --> Fire and Forget
+# 1 --> At least one message will be received by the broker
+# 2 --> Exactly 1 message is received by the broker
+DEFAULT_MQTT_QOS = 1
+
 
 # Debug, graphic and similiar
 CREDITS = "(c) 2019, LINKS Foundation\ndeveloped by Jacopo Foglietti & Luca Mannella.\n"

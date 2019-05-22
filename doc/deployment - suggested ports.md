@@ -18,11 +18,12 @@ FUTURE USES  are between ports 8900 and 8999.
 
 ## Pilot
 The pilot is characterized by a 2 digits value. Values with a final zero are prefered.
-Leeds modules       use port xx10. \
-DOM modules         use port xx30. \
-TIVOLI modules      use port xx40. \
-RIF modules         use port xx50. \
-Nuits Sonores       use port xx60. \
-Movida modules      use port xx70. 
+Leeds modules           use ports xx10. \
+DOM modules             use ports xx30. \
+TIVOLI modules          use ports xx40. \
+RIF modules             use ports xx50. \
+Nuits Sonores modules   use ports xx60. \
+Movida modules          use ports xx70. \
+IoT Week modules        use ports xx80. 
 
-FUTURE USES modules use port xx99.
+FUTURE USES modules use ports xx99.

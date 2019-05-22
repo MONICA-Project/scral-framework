@@ -16,6 +16,7 @@
 """
 
 # PORT
+# LST = 8490 --- IoTWeek = 8480 --- Movida = 8470
 VPN_PORT = "8490"
 
 # URI

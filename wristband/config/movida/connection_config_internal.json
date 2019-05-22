@@ -1,11 +1,11 @@
 {
   "mqtt": {
-    "pub_broker": "mpclsifrmq01.monica-cloud.eu",
+    "pub_broker": "mosquitto",
     "pub_broker_port": 1883,
     "broker_keepalive": 60
   },
   "REST": {
-    "ogc_server_address": "http://gost_large_scale_test:8090/v1.0",
+    "ogc_server_address": "http://bgw-http-proxy:5050/gost_movida/v1.0",
     "listening_address": {
       "address": "0.0.0.0",
       "port": "8000"
