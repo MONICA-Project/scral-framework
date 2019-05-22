@@ -119,7 +119,7 @@ def test_module():
     posts = ()
     puts = (URI_SOUND_EVENT, )
     gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation("SCRALSmartGlasses", link, posts, puts, gets)
+    to_ret = util.to_html_documentation("SCRALSoundLevelMeter", link, posts, puts, gets)
     return to_ret
 
 

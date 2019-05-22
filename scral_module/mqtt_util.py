@@ -57,7 +57,7 @@ def get_publish_mqtt_topic(pilot_name):
     elif pilot_name == "PORT":
         mqtt_topic = "GOST_PA/"
     elif pilot_name == "NS":
-        mqtt_topic = "GOST_NS"
+        mqtt_topic = "GOST_NS/"
     elif pilot_name == "LST":
         mqtt_topic = "GOST_LARGE_SCALE_TEST/"
     else:
