@@ -38,7 +38,7 @@ def main():
     args = util.parse_command_line(module_description)
 
     # OGC-Configuration
-    ogc_config = SCRALWristband.startup(args)  # , OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
+    ogc_config = SCRALWristband.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
     # Module initialization and runtime phase
     global module
