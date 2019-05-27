@@ -22,9 +22,10 @@ PHASE RUNTIME: INTEGRATION
 """
 
 #############################################################################
-import cherrypy
-
+# import cherrypy
 import scral_module.util as util
+
+from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher
 from scral_module.constants import CATALOG_FILENAME
 from scral_module.scral_module import SCRALModule
 
@@ -57,13 +58,21 @@ class SCRALRestModule(SCRALModule):
         This method deploys an REST endpoint as Flask application based on CherryPy WSGI web server.
         This endpoint will listen for incoming REST requests on different route paths.
         """
-        cherrypy.tree.graft(flask_instance, "/")
-        cherrypy.config.update({"server.socket_host": self._listening_address,
-                                "server.socket_port": self._listening_port,
-                                "engine.autoreload.on": False,
-                                })
-        cherrypy.engine.start()
-        cherrypy.engine.block()
+        # cherrypy.tree.graft(flask_instance, "/")
+        # cherrypy.config.update({"server.socket_host": self._listening_address,
+        #                         "server.socket_port": self._listening_port,
+        #                         "engine.autoreload.on": False,
+        #                         })
+        # cherrypy.engine.start()
+        # cherrypy.engine.block()
+
+        dispatcher = PathInfoDispatcher({'/': flask_instance})
+        server = WSGIServer((self._listening_address, self._listening_port), dispatcher)
+        try:
+            server.start()
+            #server.block
+        except KeyboardInterrupt:
+            server.stop()
 
     def get_address(self):
         return self._listening_address
