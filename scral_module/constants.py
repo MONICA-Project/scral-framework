@@ -30,6 +30,7 @@ OGC_SERVER_PASSWORD = "A5_xYY#HqNiao_12#b"
 
 # HTTP
 VPN_URL = "monappdwp3.monica-cloud.eu"
+# VPN_URL = "monapp-lst.monica-cloud.eu"
 
 # MQTT default values
 BROKER_PERT = "130.192.85.32"
@@ -47,10 +48,10 @@ CREDITS = "(c) 2019, LINKS Foundation\ndeveloped by Jacopo Foglietti & Luca Mann
 END_MESSAGE = "\nThat's all folks! Thanks for choosing SCRAL!\n"+CREDITS
 
 # ERROR CODES
-ERROR_MISSING_CONNECTION_FILE = 1
-ERROR_MISSING_OGC_FILE = 2
-ERROR_WRONG_PILOT_NAME = 3
-ERROR_NO_SERVER_CONNECTION = 4
+ERROR_MISSING_CONNECTION_FILE = 11
+ERROR_MISSING_OGC_FILE = 22
+ERROR_WRONG_PILOT_NAME = 33
+ERROR_NO_SERVER_CONNECTION = 44
 
 # Code keys constants
 OGC_ID_KEY = "@iot.id"

@@ -22,10 +22,11 @@ PHASE RUNTIME: INTEGRATION
 """
 
 #############################################################################
-# import cherrypy
-import scral_module.util as util
-
+from flask import Flask
+import cherrypy
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher
+
+import scral_module.util as util
 from scral_module.constants import CATALOG_FILENAME
 from scral_module.scral_module import SCRALModule
 
@@ -53,26 +54,32 @@ class SCRALRestModule(SCRALModule):
         self._listening_port = int(connection_config_file["REST"]["listening_address"]["port"])
 
     # noinspection PyMethodOverriding
-    def runtime(self, flask_instance):
+    def runtime(self, flask_instance: Flask, mode=0):
         """
-        This method deploys an REST endpoint as Flask application based on CherryPy WSGI web server.
-        This endpoint will listen for incoming REST requests on different route paths.
+            This method deploys an REST endpoint as Flask application based on CherryPy WSGI web server.
+            This endpoint will listen for incoming REST requests on different route paths.
         """
-        # cherrypy.tree.graft(flask_instance, "/")
-        # cherrypy.config.update({"server.socket_host": self._listening_address,
-        #                         "server.socket_port": self._listening_port,
-        #                         "engine.autoreload.on": False,
-        #                         })
-        # cherrypy.engine.start()
-        # cherrypy.engine.block()
 
-        dispatcher = PathInfoDispatcher({'/': flask_instance})
-        server = WSGIServer((self._listening_address, self._listening_port), dispatcher)
-        try:
-            server.start()
-            #server.block
-        except KeyboardInterrupt:
-            server.stop()
+        if mode == 0:
+            flask_instance.run(host="0.0.0.0", port=8000)
+        elif mode == 1:
+            cherrypy.tree.graft(flask_instance, "/")
+            cherrypy.config.update({"server.socket_host": self._listening_address,
+                                    "server.socket_port": self._listening_port,
+                                    "engine.autoreload.on": False,
+                                    })
+            cherrypy.engine.start()
+            cherrypy.engine.block()
+        elif mode == 2:
+            dispatcher = PathInfoDispatcher({'/': flask_instance})
+            server = WSGIServer((self._listening_address, self._listening_port), dispatcher)
+            try:
+                server.start()
+                # server.block
+            except KeyboardInterrupt:
+                server.stop()
+        else:
+            raise RuntimeError("Invalid runtime mode was selected.")
 
     def get_address(self):
         return self._listening_address
