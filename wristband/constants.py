@@ -16,8 +16,8 @@
 """
 
 # PORT
-# LST = 8490 --- IoTWeek = 8480 --- Movida = 8470
-VPN_PORT = "8480"
+# VPN-TEST = 8491 --- LST = 8490 --- IoTWeek = 8480 --- Movida = 8470
+VPN_PORT = "8491"
 
 # URI
 URI_DEFAULT = "/scral/v1.0/wristband-gw"
