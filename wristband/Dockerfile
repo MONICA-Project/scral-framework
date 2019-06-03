@@ -1,15 +1,17 @@
 # to be launched from parent folder
 
 FROM python:3.6-alpine
+MAINTAINER Luca Mannella (luca.mannella@linksfoundation.com)
 
 WORKDIR /monica-scral
-
 EXPOSE 8000
 
-ADD scral_startup.py /monica-scral
-ADD scral_ogc /monica-scral/scral_ogc
-ADD scral_module /monica-scral/scral_module
-ADD wristband /monica-scral/wristband
+COPY scral_startup.py /monica-scral
+COPY scral_ogc /monica-scral/scral_ogc
+COPY scral_module /monica-scral/scral_module
+COPY wristband /monica-scral/wristband
+RUN mkdir /monica-scral/catalogs
+VOLUME /monica-scral/catalogs
 
 RUN pip3 install --no-cache-dir -r wristband/requirements.txt
 RUN pip3 install -e wristband

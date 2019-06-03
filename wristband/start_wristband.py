@@ -42,13 +42,14 @@ def main():
 
     # Module initialization and runtime phase
     global module
-    module = SCRALWristband(ogc_config, args.connection_file, args.pilot)
+    catalog_name = args.pilot + "_wristband.json"
+    module = SCRALWristband(ogc_config, args.connection_file, args.pilot, catalog_name)
     module.runtime(flask_instance)
 
 
 @flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST"])
 def new_wristband_request():
-    logging.debug("\n"+new_wristband_request.__name__+" method called from: "+request.remote_addr+" \n")
+    logging.debug(new_wristband_request.__name__+" method called from: "+request.remote_addr)
 
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
@@ -75,7 +76,7 @@ def new_wristband_request():
 
 @flask_instance.route(URI_WRISTBAND_ASSOCIATION, methods=["PUT"])
 def new_wristband_association_request():
-    logging.debug("\n"+new_wristband_association_request.__name__+" method called from: "+request.remote_addr+" \n")
+    logging.debug(new_wristband_association_request.__name__+" method called from: "+request.remote_addr)
 
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
@@ -88,14 +89,17 @@ def new_wristband_association_request():
     rc = module.get_resource_catalog()
     if wristband_id_1 not in rc or wristband_id_2 not in rc:
         logging.error("One of the wristbands is not registered.")
+        logging.debug("\n")
         return make_response(jsonify({"Error": "One of the wristbands is not registered!"}), 400)
 
     vds = module.get_ogc_config().get_virtual_datastream(SENSOR_ASSOCIATION_NAME)
     if not vds:
+        logging.debug("\n")
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
     response = put_service_observation(vds, request.json)
 
+    logging.debug("\n")
     return response
 
 
@@ -103,13 +107,15 @@ def new_wristband_association_request():
 def new_wristband_localization():
     logging.debug("\n"+new_wristband_localization.__name__+" method called from: "+request.remote_addr+" \n")
     response = put_observation(PROPERTY_LOCALIZATION_NAME, request.json)
+    logging.debug("\n")
     return response
 
 
 @flask_instance.route(URI_WRISTBAND_BUTTON, methods=["PUT"])
 def new_wristband_button():
-    logging.debug("\n"+new_wristband_button.__name__+" method called from: "+request.remote_addr+" \n")
+    logging.debug(new_wristband_button.__name__+" method called from: "+request.remote_addr)
     response = put_observation(PROPERTY_BUTTON_NAME, request.json)
+    logging.debug("\n")
     return response
 
 
@@ -150,8 +156,9 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug("\n"+get_active_devices.__name__+" method called from: "+request.remote_addr+" \n")
+    logging.debug(get_active_devices.__name__+" method called from: "+request.remote_addr)
     to_ret = jsonify(module.get_resource_catalog())
+    logging.debug("\n")
     return make_response(to_ret, 200)
 
 
@@ -160,13 +167,14 @@ def test_module():
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug("\n"+test_module.__name__+" method called from: "+request.remote_addr+" \n")
+    logging.debug(test_module.__name__+" method called from: "+request.remote_addr)
 
     link = VPN_URL+":"+str(VPN_PORT)
     posts = (URI_WRISTBAND_REGISTRATION, )
     puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
     gets = (URI_ACTIVE_DEVICES, )
     to_ret = util.to_html_documentation("SCRALWristband", link, posts, puts, gets)
+    logging.debug("\n")
     return to_ret
 
 

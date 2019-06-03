@@ -60,6 +60,7 @@ class SCRALWristband(SCRALRestModule):
 
             self._resource_catalog[wristband_id][property_name] = datastream_id
 
+        self.update_file_catalog()
         return True
 
     def ogc_observation_registration(self, obs_property, payload):
