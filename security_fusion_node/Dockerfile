@@ -1,15 +1,18 @@
 # to be launched from parent folder
 
 FROM python:3.6-alpine
+LABEL authors="Jacopo Foglietti, Luca Mannella"
 
 WORKDIR /monica-scral
-
 EXPOSE 8000
 
-ADD scral_startup.py /monica-scral
-ADD scral_ogc /monica-scral/scral_ogc
-ADD scral_module /monica-scral/scral_module
-ADD security_fusion_node /monica-scral/security_fusion_node
+COPY scral_startup.py /monica-scral
+COPY scral_ogc /monica-scral/scral_ogc
+COPY scral_module /monica-scral/scral_module
+COPY security_fusion_node /monica-scral/security_fusion_node
+
+RUN mkdir /monica-scral/catalogs
+VOLUME /monica-scral/catalogs
 
 RUN pip3 install --no-cache-dir -r security_fusion_node/requirements.txt
 RUN pip3 install -e security_fusion_node

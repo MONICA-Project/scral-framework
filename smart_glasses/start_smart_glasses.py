@@ -33,9 +33,8 @@ import scral_module as scral
 from scral_module import util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
 
-from smart_glasses.constants import URI_DEFAULT, CATALOG_NAME_GLASSES, VPN_PORT, \
-    URI_ACTIVE_DEVICES, URI_GLASSES_REGISTRATION, URI_GLASSES_LOCALIZATION, \
-    URI_GLASSES_INCIDENT, PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDENT_NAME
+from smart_glasses.constants import URI_DEFAULT, VPN_PORT, PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDENT_NAME, \
+    URI_ACTIVE_DEVICES, URI_GLASSES_REGISTRATION, URI_GLASSES_LOCALIZATION, URI_GLASSES_INCIDENT
 from smart_glasses.smart_glasses_module import SCRALSmartGlasses
 
 flask_instance = Flask(__name__)
@@ -51,7 +50,8 @@ def main():
 
     # Module initialization and runtime phase
     global module
-    module = SCRALSmartGlasses(ogc_config, args.connection_file, args.pilot, CATALOG_NAME_GLASSES)
+    catalog_name = args.pilot + "_glasses.json"
+    module = SCRALSmartGlasses(ogc_config, args.connection_file, args.pilot, catalog_name)
     module.runtime(flask_instance)
 
 
@@ -60,7 +60,7 @@ def new_glasses_request():
     """ This function can register new glasses in the OGC server.
     :return: An HTTP Response.
     """
-    logging.debug(new_glasses_request.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(new_glasses_request.__name__ + " method called from: "+request.remote_addr)
 
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
@@ -90,7 +90,7 @@ def new_glasses_localization():
     """ This function can register new glasses location in the OGC server.
     :return: An HTTP Response.
     """
-    logging.debug(new_glasses_localization.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(new_glasses_localization.__name__ + " method called from: "+request.remote_addr)
     response = put_observation(PROPERTY_LOCALIZATION_NAME, request.json)
     return response
 
@@ -100,7 +100,7 @@ def new_glasses_incident():
     """ This function can register new glasses incident in the OGC server.
     :return: An HTTP Response.
     """
-    logging.debug(new_glasses_incident.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(new_glasses_incident.__name__ + " method called from: "+request.remote_addr)
 
     response = put_observation(PROPERTY_INCIDENT_NAME, request.json)
     return response
@@ -136,7 +136,7 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
     to_ret = jsonify(module.get_resource_catalog())
     return make_response(to_ret, 200)
@@ -147,7 +147,7 @@ def test_module():
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     link = VPN_URL+":"+str(VPN_PORT)
     posts = (URI_GLASSES_REGISTRATION, )

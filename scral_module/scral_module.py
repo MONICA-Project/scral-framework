@@ -36,7 +36,7 @@ from abc import abstractmethod
 
 import paho.mqtt.client as mqtt
 
-from scral_module.constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, \
+from scral_module.constants import CATALOG_FOLDER, CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, \
     ERROR_MISSING_CONNECTION_FILE, ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_WRONG_PILOT_NAME
 from scral_module.ogc_configuration import OGCConfiguration
 from scral_module import util
@@ -113,9 +113,9 @@ class SCRALModule(object):
         connection_config_file = util.load_from_file(connection_file)
 
         # 3 Load local resource catalog
-        self._catalog_name = catalog_name
-        if os.path.exists(self._catalog_name):
-            self._resource_catalog = util.load_from_file(self._catalog_name)
+        self._catalog_fullpath = CATALOG_FOLDER + catalog_name
+        if os.path.exists(self._catalog_fullpath):
+            self._resource_catalog = util.load_from_file(self._catalog_fullpath)
             self.print_catalog()
         else:
             logging.info("No resource catalog <" + catalog_name + "> available.")
@@ -180,7 +180,7 @@ class SCRALModule(object):
     def print_catalog(self):
         """ Print resource catalog on log. """
 
-        logging.info("[PHASE-INIT] Resource Catalog <" + self._catalog_name + ">:")
+        logging.info("[PHASE-INIT] Resource Catalog <" + self._catalog_fullpath + ">:")
         for key, value in self._resource_catalog.items():
             logging.info(key + ": " + json.dumps(value))
         logging.info("--- End of Resource Catalog ---\n")
@@ -188,7 +188,7 @@ class SCRALModule(object):
     def update_file_catalog(self):
         """ Update the resource catalog on file. """
 
-        with open(self._catalog_name, 'w+') as outfile:
+        with open(self._catalog_fullpath, 'w+') as outfile:
             json.dump(self._resource_catalog, outfile)
             outfile.write('\n')
 
@@ -251,3 +251,5 @@ class SCRALModule(object):
     #                 self._ogc_config.add_datastream(datastream)
     #
     #                 self._resource_catalog[iot_id][property_name] = datastream_id
+    #
+    #       self.update_file_catalog()

@@ -50,6 +50,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
                 if not ok:
                     return make_response(jsonify({"Error": "Internal server error."}), 500)
 
+        self.update_file_catalog()
         return make_response(jsonify({"result": "Ok"}), 201)
 
     def _ogc_datastream_registration(self, resource_id, sensor_type, observed_property, payload,
@@ -75,7 +76,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         property_description = observed_property.get_description()
 
         datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + resource_id
-        uom = util.build_ogc_unit_of_measure(property_name.lower())
+        uom = util.build_ogc_unit_of_measure(property_name.lower())  # ToDo: is it right that this field is not used?
 
         datastream = OGCDatastream(name=datastream_name, description="Datastream for " + property_description,
                                    ogc_property_id=property_id, ogc_sensor_id=sensor_id, ogc_thing_id=thing_id,
@@ -90,8 +91,6 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         self._ogc_config.add_datastream(datastream)
 
         self._resource_catalog[resource_id][property_name] = datastream_id
-        self.update_file_catalog()
-
         return datastream_id
 
     def ogc_observation_registration(self, resource_id, obs_property, payload):

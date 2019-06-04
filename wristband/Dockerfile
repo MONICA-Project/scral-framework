@@ -1,7 +1,7 @@
 # to be launched from parent folder
 
 FROM python:3.6-alpine
-MAINTAINER Luca Mannella (luca.mannella@linksfoundation.com)
+LABEL authors="Jacopo Foglietti, Luca Mannella"
 
 WORKDIR /monica-scral
 EXPOSE 8000
@@ -10,6 +10,7 @@ COPY scral_startup.py /monica-scral
 COPY scral_ogc /monica-scral/scral_ogc
 COPY scral_module /monica-scral/scral_module
 COPY wristband /monica-scral/wristband
+
 RUN mkdir /monica-scral/catalogs
 VOLUME /monica-scral/catalogs
 

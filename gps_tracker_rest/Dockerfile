@@ -1,16 +1,19 @@
 # to be launched from parent folder
 
 FROM python:3.6-alpine
+LABEL authors="Jacopo Foglietti, Luca Mannella"
 
 WORKDIR /monica-scral
-
 EXPOSE 8000
 
-ADD scral_startup.py /monica-scral
-ADD scral_ogc /monica-scral/scral_ogc
-ADD scral_module /monica-scral/scral_module
-ADD gps_tracker /monica-scral/gps_tracker
-ADD gps_tracker_rest /monica-scral/gps_tracker_rest
+COPY scral_startup.py /monica-scral
+COPY scral_ogc /monica-scral/scral_ogc
+COPY scral_module /monica-scral/scral_module
+COPY gps_tracker /monica-scral/gps_tracker
+COPY gps_tracker_rest /monica-scral/gps_tracker_rest
+
+RUN mkdir /monica-scral/catalogs
+VOLUME /monica-scral/catalogs
 
 RUN pip3 install --no-cache-dir -r gps_tracker_rest/requirements.txt
 RUN pip3 install -e gps_tracker_rest

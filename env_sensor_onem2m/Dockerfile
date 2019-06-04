@@ -1,15 +1,18 @@
 # to be launched from parent folder
 
 FROM python:3.6-alpine
-
-EXPOSE 8000
+LABEL authors="Jacopo Foglietti, Luca Mannella"
 
 WORKDIR /monica-scral
+EXPOSE 8000
 
-ADD scral_startup.py /monica-scral
-ADD scral_ogc /monica-scral/scral_ogc
-ADD scral_module /monica-scral/scral_module
-ADD env_sensor_onem2m /monica-scral/env_sensor_onem2m
+COPY scral_startup.py /monica-scral
+COPY scral_ogc /monica-scral/scral_ogc
+COPY scral_module /monica-scral/scral_module
+COPY env_sensor_onem2m /monica-scral/env_sensor_onem2m
+
+RUN mkdir /monica-scral/catalogs
+VOLUME /monica-scral/catalogs
 
 RUN pip3 install --no-cache-dir -r env_sensor_onem2m/requirements.txt
 RUN pip3 install -e env_sensor_onem2m

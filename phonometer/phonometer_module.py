@@ -22,8 +22,7 @@ from datetime import timedelta
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
 from scral_module import util
-from scral_module.constants import REST_HEADERS
-from scral_module.scral_module import SCRALModule
+from scral_module.constants import REST_HEADERS, CATALOG_FILENAME
 from scral_ogc import OGCDatastream
 
 from microphone.microphone_module import SCRALMicrophone
@@ -36,13 +35,13 @@ from phonometer.constants import URL_TENANT, ACTIVE_DEVICES, FILTER_SDN_1, URL_C
 class SCRALPhonometer(SCRALMicrophone):
     """ Resource manager for integration of Phonometers. """
 
-    def __init__(self, ogc_config, connection_file, pilot):
+    def __init__(self, ogc_config, connection_file, pilot, catalog_name=CATALOG_FILENAME):
         """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
 
         :param connection_file: A file containing connection information.
         :param pilot: The MQTT topic prefix on which information will be published.
         """
-        super().__init__(ogc_config, connection_file, pilot)
+        super().__init__(ogc_config, connection_file, pilot, catalog_name)
 
         self._publish_mutex = Lock()
         self._active_devices = {}
@@ -99,7 +98,8 @@ class SCRALPhonometer(SCRALMicrophone):
                 url_sequence = URL_CLOUD + '/' + device_id + '/' + FILTER_SDN_1
                 self._active_devices[device_id][SEQUENCES_KEY] = url_sequence
 
-            logging.info("--- End of OGC DATASTREAMs registration ---\n")
+        self.update_file_catalog()
+        logging.info("--- End of OGC DATASTREAMs registration ---\n")
 
     def _new_datastream(self, ogc_property, device_id, device_coordinates, device_description):
         """ This method creates a new DATASTREAM.

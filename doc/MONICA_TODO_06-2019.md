@@ -1,6 +1,6 @@
-### MEETING ###
+## MEETING ##
 
-- IOT WEEk telco
+- IOT Week telco
 	ogni lunedì alle 15 - fino al giorno dell'evento
 	LINKS gestisce il GoToMeeting
 
@@ -13,10 +13,12 @@
 	ogni martedì alle 14 - fino a ?
 	ref: Benadik Jan
 
-### SCRAL ###
+## SCRAL ##
 
-- Storage resource catalog (tramite docker volume o discovery OGC)
 - Dockerizza soluzione nginx + uwsgi + wristband
 - Monitoraggio/Supporto agli scenari di "load testing" (VPN, broker, SCRAL endpoint..)
 - Integrazione sensori ambientali su blimp (ref: Sebastian from HAW, Emanuele from DIGISKY)
 - Miglioramento del processo di deployment
+
+### DONE ###
+- Storage resource catalog (tramite docker volume)

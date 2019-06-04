@@ -50,7 +50,8 @@ def main():
 
     # Module initialization and runtime phase
     global module
-    module = SCRALGPSPoll(ogc_config, args.connection_file, args.pilot)
+    catalog_name = args.pilot + "_GPS-poll.json"
+    module = SCRALGPSPoll(ogc_config, args.connection_file, args.pilot, catalog_name)
     module.runtime()
 
 

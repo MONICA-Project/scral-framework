@@ -53,8 +53,9 @@ def main():
 
     # Module initialization and runtime phase
     global module
+    catalog_name = args.pilot + "_SLM.json"
     module = SCRALSoundLevelMeter(ogc_config, args.connection_file, args.pilot,
-                                  URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX)
+                                  URL_SLM_LOGIN, CREDENTIALS, catalog_name, SLM_LOGIN_PREFIX)
     module.runtime(flask_instance)
 
 
@@ -66,7 +67,7 @@ def new_sound_event():
 
     :return: An HTTP Response.
     """
-    logging.debug(new_sound_event.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(new_sound_event.__name__ + " method called from: "+request.remote_addr)
 
     payload = request.json
     property_name = payload["type"]
@@ -97,7 +98,7 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
     rc_copy = copy.deepcopy(module.get_resource_catalog())
     new_rc = {}
@@ -113,7 +114,7 @@ def test_module():
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     link = VPN_URL+":"+str(VPN_PORT)
     posts = ()

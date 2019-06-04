@@ -18,9 +18,6 @@
 # PORT
 VPN_PORT = 8140
 
-# CATALOG
-CATALOG_NAME_GLASSES = "resource_catalog_GLASSES.json"
-
 # URI
 URI_DEFAULT = "/scral/v1.0/monicora"
 URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"

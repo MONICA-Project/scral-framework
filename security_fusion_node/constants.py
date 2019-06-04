@@ -19,9 +19,6 @@
 # Movida = 8370 --- RIF = 8350 --- Tivoli = 8340
 VPN_PORT = 8370
 
-# CATALOG
-CATALOG_NAME_SFN = "resource_catalog_SFN.json"
-
 # URI
 URI_DEFAULT = "/scral/v1.0/sfn"
 URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"

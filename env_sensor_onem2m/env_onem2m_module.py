@@ -62,13 +62,14 @@ class SCRALEnvOneM2M(SCRALRestModule):
 
             if not datastream_id:
                 logging.error("No datastream ID for Env-Node: "+env_node_id+", property: "+property_name)
-                make_response(jsonify({"Error:": "Invalid DATASTREAM"}), 500)
+                return make_response(jsonify({"Error:": "Invalid DATASTREAM"}), 500)
             else:
                 datastream.set_id(datastream_id)
                 ogc_config.add_datastream(datastream)
 
                 rc[env_node_id][property_name] = datastream_id  # Store Hamburg to MONICA coupled information
 
+        self.update_file_catalog()
         return make_response(jsonify({"Result": "ok"}), 200)
 
     def ogc_observation_registration(self, env_node_id, content, onem2m_payload):

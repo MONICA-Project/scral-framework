@@ -34,8 +34,8 @@ import scral_module as scral
 from scral_module import util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
 
-from security_fusion_node.constants import VPN_PORT, CATALOG_NAME_SFN, \
-    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_CAMERA, URI_CDG, CAMERA_SENSOR_TYPE, CDG_SENSOR_TYPE
+from security_fusion_node.constants import VPN_PORT, CAMERA_SENSOR_TYPE, CDG_SENSOR_TYPE, \
+                                           URI_DEFAULT, URI_ACTIVE_DEVICES, URI_CAMERA, URI_CDG
 from security_fusion_node.sfn_module import SCRALSecurityFusionNode
 
 flask_instance = Flask(__name__)
@@ -51,7 +51,8 @@ def main():
 
     # Module initialization and runtime phase
     global module
-    module = SCRALSecurityFusionNode(ogc_config, args.connection_file, args.pilot, CATALOG_NAME_SFN)
+    catalog_name = args.pilot + "_SFN.json"
+    module = SCRALSecurityFusionNode(ogc_config, args.connection_file, args.pilot, catalog_name)
     module.runtime(flask_instance)
 
 
@@ -61,7 +62,7 @@ def new_camera_request():
 
     :return: An HTTP Response.
     """
-    logging.debug(new_camera_request.__name__ + ", " + request.method + " method called from: "+request.remote_addr+" \n")
+    logging.debug(new_camera_request.__name__ + ", " + request.method + " method called from: "+request.remote_addr)
 
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
@@ -111,7 +112,7 @@ def new_cdg_request():
 
     :return: An HTTP Response.
     """
-    logging.debug(new_cdg_request.__name__ + ", " + request.method + " method called from: "+request.remote_addr+" \n")
+    logging.debug(new_cdg_request.__name__ + ", " + request.method + " method called from: "+request.remote_addr)
 
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
@@ -178,7 +179,7 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
     to_ret = jsonify(module.get_resource_catalog())
     return make_response(to_ret, 200)
@@ -189,7 +190,7 @@ def test_module():
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     link = VPN_URL+":"+str(VPN_PORT)
     posts = (URI_CAMERA, URI_CDG)

@@ -105,9 +105,8 @@ def new_wristband_association_request():
 
 @flask_instance.route(URI_WRISTBAND_LOCALIZATION, methods=["PUT"])
 def new_wristband_localization():
-    logging.debug("\n"+new_wristband_localization.__name__+" method called from: "+request.remote_addr+" \n")
+    logging.debug(new_wristband_localization.__name__+" method called from: "+request.remote_addr)
     response = put_observation(PROPERTY_LOCALIZATION_NAME, request.json)
-    logging.debug("\n")
     return response
 
 
@@ -115,7 +114,6 @@ def new_wristband_localization():
 def new_wristband_button():
     logging.debug(new_wristband_button.__name__+" method called from: "+request.remote_addr)
     response = put_observation(PROPERTY_BUTTON_NAME, request.json)
-    logging.debug("\n")
     return response
 
 
@@ -158,7 +156,6 @@ def get_active_devices():
     """
     logging.debug(get_active_devices.__name__+" method called from: "+request.remote_addr)
     to_ret = jsonify(module.get_resource_catalog())
-    logging.debug("\n")
     return make_response(to_ret, 200)
 
 
@@ -174,7 +171,6 @@ def test_module():
     puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
     gets = (URI_ACTIVE_DEVICES, )
     to_ret = util.to_html_documentation("SCRALWristband", link, posts, puts, gets)
-    logging.debug("\n")
     return to_ret
 
 

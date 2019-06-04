@@ -44,7 +44,8 @@ def main():
 
     # Module initialization and runtime phase
     global module
-    module = SCRALPhonometer(ogc_config, args.connection_file, args.pilot)
+    catalog_name = args.pilot + "_phonometer.json"
+    module = SCRALPhonometer(ogc_config, args.connection_file, args.pilot, catalog_name)
     module.runtime()
 
 

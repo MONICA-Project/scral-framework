@@ -22,7 +22,7 @@ import arrow
 from requests.exceptions import SSLError
 
 from scral_ogc import OGCObservation
-from scral_module.constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, OGC_ID_KEY
+from scral_module.constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, OGC_ID_KEY, CATALOG_FILENAME
 from scral_module import mqtt_util
 
 from gps_tracker.constants import LOCALIZATION
@@ -34,7 +34,7 @@ from gps_tracker_poll.constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CL
 class SCRALGPSPoll(SCRALGPS):
     """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
 
-    def __init__(self, ogc_config, connection_file, pilot):
+    def __init__(self, ogc_config, connection_file, pilot, catalog_name=CATALOG_FILENAME):
         """ Initialize MQTT Brokers for listening and publishing
 
         :param connection_file: A file containing connection information.
@@ -42,7 +42,7 @@ class SCRALGPSPoll(SCRALGPS):
                       it will be used for generate the MQTT topic prefix on which information will be published.
         """
 
-        super().__init__(ogc_config, connection_file, pilot)
+        super().__init__(ogc_config, connection_file, pilot, catalog_name)
 
         # Creating an MQTT Subscriber
         self._mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)
@@ -91,11 +91,11 @@ class SCRALGPSPoll(SCRALGPS):
             if len(datastreams) > 0:
                 # Associating HAMBURG THING id to MONICA DATASTREAM id (plus HAMBURG device_id)
                 self._resource_catalog[iot_id][DEVICE_ID_KEY] = device_id
-                self.update_file_catalog()
 
                 for ds in datastreams:  # right now there is only 1 Datastream for each hamburg device
                     ds.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC + "(" + iot_id + ")/Locations")
 
+        self.update_file_catalog()
         self.update_mqtt_subscription(self._ogc_config.get_datastreams())
 
         if dynamic_discovery:

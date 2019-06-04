@@ -22,7 +22,7 @@ import logging
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
 from scral_ogc import OGCDatastream
-from scral_module.constants import REST_HEADERS
+from scral_module.constants import REST_HEADERS, CATALOG_FILENAME
 from scral_module import util
 from scral_module.rest_module import SCRALRestModule
 
@@ -36,13 +36,13 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
     """ Resource manager for integration of the SLM-GW (by usage of B&K's IoT Sound Level Meters). """
 
     def __init__(self, ogc_config, connection_file, pilot,
-                 url_login, credentials, token_prefix="", token_suffix=""):
+                 url_login, credentials, catalog_name=CATALOG_FILENAME, token_prefix="", token_suffix=""):
         """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
 
         :param connection_file: A file containing connection information.
         :param pilot: The MQTT topic prefix on which information will be published.
         """
-        super().__init__(ogc_config, connection_file, pilot)
+        super().__init__(ogc_config, connection_file, pilot, catalog_name)
 
         self._publish_mutex = Lock()
         self._active_devices = {}
@@ -172,6 +172,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
                 for ogc_property in self._ogc_config.get_observed_properties():
                     self._new_datastream(ogc_property, device_id, device_name, device_coordinates, device_description)
 
+        self.update_file_catalog()
         logging.info("\n\n--- End of OGC DATASTREAMs registration. "
                      + str(len(self._ogc_config.get_datastreams()))+" datastreams were registered. ---\n")
 
@@ -198,6 +199,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
 
             datastream_id = self._new_datastream(
                 ogc_obs_property, device_id, device_name, device_coordinates, device_description)
+
         return datastream_id
 
     def _new_datastream(self, ogc_property, device_id, device_name, device_coordinates, device_description):
@@ -241,6 +243,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
             logging.debug("Added Datastream: " + str(datastream_id) + " to the resource catalog for device: "
                           + device_id + " and property: " + property_name)
 
+        self.update_file_catalog()
         return datastream_id
 
     class SLMThread(Thread):

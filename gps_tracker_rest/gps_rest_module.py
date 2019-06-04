@@ -25,6 +25,7 @@ class SCRALGPSRest(SCRALRestModule, SCRALGPS):
         device_id = payload["tagId"]
         description = payload["type"]
         datastream = self.ogc_datastream_registration(device_id, description, "position")
+        self.update_file_catalog()
         return datastream
 
     def ogc_observation_registration(self, observed_property, payload):
