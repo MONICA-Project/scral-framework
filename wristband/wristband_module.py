@@ -60,6 +60,12 @@ class SCRALWristband(SCRALRestModule):
 
             self._resource_catalog[wristband_id][property_name] = datastream_id
 
+            topic = self._topic_prefix + "Datastreams"
+            payload = {"wristband_id": wristband_id,
+                       "observed_property": property_name,
+                       "datastream_id": datastream_id}
+            self.mqtt_publish(topic, json.dumps(payload), to_print=False)
+
         self.update_file_catalog()
         return True
 
@@ -76,9 +82,8 @@ class SCRALWristband(SCRALRestModule):
         logging.debug(
             "Wristband: '"+wristband_id+"', Property: '"+obs_property+"', Observation:\n"+json.dumps(payload)+".")
 
-        topic_prefix = self._topic_prefix
         datastream_id = self._resource_catalog[wristband_id][obs_property]
-        topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
+        topic = self._topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
 
         # Create OGC Observation and publish
         ogc_observation = OGCObservation(datastream_id, phenomenon_time, payload, observation_time)

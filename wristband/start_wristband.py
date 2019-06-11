@@ -70,7 +70,7 @@ def new_wristband_request():
         return make_response(jsonify({"result": "Ok"}), 201)
 
     else:
-        logging.error("Device already registered!")
+        logging.error("Device "+wristband_id+" already registered!")
         return make_response(jsonify({"Error": "Duplicate request!"}), 422)
 
 
