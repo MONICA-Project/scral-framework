@@ -63,15 +63,14 @@ def new_wristband_request():
     rc = module.get_resource_catalog()
     if wristband_id not in rc:
         logging.info("Wristband: '" + str(wristband_id) + "' registration.")
-        ok = module.ogc_datastream_registration(wristband_id, request.json)
-        if not ok:
-            return make_response(jsonify({"Error": "Internal server error"}), 500)
-
-        return make_response(jsonify({"result": "Ok"}), 201)
-
     else:
-        logging.error("Device "+wristband_id+" already registered!")
-        return make_response(jsonify({"Error": "Duplicate request!"}), 422)
+        logging.warning("Device '" + str(wristband_id) + "' already registered... It will be overwritten on RC!")
+
+    ok = module.ogc_datastream_registration(wristband_id, request.json)
+    if not ok:
+        return make_response(jsonify({"Error": "Internal server error"}), 500)
+    else:
+        return make_response(jsonify({"result": "Ok"}), 201)
 
 
 @flask_instance.route(URI_WRISTBAND_ASSOCIATION, methods=["PUT"])
