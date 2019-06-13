@@ -16,8 +16,8 @@
 """
 
 # PORT
-# Movida = 8370 --- RIF = 8350 --- Tivoli = 8340
-VPN_PORT = 8370
+# Movida = 8370 --- RIF = 8350 --- Tivoli = 8340 --- KFF = 8335
+VPN_PORT = 8335
 
 # URI
 URI_DEFAULT = "/scral/v1.0/sfn"

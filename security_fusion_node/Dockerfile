@@ -20,8 +20,10 @@ RUN pip3 install -e security_fusion_node
 ### local testing:
 # ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/connection_config_local.json -p local
 
+### docker deploy - INTERNAL - KFF
+ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/kff/connection_config_internal.json -p KFF
 ### docker deploy - INTERNAL - MOVIDA
-ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/movida/connection_config_internal.json -p MOVIDA
+# ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/movida/connection_config_internal.json -p MOVIDA
 ### docker deploy - INTERNAL - RIF
 # ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/rif/connection_config_internal.json -p RIF
 ### docker deploy - INTERNAL - TIVOLI
