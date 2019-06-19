@@ -11,7 +11,7 @@ import logging
 import random
 import time
 import paho.mqtt.client as mqtt
-from MQTTListener import BROKER_ADDRESS, BROKER_PORT, KEEPALIVE, TOPIC
+from testing.MQTTListener import BROKER_ADDRESS, BROKER_PORT, KEEPALIVE, TOPIC
 
 
 def on_connect(client, userdata, flags, rc):

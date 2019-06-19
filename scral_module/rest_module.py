@@ -61,8 +61,10 @@ class SCRALRestModule(SCRALModule):
         """
 
         if mode == 0:
+            # simply run Flask
             flask_instance.run(host="0.0.0.0", port=8000)
         elif mode == 1:
+            # Run Flask wrapped by Cherrypy
             cherrypy.tree.graft(flask_instance, "/")
             cherrypy.config.update({"server.socket_host": self._listening_address,
                                     "server.socket_port": self._listening_port,
@@ -71,6 +73,7 @@ class SCRALRestModule(SCRALModule):
             cherrypy.engine.start()
             cherrypy.engine.block()
         elif mode == 2:
+            # Run Flask wrapped by a WSGI Server.
             dispatcher = PathInfoDispatcher({'/': flask_instance})
             server = WSGIServer((self._listening_address, self._listening_port), dispatcher)
             try:

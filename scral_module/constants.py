@@ -29,10 +29,6 @@ DEFAULT_CONFIG = "local"
 OGC_SERVER_USERNAME = "scral"
 OGC_SERVER_PASSWORD = "A5_xYY#HqNiao_12#b"
 
-# HTTP
-VPN_URL = "monappdwp3.monica-cloud.eu"
-# VPN_URL = "monapp-lst.monica-cloud.eu"
-
 # MQTT default values
 BROKER_PERT = "130.192.85.32"
 BROKER_DEFAULT_PORT = 1883
@@ -42,7 +38,6 @@ DEFAULT_KEEPALIVE = 60
 # 1 --> At least one message will be received by the broker
 # 2 --> Exactly 1 message is received by the broker
 DEFAULT_MQTT_QOS = 1
-
 
 # Debug, graphic and similiar
 CREDITS = "(c) 2019, LINKS Foundation\ndeveloped by Jacopo Foglietti & Luca Mannella.\n"
@@ -58,6 +53,10 @@ ERROR_NO_SERVER_CONNECTION = 44
 OGC_ID_KEY = "@iot.id"
 OGC_DEVICE_NAME_KEY = "name"
 GOST_RESULT_KEY = "value"
+
+# CONFIGURATION FILES
+FILENAME_CONFIG = "config/"
+FILENAME_COMMAND_FILE = "cli_file.json"
 
 # log
 DEFAULT_LOG_FORMATTER = "%(asctime)s.%(msecs)04d %(name)-7s %(levelname)s: %(message)s"

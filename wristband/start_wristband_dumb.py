@@ -22,28 +22,31 @@ from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
-from wristband.constants import PROPERTY_BUTTON_NAME, PROPERTY_LOCALIZATION_NAME, \
-    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_REGISTRATION, \
-    URI_WRISTBAND_ASSOCIATION, SENSOR_ASSOCIATION_NAME, VPN_PORT
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
+                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
+from wristband.constants import PROPERTY_BUTTON_NAME, PROPERTY_LOCALIZATION_NAME, SENSOR_ASSOCIATION_NAME, \
+                                URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, \
+                                URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
 
 from wristband.wristband_module import SCRALWristband
+from wristband import wristband_util as wb_util
 
 flask_instance = Flask(__name__)
 module: SCRALWristband = None
 
+MODULE_NAME: str = "SCRAL Module"
+VPN_PORT: int = 8000
+VPN_URL: str = "localhost"
+
 
 def main():
     module_description = "Dumb Wristband integration instance"
-    args = util.parse_command_line(module_description)
+    cmd_line = util.parse_small_command_line(module_description)
+    pilot_config_folder = cmd_line.pilot.lower() + "/"
 
-    # OGC-Configuration
-    ogc_config = SCRALWristband.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
-
-    # Module initialization and runtime phase
     global module
-    module = SCRALWristband(ogc_config, args.connection_file, args.pilot)
-    module.runtime(flask_instance)
+    module = wb_util.instance_wb_module(pilot_config_folder)
+    module.runtime(flask_instance, 1)
 
 
 @flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST"])
@@ -91,7 +94,7 @@ def test_module():
     posts = (URI_WRISTBAND_REGISTRATION, )
     puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
     gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation("Dumb SCRALWristband", link, posts, puts, gets)
+    to_ret = util.to_html_documentation(MODULE_NAME+" (dumb version)", link, posts, puts, gets)
     return to_ret
 
 

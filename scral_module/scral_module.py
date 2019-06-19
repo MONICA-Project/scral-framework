@@ -65,7 +65,7 @@ class SCRALModule(object):
         """
 
         global verbose  # overwrite verbose flag from command line
-        if args.verbose:
+        if args['verbose']:
             verbose = True
             logging_level = logging.DEBUG
         else:
@@ -74,18 +74,21 @@ class SCRALModule(object):
 
         util.init_logger(logging_level)  # logging initialization
 
-        if not args.connection_file:  # has the connection_file been set?
+        if not args['connection_file']:  # has the connection_file been set?
             logging.critical("Connection file is missing!")
             exit(ERROR_MISSING_CONNECTION_FILE)
-        if not args.ogc_file:  # has the ogc_file been set?
+        if not args['ogc_file']:  # has the ogc_file been set?
             logging.critical("OGC configuration file is missing!")
             exit(ERROR_MISSING_OGC_FILE)
 
-        logging.info("[PHASE-INIT] The connection file is: " + args.connection_file)
-        logging.debug("OGC file: " + args.ogc_file)
+        logging.info("Connection file: " + args['connection_file'])
+        logging.debug("Connection file stored in: " + args["connection_path"])
+        logging.info("OGC file: " + args['ogc_file'])
+        logging.debug("OGC file stored in: " + args["config_path"])
 
         # Storing the OGC server addresses
-        connection_config_file = util.load_from_file(args.connection_file)
+        filename_connection = args["connection_path"] + args['connection_file']
+        connection_config_file = util.load_from_file(filename_connection)
         ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
 
         # Testing OGC server connectivity
@@ -94,7 +97,8 @@ class SCRALModule(object):
             exit(ERROR_NO_SERVER_CONNECTION)
 
         # OGC model configuration and discovery
-        ogc_config = OGCConfiguration(args.ogc_file, ogc_server_address)
+        full_ogc_filename = args["config_path"] + args['ogc_file']
+        ogc_config = OGCConfiguration(full_ogc_filename, ogc_server_address)
         ogc_config.discovery(verbose)
         return ogc_config
 

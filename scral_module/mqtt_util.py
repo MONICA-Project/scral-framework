@@ -40,7 +40,9 @@ def get_publish_mqtt_topic(pilot_name):
     :param pilot_name: the name of the desired pilot
     :return: An MQTT topic string if the pilot name exists otherwise a boolean value (False).
     """
-    if pilot_name == 'local':
+    pilot_name = pilot_name.upper()
+
+    if pilot_name == 'LOCAL':
         mqtt_topic = "GOST/"
     elif pilot_name == 'MOVIDA':
         mqtt_topic = "GOST_MOVIDA/"

@@ -17,62 +17,58 @@
 import logging
 import sys
 import signal
+import os.path
+
 
 from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import END_MESSAGE
-from wristband.constants import FILENAME_PILOT, \
-                                PROPERTY_BUTTON_NAME, PROPERTY_LOCALIZATION_NAME, SENSOR_ASSOCIATION_NAME, \
-                                URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, \
-                                URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
+                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
+from wristband.constants import PROPERTY_BUTTON_NAME, PROPERTY_LOCALIZATION_NAME, SENSOR_ASSOCIATION_NAME, \
+                                URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, \
+                                URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
 
 from wristband.wristband_module import SCRALWristband
-from wristband.wristband_util import instance_wb_module
+from wristband import wristband_util as wb_util
+
 
 flask_instance = Flask(__name__)
-scral_module: SCRALWristband = None
+module: SCRALWristband = None
 
 MODULE_NAME: str = "SCRAL Module"
 VPN_PORT: int = 8000
 VPN_URL: str = "localhost"
 
 
-def get_scral_module():
-    global scral_module
-    if not scral_module:
-        # printing scral banner and instantiating a signal handler
-        print(scral.BANNER % scral.VERSION)
-        sys.stdout.flush()
-        signal.signal(signal.SIGINT, util.signal_handler)
+def main():
+    module_description = "Wristband integration instance"
+    cmd_line = util.parse_small_command_line(module_description)
+    pilot_config_folder = cmd_line.pilot.lower() + "/"
 
-        scral_module = instance_wb_module(FILENAME_PILOT)
-
-    return scral_module
+    global module
+    module = wb_util.instance_wb_module(pilot_config_folder)
+    module.runtime(flask_instance, 1)
 
 
 @flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST"])
 def new_wristband_request():
-    logging.debug(new_wristband_request.__name__ + " method called from: "+request.remote_addr)
-
-    module = get_scral_module()
-    if module is None:
-        return make_response(jsonify({"Error": "Internal server error"}), 600)
+    logging.debug(new_wristband_request.__name__+" method called from: "+request.remote_addr)
 
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
 
     wristband_id = request.json["tagId"]
 
+    if module is None:
+        return make_response(jsonify({"Error": "Internal server error"}), 500)
+
     # -> ### DATASTREAM REGISTRATION ###
     rc = module.get_resource_catalog()
-
     if wristband_id not in rc:
         logging.info("Wristband: '" + str(wristband_id) + "' registration.")
     else:
-        # logging.error("Device "+wristband_id+" already registered!")
-        # return make_response(jsonify({"Error": "Duplicate request!"}), 422)
         logging.warning("Device '" + str(wristband_id) + "' already registered... It will be overwritten on RC!")
 
     ok = module.ogc_datastream_registration(wristband_id, request.json)
@@ -84,13 +80,12 @@ def new_wristband_request():
 
 @flask_instance.route(URI_WRISTBAND_ASSOCIATION, methods=["PUT"])
 def new_wristband_association_request():
-    logging.debug(new_wristband_association_request.__name__ + " method called from: "+request.remote_addr)
+    logging.debug(new_wristband_association_request.__name__+" method called from: "+request.remote_addr)
 
-    module = get_scral_module()
-    if not module:
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
     if not request.json:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
+    if module is None:
+        return make_response(jsonify({"Error": "Internal server error"}), 500)
 
     wristband_id_1 = request.json["tagId_1"]
     wristband_id_2 = request.json["tagId_2"]
@@ -128,8 +123,6 @@ def new_wristband_button():
 def put_observation(observed_property, payload):
     if not payload:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
-
-    module = get_scral_module()
     if not module:
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
@@ -148,8 +141,6 @@ def put_observation(observed_property, payload):
 def put_service_observation(datastream, payload):
     if not payload:
         return make_response(jsonify({"Error": "Wrong request!"}), 400)
-
-    module = get_scral_module()
     if not module:
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
@@ -166,9 +157,8 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
+    logging.debug(get_active_devices.__name__+" method called from: "+request.remote_addr)
 
-    module = get_scral_module()
     to_ret = jsonify(module.get_resource_catalog())
     return make_response(to_ret, 200)
 
@@ -184,11 +174,14 @@ def test_module():
     posts = (URI_WRISTBAND_REGISTRATION, )
     puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
     gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation(MODULE_NAME, link, posts, puts, gets)
+    to_ret = util.to_html_documentation(MODULE_NAME+" (debug version)", link, posts, puts, gets)
     return to_ret
 
 
 if __name__ == '__main__':
-    get_scral_module()
-    flask_instance.run(host="0.0.0.0", port=8000)
+    print(scral.BANNER % scral.VERSION)
+    sys.stdout.flush()
+
+    signal.signal(signal.SIGINT, util.signal_handler)
+    main()
     print(END_MESSAGE)

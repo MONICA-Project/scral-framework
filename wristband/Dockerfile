@@ -1,33 +1,33 @@
-# to be launched from parent folder
-
-FROM python:3.6-alpine
+FROM python:3.6-slim
 LABEL authors="Jacopo Foglietti, Luca Mannella"
 
-WORKDIR /monica-scral
-EXPOSE 8000
+WORKDIR /monica_scral
 
-COPY scral_startup.py /monica-scral
-COPY scral_ogc /monica-scral/scral_ogc
-COPY scral_module /monica-scral/scral_module
-COPY wristband /monica-scral/wristband
+COPY scral_ogc /monica_scral/scral_ogc
+COPY scral_module /monica_scral/scral_module
+COPY wristband /monica_scral/wristband
+RUN mkdir /monica_scral/catalogs
+VOLUME /monica_scral/catalogs
 
-RUN mkdir /monica-scral/catalogs
-VOLUME /monica-scral/catalogs
+RUN apt-get clean \
+   && apt-get -y update
+
+RUN apt-get -y install \
+	nginx python3-dev build-essential supervisor
 
 RUN pip3 install --no-cache-dir -r wristband/requirements.txt
 RUN pip3 install -e wristband
 
-### docker deploy - INTERNAL - LST
-ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/lst/connection_config_internal.json -p LST
-### docker deploy - EXTERNAL - LST
-# ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/lst/connection_config_external.json -p LST
+RUN rm /etc/nginx/sites-enabled/default
+RUN rm -r /root/.cache
 
-### docker deploy - INTERNAL - Movida
-# ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/movida/connection_config_internal.json -p MOVIDA
-### docker deploy - INTERNAL - TIVOLI
-# ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/tivoli/connection_config_internal.json -p TIVOLI
-### docker deploy - INTERNAL - IoTWeek
-# ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/iotweek/connection_config_internal.json -p IOTWEEK
+COPY wristband/nginx.conf /etc/nginx
+COPY wristband/wristband_nginx.conf /etc/nginx/conf.d/
+COPY wristband/uwsgi.ini /etc/uwsgi/
+#RUN  ln -s /etc/nginx/sites-available/wristband /etc/nginx/sites-enabled/
+COPY wristband/supervisord.conf /etc/
 
-### local testing:
-# ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/connection_config_local.json -p local
+RUN ls -la /monica_scral/*
+RUN ls -la /monica_scral/*/*
+
+CMD ["/usr/bin/supervisord"]

@@ -57,11 +57,28 @@ def init_mirrored_logger(log_name, debug_level, output_filename=None):
     return logger
 
 
+def parse_small_command_line(description):
+    """ This function parses a small version of the "original" command line.
+
+    :param description: The module description that you want to show in -h option.
+    :return: an object with all the parsed parameters.
+    """
+    example_text = "example: start_module.py -p MOVIDA"
+
+    parser = argparse.ArgumentParser(prog='SCRAL', epilog=example_text,
+                                     description=description,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-p', '--pilot', default=DEFAULT_CONFIG, type=str, help='the name of the desired pilot')
+    args = parser.parse_args()
+
+    return args
+
+
 def parse_command_line(description):
     """ This function parses the command line.
 
     :param description: The module description that you want to show in -h option.
-    :return: a dictionary with all the parsed parameters.
+    :return: an object with all the parsed parameters.
     """
     example_text = "example: start_module.py -v -f ./my_conf.conf -c external -p MOVIDA"
 

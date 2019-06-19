@@ -16,28 +16,29 @@ import paho.mqtt.client as mqtt
 
 # BROKER_ADDRESS = "test.geoportal-hamburg.de"
 # BROKER_ADDRESS = "130.192.85.32"
+# BROKER_ADDRESS = "monappdwp3.monica-cloud.eu"
 BROKER_ADDRESS = "localhost"
 
 BROKER_PORT = 1883
 KEEPALIVE = 60
 CLIENT_ID = "MONICA_GPS"
-# TOPIC = "v1.0/Things(12295)/Locations"
 
-TOPIC_GOST = "GOST/+/Observations"
-# TOPIC_ALL = "#"
-# TOPIC_THING_ID = "v1.0/Things(12295)/#"
-# TOPIC_ALL_THINGS = "v1.0/+/Locations"
+TOPIC_ALL = "#"
+TOPIC_GOST_ALL_OBSERVATIONS = "GOST/+/Observations"
+TOPIC_THING_ID = "v1.0/Things(12295)/#"
+TOPIC_ALL_THINGS = "v1.0/+/Locations"
+
+TOPIC = TOPIC_ALL
 
 
 def on_connect(client, userdata, flags, rc):
-    topic = TOPIC_GOST
     # The callback for when the client receives a CONNACK response from the server.
     logging.info("Connected to '"+BROKER_ADDRESS+"' with result code "+str(rc))
 
-    logging.info("Listening on topic: "+topic)
+    logging.info("Listening on topic: "+TOPIC)
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-    client.subscribe(topic, 2)
+    client.subscribe(TOPIC, 2)
 
 
 def on_disconnect(client, userdata, rc):

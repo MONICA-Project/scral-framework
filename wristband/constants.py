@@ -15,10 +15,6 @@
     This file contains useful constants for this module.
 """
 
-# PORT
-# VPN-TEST = 8491 --- LST = 8490 --- IoTWeek = 8480 --- Movida = 8470
-VPN_PORT = "8491"
-
 # URI
 URI_DEFAULT = "/scral/v1.0/wristband-gw"
 URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"
@@ -35,3 +31,6 @@ PROPERTY_BUTTON_NAME = "Button-Wristband"
 SENSOR_ULTRAWIDEBAND_SCRAL = "UWB"
 SENSOR_ULTRAWIDEBAND_DEXELS = "uwb"
 SENSOR_ASSOCIATION_NAME = "WRISTBAND-GW/Friend-Connect/Friend-Connect-Request"
+
+# CONFIGURATION FILE
+FILENAME_PILOT = "local/"
