@@ -1,0 +1,10 @@
+{
+  "module_name": "SCRAL Sound Level Meter",
+  "endpoint_port": 8565,
+  "endpoint_url": "monappdwp3.monica-cloud.eu",
+
+  "connection_file": "connection_config_local.json",
+  "ogc_file": "ogc_config_slm.conf",
+  "pilot": "NS",
+  "verbose": true
+}

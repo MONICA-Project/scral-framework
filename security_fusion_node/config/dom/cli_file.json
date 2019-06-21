@@ -1,10 +1,10 @@
 {
-  "module_name": "SCRAL Wristband",
-  "endpoint_port": 8470,
+  "module_name": "SCRAL Security Fusion Node",
+  "endpoint_port": 8330,
   "endpoint_url": "monappdwp3.monica-cloud.eu",
 
   "connection_file": "connection_config_internal.json",
-  "ogc_file": "ogc_config_wristband.conf",
-  "pilot": "MOVIDA",
+  "ogc_file": "ogc_config_sfn.conf",
+  "pilot": "DOM",
   "verbose": true
 }

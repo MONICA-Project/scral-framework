@@ -1,10 +1,10 @@
 {
-  "module_name": "SCRAL Wristband",
-  "endpoint_port": 8470,
+  "module_name": "SCRAL GPS REST",
+  "endpoint_port": 8250,
   "endpoint_url": "monappdwp3.monica-cloud.eu",
 
   "connection_file": "connection_config_internal.json",
-  "ogc_file": "ogc_config_wristband.conf",
-  "pilot": "MOVIDA",
+  "ogc_file": "ogc_config_gps.conf",
+  "pilot": "RIF",
   "verbose": true
 }

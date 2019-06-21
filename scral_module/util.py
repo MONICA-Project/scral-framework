@@ -25,7 +25,9 @@ import configparser
 import requests
 from arrow.arrow import Arrow
 
-from scral_module.constants import DEFAULT_CONFIG, CREDITS, DEFAULT_LOG_FORMATTER
+from scral_module.constants import DEFAULT_CONFIG, CREDITS, DEFAULT_LOG_FORMATTER, \
+                                   OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, \
+                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
 
 
 def init_logger(debug_level):
@@ -55,6 +57,15 @@ def init_mirrored_logger(log_name, debug_level, output_filename=None):
         logger.addHandler(fh)
 
     return logger
+
+
+def init_parser(file_to_parse):
+    parser = configparser.ConfigParser()
+    files_read = parser.read(file_to_parse)
+    if len(files_read) <= 0:
+        raise FileNotFoundError("File: '" + file_to_parse + "' not found or you don't have permission to read it!")
+    parser.sections()
+    return parser
 
 
 def parse_small_command_line(description):
@@ -93,15 +104,6 @@ def parse_command_line(description):
     args = parser.parse_args()
 
     return args
-
-
-def init_parser(file_to_parse):
-    parser = configparser.ConfigParser()
-    files_read = parser.read(file_to_parse)
-    if len(files_read) <= 0:
-        raise FileNotFoundError("File: '" + file_to_parse + "' not found or you don't have permission to read it!")
-    parser.sections()
-    return parser
 
 
 def load_from_file(filename):

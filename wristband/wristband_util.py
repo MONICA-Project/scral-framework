@@ -15,6 +15,7 @@ import os
 from scral_module import util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
                                    FILENAME_CONFIG, FILENAME_COMMAND_FILE
+
 from wristband.wristband_module import SCRALWristband
 
 
@@ -36,8 +37,8 @@ def instance_wb_module(pilot_name: str):
     # Initialize documentation variable
     global MODULE_NAME, VPN_PORT, VPN_URL
     MODULE_NAME = args["module_name"]
-    VPN_PORT = args["vpn_port"]
-    VPN_URL = args["vpn_url"]
+    VPN_PORT = args["endpoint_port"]
+    VPN_URL = args["endpoint_url"]
 
     # Module initialization and runtime phase
     filename_connection = os.path.join(connection_path + args['connection_file'])

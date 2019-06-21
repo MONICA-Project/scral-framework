@@ -25,6 +25,7 @@ PHASE: INTEGRATION
 #############################################################################
 import copy
 import logging
+import os
 import sys
 import signal
 
@@ -33,30 +34,53 @@ from flask import Flask, request, jsonify, make_response
 import scral_module as scral
 import scral_ogc
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, ERROR_WRONG_PILOT_NAME, \
-    VPN_URL
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
+                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
-from sound_level_meter.constants import VPN_PORT, URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, \
+from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, \
     URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT, DEVICE_NAME_KEY
 
 flask_instance = Flask(__name__)
 module: SCRALSoundLevelMeter = None
 
+MODULE_NAME: str = "SCRAL Module"
+ENDPOINT_PORT: int = 8000
+ENDPOINT_URL: str = "localhost"
+
 
 def main():
     module_description = "Sound Level Meter integration instance"
-    args = util.parse_command_line(module_description)
+    cmd_line = util.parse_small_command_line(module_description)
+    pilot_config_folder = cmd_line.pilot.lower() + "/"
+
+    # Preparing all the necessary configuration paths
+    abs_path = os.path.abspath(os.path.dirname(__file__))
+    config_path = os.path.join(abs_path, FILENAME_CONFIG)
+    connection_path = os.path.join(config_path, pilot_config_folder)
+    command_line_file = os.path.join(connection_path + FILENAME_COMMAND_FILE)
+
+    # Taking and setting application parameters
+    args = util.load_from_file(command_line_file)
+    args["config_path"] = config_path
+    args["connection_path"] = connection_path
 
     # OGC-Configuration
     ogc_config = SCRALSoundLevelMeter.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
+    # Initialize documentation variable
+    global MODULE_NAME, ENDPOINT_PORT, ENDPOINT_URL
+    MODULE_NAME = args["module_name"]
+    ENDPOINT_PORT = args["endpoint_port"]
+    ENDPOINT_URL = args["endpoint_url"]
+
     # Module initialization and runtime phase
     global module
-    catalog_name = args.pilot + "_SLM.json"
-    module = SCRALSoundLevelMeter(ogc_config, args.connection_file, args.pilot,
+    filename_connection = os.path.join(connection_path + args['connection_file'])
+    catalog_name = args["pilot"] + "_SLM.json"
+    module = SCRALSoundLevelMeter(ogc_config, filename_connection, args['pilot'],
                                   URL_SLM_LOGIN, CREDENTIALS, catalog_name, SLM_LOGIN_PREFIX)
-    module.runtime(flask_instance)
+    module.runtime(flask_instance, 1)
 
 
 @flask_instance.route(URI_SOUND_EVENT, methods=["PUT"])
@@ -116,11 +140,11 @@ def test_module():
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
-    link = VPN_URL+":"+str(VPN_PORT)
+    link = ENDPOINT_URL+":"+str(ENDPOINT_PORT)
     posts = ()
     puts = (URI_SOUND_EVENT, )
     gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation("SCRALSoundLevelMeter", link, posts, puts, gets)
+    to_ret = util.to_html_documentation(MODULE_NAME, link, posts, puts, gets)
     return to_ret
 
 

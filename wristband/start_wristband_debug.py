@@ -17,15 +17,12 @@
 import logging
 import sys
 import signal
-import os.path
-
 
 from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
-                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
+from scral_module.constants import END_MESSAGE
 from wristband.constants import PROPERTY_BUTTON_NAME, PROPERTY_LOCALIZATION_NAME, SENSOR_ASSOCIATION_NAME, \
                                 URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, \
                                 URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
@@ -38,8 +35,8 @@ flask_instance = Flask(__name__)
 module: SCRALWristband = None
 
 MODULE_NAME: str = "SCRAL Module"
-VPN_PORT: int = 8000
-VPN_URL: str = "localhost"
+ENDPOINT_PORT: int = 8000
+ENDPOINT_URL: str = "localhost"
 
 
 def main():
@@ -170,7 +167,7 @@ def test_module():
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
 
-    link = VPN_URL+":"+str(VPN_PORT)
+    link = ENDPOINT_URL + ":" + str(ENDPOINT_PORT)
     posts = (URI_WRISTBAND_REGISTRATION, )
     puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
     gets = (URI_ACTIVE_DEVICES, )

@@ -15,9 +15,6 @@
     This file contains useful constants for this module.
 """
 
-# PORT
-VPN_PORT = 8260
-
 # URI
 URI_DEFAULT = "/scral/v1.0/gps-tracker-gw"
 URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"

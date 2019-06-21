@@ -1,10 +1,10 @@
 {
-  "module_name": "SCRAL Wristband",
+  "module_name": "SCRAL Security Fusion Node",
   "endpoint_port": 8000,
   "endpoint_url": "localhost",
 
   "connection_file": "connection_config_local.json",
-  "ogc_file": "ogc_config_wristband.conf",
+  "ogc_file": "ogc_config_sfn.conf",
   "pilot": "local",
   "verbose": true
 }

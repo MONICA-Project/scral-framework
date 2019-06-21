@@ -29,6 +29,6 @@ ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config
 ### docker deploy - INTERNAL - TIVOLI
 # ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/tivoli/connection_config_internal.json -p TIVOLI
 ### docker deploy - INTERNAL - DOM
-# ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/hamburg/connection_config_internal.json -p DOM
+# ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/dom/connection_config_internal.json -p DOM
 ### docker deploy - INTERNAL - LEEDS
 # ENTRYPOINT python3 scral_startup.py -v -o security_fusion_node/config/ogc_config_sfn.conf -c security_fusion_node/config/leeds/connection_config_internal.json -p LEEDS

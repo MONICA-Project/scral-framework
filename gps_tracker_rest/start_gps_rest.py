@@ -24,6 +24,7 @@ PHASE RUNTIME: INTEGRATION
 
 #############################################################################
 import logging
+import os
 import sys
 import signal
 
@@ -31,29 +32,53 @@ from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
+                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
 
 from gps_tracker.constants import ALERT, LOCALIZATION
-from gps_tracker_rest.constants import VPN_PORT, \
+from gps_tracker_rest.constants import \
     URI_GPS_TAG_REGISTRATION, URI_GPS_TAG_LOCALIZATION, URI_DEFAULT, URI_ACTIVE_DEVICES, URI_GPS_TAG_ALERT
 from gps_tracker_rest.gps_rest_module import SCRALGPSRest
 
 flask_instance = Flask(__name__)
 module: SCRALGPSRest = None
 
+MODULE_NAME: str = "SCRAL Module"
+ENDPOINT_PORT: int = 8000
+ENDPOINT_URL: str = "localhost"
+
 
 def main():
-    module_description = "GPS REST integration instance"
-    args = util.parse_command_line(module_description)
+    module_description = "SCRAL GPS REST integration instance"
+    cmd_line = util.parse_small_command_line(module_description)
+    pilot_config_folder = cmd_line.pilot.lower() + "/"
+
+    # Preparing all the necessary configuration paths
+    abs_path = os.path.abspath(os.path.dirname(__file__))
+    config_path = os.path.join(abs_path, FILENAME_CONFIG)
+    connection_path = os.path.join(config_path, pilot_config_folder)
+    command_line_file = os.path.join(connection_path + FILENAME_COMMAND_FILE)
+
+    # Taking and setting application parameters
+    args = util.load_from_file(command_line_file)
+    args["config_path"] = config_path
+    args["connection_path"] = connection_path
 
     # OGC-Configuration
     ogc_config = SCRALGPSRest.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
+    # Initialize documentation variable
+    global MODULE_NAME, ENDPOINT_PORT, ENDPOINT_URL
+    MODULE_NAME = args["module_name"]
+    ENDPOINT_PORT = args["endpoint_port"]
+    ENDPOINT_URL = args["endpoint_url"]
+
     # Module initialization and runtime phase
     global module
-    catalog_name = args.pilot + "_GPS-Rest.json"
-    module = SCRALGPSRest(ogc_config, args.connection_file, args.pilot, catalog_name)
-    module.runtime(flask_instance)
+    filename_connection = os.path.join(connection_path + args['connection_file'])
+    catalog_name = args["pilot"] + "_GPS-Rest.json"
+    module = SCRALGPSRest(ogc_config, filename_connection, args['pilot'], catalog_name)
+    module.runtime(flask_instance, 1)
 
 
 @flask_instance.route(URI_GPS_TAG_REGISTRATION, methods=["POST"])
@@ -132,11 +157,11 @@ def test_module():
     """ Checking if SCRAL is running. """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
-    link = VPN_URL+":"+str(VPN_PORT)
-    posts = (URI_GPS_TAG_REGISTRATION, )
+    link = ENDPOINT_URL + ":" + str(ENDPOINT_PORT)
+    posts = (URI_GPS_TAG_REGISTRATION,)
     puts = (URI_GPS_TAG_LOCALIZATION, URI_GPS_TAG_ALERT)
-    gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation("SCRALGPSRest", link, posts, puts, gets)
+    gets = (URI_ACTIVE_DEVICES,)
+    to_ret = util.to_html_documentation(MODULE_NAME, link, posts, puts, gets)
     return to_ret
 
 

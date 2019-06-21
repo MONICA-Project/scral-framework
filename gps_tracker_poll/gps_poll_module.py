@@ -60,7 +60,7 @@ class SCRALGPSPoll(SCRALGPS):
             These DATASTREAMS are published on MONICA OGC server.
             This is a "blocking function".
 
-        :param dynamic_discovery:  A boolean value that enable the dynamic discovery of new hamburg sensors
+        :param dynamic_discovery:  A boolean value that enable the dynamic discovery of new dom sensors
         """
         http_request = None
         try:
@@ -92,7 +92,7 @@ class SCRALGPSPoll(SCRALGPS):
                 # Associating HAMBURG THING id to MONICA DATASTREAM id (plus HAMBURG device_id)
                 self._resource_catalog[iot_id][DEVICE_ID_KEY] = device_id
 
-                for ds in datastreams:  # right now there is only 1 Datastream for each hamburg device
+                for ds in datastreams:  # right now there is only 1 Datastream for each dom device
                     ds.set_mqtt_topic(THINGS_SUBSCRIBE_TOPIC + "(" + iot_id + ")/Locations")
 
         self.update_file_catalog()

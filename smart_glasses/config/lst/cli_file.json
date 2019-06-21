@@ -1,10 +1,10 @@
 {
-  "module_name": "SCRAL Wristband",
-  "endpoint_port": 8490,
+  "module_name": "SCRAL Smart Glasses",
+  "endpoint_port": 8190,
   "endpoint_url": "monapp-lst.monica-cloud.eu",
 
   "connection_file": "connection_config_internal.json",
-  "ogc_file": "ogc_config_wristband.conf",
+  "ogc_file": "ogc_config_glasses.conf",
   "pilot": "LST",
   "verbose": true
 }

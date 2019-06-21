@@ -57,6 +57,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         self.update_cloud_token()
 
         connection_config_file = util.load_from_file(connection_file)
+        self._site_name = connection_config_file["cloud"]["SiteName"]
         self._tenant_id = connection_config_file["cloud"]["TenantID"]
         self._site_id = connection_config_file["cloud"]["SiteID"]
 
@@ -72,7 +73,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
                                                          self._token_prefix, self._token_suffix)
 
     # noinspection PyMethodOverriding
-    def runtime(self, flask_instance):
+    def runtime(self, flask_instance, mode=1):
         """
         This method discovers active SLMs from B&K cloud, registers them as OGC Datastreams into the MONICA
         cloud and finally retrieves sound measurements for each device by using parallel querying threads.
@@ -82,13 +83,20 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         and will generate corresponding Observations.
         """
         # Start SLM discovery and Datastream registration
-        self.ogc_datastream_registration(URL_SLM_CLOUD)
+        try:
+            self.ogc_datastream_registration(URL_SLM_CLOUD)
+        except AttributeError as ae:
+            logging.critical(ae)
+            logging.info("Site name: " + self._site_name)
+            logging.info("Tenant ID :" + self._tenant_id)
+            logging.info("Site ID :" + self._site_id)
+            return
 
         # Start thread pool for Observations
         self._start_thread_pool(SCRALSoundLevelMeter.SLMThread)
 
         # starting REST web server
-        super().runtime(flask_instance)
+        super().runtime(flask_instance, mode)
 
     def ogc_datastream_registration(self, url):
         """ This method receive a target URL as parameter and discovers active SLMs.

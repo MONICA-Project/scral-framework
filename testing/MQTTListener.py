@@ -14,7 +14,7 @@ import time
 
 import paho.mqtt.client as mqtt
 
-# BROKER_ADDRESS = "test.geoportal-hamburg.de"
+# BROKER_ADDRESS = "test.geoportal-dom.de"
 # BROKER_ADDRESS = "130.192.85.32"
 # BROKER_ADDRESS = "monappdwp3.monica-cloud.eu"
 BROKER_ADDRESS = "localhost"

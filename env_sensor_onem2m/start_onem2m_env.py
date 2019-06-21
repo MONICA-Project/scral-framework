@@ -26,6 +26,7 @@ PHASE: INTEGRATION
 ##############################################################################
 import json
 import logging
+import os
 import signal
 import sys
 
@@ -33,27 +34,51 @@ from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, VPN_URL
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
+                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
 
-from env_sensor_onem2m.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, URI_ENV_NODE, ONEM2M_CONTENT_TYPE, VPN_PORT
+from env_sensor_onem2m.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, URI_ENV_NODE, ONEM2M_CONTENT_TYPE
 from env_sensor_onem2m.env_onem2m_module import SCRALEnvOneM2M
 
 flask_instance = Flask(__name__)
-module: SCRALEnvOneM2M = None
+scral_module: SCRALEnvOneM2M = None
+
+MODULE_NAME: str = "SCRAL Module"
+ENDPOINT_PORT: int = 8000
+ENDPOINT_URL: str = "localhost"
 
 
 def main():
-    module_description = "OneM2M Environmental Sensors adapter instance"
-    args = util.parse_command_line(module_description)
+    module_description = "SCRAL-OneM2M Environmental Sensors adapter instance"
+    cmd_line = util.parse_small_command_line(module_description)
+    pilot_config_folder = cmd_line.pilot.lower() + "/"
+
+    # Preparing all the necessary configuration paths
+    abs_path = os.path.abspath(os.path.dirname(__file__))
+    config_path = os.path.join(abs_path, FILENAME_CONFIG)
+    connection_path = os.path.join(config_path, pilot_config_folder)
+    command_line_file = os.path.join(connection_path + FILENAME_COMMAND_FILE)
+
+    # Taking and setting application parameters
+    args = util.load_from_file(command_line_file)
+    args["config_path"] = config_path
+    args["connection_path"] = connection_path
 
     # OGC-Configuration
     ogc_config = SCRALEnvOneM2M.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
+    # Initialize documentation variable
+    global MODULE_NAME, VPN_PORT, VPN_URL
+    MODULE_NAME = args["module_name"]
+    VPN_PORT = args["endpoint_port"]
+    VPN_URL = args["endpoint_url"]
+
     # Module initialization and runtime phase
     global module
-    catalog_name = args.pilot+"_OneM2M.json"
-    module = SCRALEnvOneM2M(ogc_config, args.connection_file, args.pilot, catalog_name)
-    module.runtime(flask_instance)
+    filename_connection = os.path.join(connection_path + args['connection_file'])
+    catalog_name = args["pilot"] + "_OneM2M.json"
+    module = SCRALEnvOneM2M(ogc_config, filename_connection, args['pilot'], catalog_name)
+    module.runtime(flask_instance, 1)
 
 
 @flask_instance.route(URI_ENV_NODE, methods=["POST"])
@@ -129,7 +154,7 @@ def test_module():
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     to_ret = "<h1>SCRAL is running!</h1>\n"
-    link = VPN_URL+":"+str(VPN_PORT)
+    link = ENDPOINT_URL + ":" + str(ENDPOINT_PORT)
     to_ret += "<h2>SCRALEnvOneM2M is listening on address: "+link+"</h2>"
     to_ret += "<h3>To have access to all active devices and to the relative DATASTREAM id, send a GET requesto to: " \
               + link + URI_ACTIVE_DEVICES + "</h3>"

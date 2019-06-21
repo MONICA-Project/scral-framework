@@ -15,10 +15,6 @@
     This file contains useful constants for this module.
 """
 
-# PORT
-# Movida = 8570 --- NS = 8560 --- RIF = 8550 --- Tivoli = 8540
-VPN_PORT = 8560
-
 # URI
 URI_DEFAULT = "/scral/v1.0/slm-gw"
 URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"
