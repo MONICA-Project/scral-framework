@@ -17,8 +17,11 @@ VOLUME /monica-scral/catalogs
 RUN pip3 install --no-cache-dir -r wristband/requirements.txt
 RUN pip3 install -e wristband
 
+### docker deploy - INTERNAL - LOCAL - new
+ENTRYPOINT python3 scral_startup.py -p local
+
 ### docker deploy - INTERNAL - LST
-ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/lst/connection_config_internal.json -p LST
+# ENTRYPOINT python3 scral_startup.py -v -o wristband/config/ogc_config_wristband.conf -c wristband/config/lst/connection_config_internal.json -p LST
 ### docker deploy - EXTERNAL - LST
 # ENTRYPOINT python3 scral_startup.py -v -o wristband_debug/config/ogc_config_wristband.conf -c wristband_debug/config/lst/connection_config_external.json -p LST
 

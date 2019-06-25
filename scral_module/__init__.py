@@ -21,13 +21,13 @@
 import logging
 import sys
 
-VERSION = "v2.0"
+VERSION = "v2.1"
 BANNER = """
-        _____ __________  ___    __                                     
-       / ___// ____/ __ \/   |  / /                                     
-       \__ \/ /   / /_/ / /| | / /                                      
-      ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer                                 
-     /____/\____/_/ |_/_/  |_/_____/   %s - enhanced by Python 3
+        _____ __________  ___    __                                         
+       / ___// ____/ __ \/   |  / /                                         
+       \__ \/ /   / /_/ / /| | / /                                          
+      ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer 
+     /____/\____/_/ |_/_/  |_/_____/   %s - enhanced by Python 3            
 
      (c) 2019, LINKS Foundation
      developed by Jacopo Foglietti & Luca Mannella

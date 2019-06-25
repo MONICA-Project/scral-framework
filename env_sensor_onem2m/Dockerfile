@@ -17,8 +17,11 @@ VOLUME /monica-scral/catalogs
 RUN pip3 install --no-cache-dir -r env_sensor_onem2m/requirements.txt
 RUN pip3 install -e env_sensor_onem2m
 
+### docker deploy - INTERNAL - LOCAL - new
+ENTRYPOINT python3 scral_startup.py -p local
+
 # docker deploy - INTERNAL - PORT
-ENTRYPOINT python3 scral_startup.py -v -o env_sensor_onem2m/config/ogc_config_onem2m.conf -c env_sensor_onem2m/config/port/connection_config_internal.json -p PORT
+# ENTRYPOINT python3 scral_startup.py -v -o env_sensor_onem2m/config/ogc_config_onem2m.conf -c env_sensor_onem2m/config/port/connection_config_internal.json -p PORT
 ### docker deploy - INTERNAL - DOM
 # ENTRYPOINT python3 scral_startup.py -v -o env_sensor_onem2m/config/ogc_config_onem2m.conf -c env_sensor_onem2m/config/dom/connection_config_internal.json -p DOM
 ### local testing:

@@ -1,0 +1,19 @@
+{
+  "mqtt": {
+    "pub_broker": "mosquitto",
+    "pub_broker_port": 1883,
+    "broker_keepalive": 60
+  },
+  "REST": {
+    "ogc_server_address": "http://bgw-http-proxy:5050/gost_kff/v1.0",
+    "listening_address": {
+      "address": "0.0.0.0",
+      "port": "8000"
+    }
+  },
+  "cloud": {
+    "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
+    "SiteName": "Kappa FuturFestival 2019",
+    "SiteID": "efd33c2f-8d22-43a4-8e0a-d4e04dfa6ef8"
+  }
+}

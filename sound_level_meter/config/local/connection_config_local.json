@@ -13,8 +13,8 @@
   },
   "cloud": {
     "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
-    "SiteName": "Movida",
-    "SiteID": "54c9dd30-f915-42b7-b00c-c07c891fb0ce"
+    "SiteName": "Kappa FuturFestival 2019",
+    "SiteID": "efd33c2f-8d22-43a4-8e0a-d4e04dfa6ef8"
   },
 
   "_comment": "Remember to change the \"cloud\" field with the desired pilot.",
@@ -29,14 +29,19 @@
     "SiteName": "Movida",
     "SiteID": "54c9dd30-f915-42b7-b00c-c07c891fb0ce"
   },
-  "_cloud__NS": {
+  "_cloud_NS": {
     "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
     "SiteName": "NuitsSonores2019",
     "SiteID": "bba77275-7454-4add-bdc1-6fcf120cc6ec"
   },
-  "_cloud__RIF": {
+  "_cloud_RIF": {
       "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
       "SiteName": "Rhein in flammen 2019",
       "SiteID": "18d65629-d57b-4787-ac79-592d1d0aec85"
+  },
+  "_cloud_KFF": {
+    "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
+    "SiteName": "Kappa FuturFestival 2019",
+    "SiteID": "efd33c2f-8d22-43a4-8e0a-d4e04dfa6ef8"
   }
 }
