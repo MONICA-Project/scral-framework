@@ -15,4 +15,5 @@
     This file contains useful constants for this module.
 """
 
+NAME_KEY = "name"
 SEQUENCES_KEY = "sequences"

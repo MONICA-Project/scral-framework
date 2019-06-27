@@ -5,6 +5,7 @@
     "broker_keepalive": 60
   },
   "REST": {
+    "ogc_server_address_vpn": "http://monappdwp3.monica-cloud.eu:8104/v1.0",
     "ogc_server_address": "http://bgw-http-proxy:5050/gost_kff/v1.0",
     "listening_address": {
       "address": "0.0.0.0",

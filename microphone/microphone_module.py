@@ -17,7 +17,7 @@ import json
 
 from scral_ogc import OGCObservation
 from scral_module.scral_module import SCRALModule
-from microphone.constants import SEQUENCES_KEY
+from microphone.constants import NAME_KEY, SEQUENCES_KEY
 
 
 class SCRALMicrophone(SCRALModule):
@@ -34,8 +34,11 @@ class SCRALMicrophone(SCRALModule):
         thread_id = 1
 
         for device_id, values in self._active_devices.items():
+            t_name = values[NAME_KEY]
+            sequences = values[SEQUENCES_KEY]
+
             thread = microphone_thread(
-                thread_id, "Thread-" + str(thread_id), device_id, values[SEQUENCES_KEY], self)
+                thread_id, t_name, device_id, sequences, self)
             thread.start()
             thread_pool.append(thread)
             thread_id += 1

@@ -27,7 +27,7 @@ from scral_module import util
 from scral_module.rest_module import SCRALRestModule
 
 from microphone.microphone_module import SCRALMicrophone
-from microphone.constants import SEQUENCES_KEY
+from microphone.constants import NAME_KEY, SEQUENCES_KEY
 
 from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, MIN5_IN_SECONDS, RETRY_INTERVAL, DEVICE_NAME_KEY
 
@@ -152,7 +152,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
             # Build active devices catalog
             self._active_devices[device_id] = {}
             self._active_devices[device_id]["coordinates"] = location_coordinates["coordinates"]
-            self._active_devices[device_id]["name"] = device_name
+            self._active_devices[device_id][NAME_KEY] = device_name
             self._active_devices[device_id]["description"] = device_description
 
             url_sequences = url + "/tenants/" + str(self._tenant_id) + "/sites/" + str(
@@ -260,11 +260,13 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         def __init__(self, thread_id, thread_name, device_id, url_sequences, slm_module):
             super().__init__()
 
+            # thread_debug_name = "("+str(thread_id)+")"
+            thread_debug_name = "("+thread_name+")"
             # Init Thread logger
-            self._logger = util.init_mirrored_logger("("+str(thread_id)+")", logging.DEBUG)
+            self._logger = util.init_mirrored_logger(thread_debug_name, logging.DEBUG)
 
             # Enable log storage in file
-            # self._logger = util.init_mirrored_logger(str(thread_id), logging.DEBUG, "mic_"+str(thread_id)+".log")
+            # self._logger = util.init_mirrored_logger(thread_debug_name, logging.DEBUG, "mic_"+str(thread_id)+".log")
 
             self._thread_name = thread_name
             self._thread_id = thread_id

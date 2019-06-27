@@ -76,6 +76,11 @@ class SCRALPhonometer(SCRALMicrophone):
         logging.info("\n\n--- Start OGC DATASTREAMs registration ---\n")
         phonometers = r.json()["metadata"]
 
+        logging.debug("Phonometers retrieved:")
+        for phono in phonometers:
+            logging.debug(phono["stream"]["smartobject"]["name"])
+            logging.debug(phono["stream"]["smartobject"]["code"]+"\n")
+
         # Iterate over active devices
         for phono in phonometers:
             if phono["dataset"]["code"] in ACTIVE_DEVICES:
