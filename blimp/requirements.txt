@@ -1,0 +1,6 @@
+paho-mqtt
+arrow
+requests
+configparser
+cherrypy
+flask
