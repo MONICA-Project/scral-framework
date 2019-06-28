@@ -16,10 +16,8 @@
 """
 
 # URI
-URI_DEFAULT = "/scral/v1.0/blimps-gw"
+URI_DEFAULT = "/scral/v1.0/blimp"
 URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"
-URI_REGISTRATION = URI_DEFAULT + "/blimp"
-URI_OBSERVATION = URI_REGISTRATION + "/observations"
 
 # KEYS
 BLIMP_KEY = "blimpId"

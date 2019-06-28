@@ -18,7 +18,7 @@ RUN pip3 install --no-cache-dir -r blimp/requirements.txt
 RUN pip3 install -e blimp
 
 ### docker deploy - INTERNAL - LOCAL - new
-ENTRYPOINT python3 scral_startup.py -p local
+# ENTRYPOINT python3 scral_startup.py -p local
 
 ### docker deploy - INTERNAL - KFF - new
-# ENTRYPOINT python3 scral_startup.py -p KFF
+ENTRYPOINT python3 scral_startup.py -p KFF

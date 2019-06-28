@@ -37,7 +37,7 @@ from scral_module import util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
                                    FILENAME_CONFIG, FILENAME_COMMAND_FILE
 
-from blimp.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, URI_REGISTRATION, URI_OBSERVATION, BLIMP_KEY
+from blimp.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, BLIMP_KEY
 from blimp.blimp_module import SCRALBlimp
 
 flask_instance = Flask(__name__)
@@ -68,10 +68,10 @@ def main():
     ogc_config = SCRALBlimp.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
     # Initialize documentation variable
-    global MODULE_NAME, VPN_PORT, VPN_URL
+    global MODULE_NAME, ENDPOINT_PORT, ENDPOINT_URL
     MODULE_NAME = args["module_name"]
-    VPN_PORT = args["endpoint_port"]
-    VPN_URL = args["endpoint_url"]
+    ENDPOINT_PORT = args["endpoint_port"]
+    ENDPOINT_URL = args["endpoint_url"]
 
     # Module initialization and runtime phase
     global module
@@ -81,7 +81,7 @@ def main():
     module.runtime(flask_instance, 1)
 
 
-@flask_instance.route(URI_REGISTRATION, methods=["POST"])
+@flask_instance.route(URI_DEFAULT, methods=["POST"])
 def new_blimp_registration():
     """ This function can register a new Blimp in the OGC server.
 
@@ -100,7 +100,7 @@ def new_blimp_registration():
     return response
 
 
-@flask_instance.route(URI_OBSERVATION+"(<datastream_id>)", methods=["PUT"])
+@flask_instance.route(URI_DEFAULT+"/Datastreams(<datastream_id>)/Observations", methods=["PUT"])
 def new_blimp_observation(datastream_id=None):
     """ This function can register a new Blimp in the OGC server.
 
@@ -143,10 +143,24 @@ def test_module():
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     link = ENDPOINT_URL+":"+str(ENDPOINT_PORT)
-    posts = (URI_REGISTRATION, )
-    puts = (URI_OBSERVATION, )
-    gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation(MODULE_NAME, link, posts, puts, gets)
+
+    to_ret = "<h1>SCRAL is running!</h1>\n"
+    to_ret += "<h2> "+MODULE_NAME+" is listening on address \""+link+"\"</h2>"
+
+    to_ret += "<h3>"
+    to_ret += "To REGISTER a new device, please send a POST request to: <ul>"
+    to_ret += "<li>" + link + URI_DEFAULT + "</li>"
+    to_ret += "</ul>"
+
+    to_ret += "To send a new OBSERVATION, please send a PUT request to: <ul>"
+    to_ret += "<li>" + link + URI_DEFAULT+"/Datastreams(id)/Observations</li>"
+    to_ret += "</ul>"
+
+    to_ret += "To retrieve a particular resource, please send a GET request to: <ul>"
+    to_ret += "<li>" + link + URI_ACTIVE_DEVICES + "</li>"
+    to_ret += "</ul>"
+
+    to_ret += "</h3>"
     return to_ret
 
 
