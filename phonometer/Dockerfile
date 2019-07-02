@@ -19,7 +19,7 @@ RUN pip3 install --no-cache-dir -r phonometer/requirements.txt
 RUN pip3 install -e phonometer
 
 ### docker deploy - INTERNAL - LOCAL - new
-ENTRYPOINT python3 scral_startup.py -p local
+# ENTRYPOINT python3 scral_startup.py -p local
 
-### docker deploy - INTERNAL - MOVIDA
-# ENTRYPOINT python3 scral_startup.py -v -o phonometer/config/ogc_config_phonometer.conf -c phonometer/config/movida/connection_config_internal.json -p MOVIDA
+### docker deploy - INTERNAL - MOVIDA - new
+ENTRYPOINT python3 scral_startup.py -p MOVIDA
