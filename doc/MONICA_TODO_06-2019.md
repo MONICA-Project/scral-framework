@@ -16,9 +16,9 @@
 ## SCRAL ##
 
 - Monitoraggio/Supporto agli scenari di "load testing" (VPN, broker, SCRAL endpoint..)
-- Integrazione sensori ambientali su blimp (ref: Sebastian from HAW, Emanuele from DIGISKY)
 - Miglioramento del processo di deployment
 
 ### DONE ###
 - Storage resource catalog (tramite docker volume)
 - Dockerizza soluzione nginx + uwsgi + wristband
+- Integrazione sensori ambientali su blimp (ref: Sebastian from HAW, Emanuele from DIGISKY)

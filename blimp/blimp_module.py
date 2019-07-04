@@ -32,7 +32,13 @@ class SCRALBlimp(SCRALRestModule):
         if ogc_config is None:
             return make_response(jsonify({"Error": "Internal server error"}), 500)
 
-        blimp_id = payload[BLIMP_KEY]
+        try:
+            blimp_id = payload[BLIMP_KEY]
+        except KeyError:
+            logging.error("Wrong payload received:")
+            logging.error(json.dumps(payload))
+            return make_response(jsonify({"Error": "Wrong payload request!"}), 422)
+
         if blimp_id in self._resource_catalog:
             logging.error("Blimp: '" + str(blimp_id) + "' already registered!")
             return make_response(jsonify({"Error": "Duplicate request!"}), 422)

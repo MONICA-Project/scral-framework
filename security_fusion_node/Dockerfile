@@ -17,6 +17,10 @@ VOLUME /monica_scral/catalogs
 RUN pip3 install --no-cache-dir -r security_fusion_node/requirements.txt
 RUN pip3 install -e security_fusion_node
 
+# Enabling bash
+# RUN apk add --no-cache bash
+RUN apk add --update bash
+
 ### docker deploy - INTERNAL - KFF - new
 ENTRYPOINT python3 scral_startup.py -p KFF
 

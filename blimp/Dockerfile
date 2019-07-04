@@ -17,6 +17,9 @@ VOLUME /monica_scral/catalogs
 RUN pip3 install --no-cache-dir -r blimp/requirements.txt
 RUN pip3 install -e blimp
 
+# Enabling bash
+RUN apk add --no-cache bash
+
 ### docker deploy - INTERNAL - LOCAL - new
 # ENTRYPOINT python3 scral_startup.py -p local
 
