@@ -142,7 +142,7 @@ def put_observation(observed_property, payload):
         return make_response(jsonify({"Error": "Wristband not registered!"}), 400)
     else:
         logging.error("Impossible to publish on MQTT server.")
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
+        return make_response(jsonify({"Error": "Internal server error"}), 502)
 
 
 def put_service_observation(datastream, payload):

@@ -174,11 +174,18 @@ class SCRALModule(object):
             msg = "\nOn topic '" + topic + "' will be send the following payload:\n" + str(payload)
             logging.info(msg)
 
-        info = self._mqtt_publisher.publish(topic, payload, qos)
+        info = None
+        try:
+            info = self._mqtt_publisher.publish(topic, payload, qos)
+        except Exception as ex:
+            logging.error("Exception caught during MQTT publish: {0}".format(ex))
 
-        if info.rc == mqtt.MQTT_ERR_SUCCESS:
+        if not info:
+            return False
+        elif info.rc == mqtt.MQTT_ERR_SUCCESS:
             return True
         else:
+            logging.error("Something wrong during MQTT publish. Error code retrieved: {0}".format(str(info.rc)))
             return False
 
     def print_catalog(self):
