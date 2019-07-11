@@ -142,7 +142,7 @@ def put_observation(observed_property, payload):
         return make_response(jsonify({"Error": "Wristband not registered!"}), 400)
     else:
         logging.error("Impossible to publish on MQTT server.")
-        return make_response(jsonify({"Error": "Internal server error"}), 502)
+        return make_response(jsonify({"Error": "Impossible to publish on MQTT server."}), 502)
 
 
 def put_service_observation(datastream, payload):
@@ -158,7 +158,7 @@ def put_service_observation(datastream, payload):
         return make_response(jsonify({"result": "Ok"}), 201)
     else:
         logging.error("Impossible to publish on MQTT server.")
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
+        return make_response(jsonify({"Error": "Impossible to publish on MQTT server."}), 502)
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])

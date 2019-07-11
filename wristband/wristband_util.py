@@ -35,10 +35,10 @@ def instance_wb_module(pilot_name: str):
     ogc_config = SCRALWristband.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
     # Initialize documentation variable
-    global MODULE_NAME, VPN_PORT, VPN_URL
+    global MODULE_NAME, ENDPOINT_PORT, ENDPOINT_URL
     MODULE_NAME = args["module_name"]
-    VPN_PORT = args["endpoint_port"]
-    VPN_URL = args["endpoint_url"]
+    ENDPOINT_PORT = args["endpoint_port"]
+    ENDPOINT_URL = args["endpoint_url"]
 
     # Module initialization and runtime phase
     filename_connection = os.path.join(connection_path + args['connection_file'])

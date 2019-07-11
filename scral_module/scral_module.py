@@ -34,6 +34,7 @@ import logging
 import os
 from abc import abstractmethod
 
+import arrow
 import paho.mqtt.client as mqtt
 
 from scral_module.constants import CATALOG_FOLDER, CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, \
@@ -183,6 +184,7 @@ class SCRALModule(object):
         if not info:
             return False
         elif info.rc == mqtt.MQTT_ERR_SUCCESS:
+            logging.debug("Message sent at: " + str(arrow.utcnow()))
             return True
         else:
             logging.error("Something wrong during MQTT publish. Error code retrieved: {0}".format(str(info.rc)))
