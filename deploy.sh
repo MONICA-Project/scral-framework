@@ -11,7 +11,7 @@ MODULE_NAME=$1
 DOCKER_FILE=$2
 
 echo " ----- STEP 1: Building docker image ----- "
-docker build -t ${MODULE_NAME} -f ${DOCKER_FILE} .
+docker build --no-cache=true --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -t ${MODULE_NAME} -f ${DOCKER_FILE} .
 RESULT=$?
 echo
 echo

@@ -1,23 +1,20 @@
-import paho.mqtt.client as mqtt #import the client1
 import time
 import datetime
-import dateutil.parser
 import json
-import numpy as np
+import logging
 
-import threading
-from typing import List
-from dictionary_catalog import DICTIONARY_OBSERVABLE_TOPICS
+import paho.mqtt.client as mqtt
+import arrow
 
-#
-# Datastreams(417)/Observations
+from dictionary_catalog_movida import DICTIONARY_OBSERVABLE_TOPICS
 
-# Datastreams(415)/Observations
-# Datastreams(413)/Observations
-# Datastreams(419)/Observations
-# 421
-##
+RABBITMQ_URL = "mpclsifrmq01.monica-cloud.eu"
+MOSQUITTO_URL = "monapp-lst.monica-cloud.eu"
+MAIN_URL = "monappdwp3.monica-cloud.eu"
+INTERNAL_BROKER_NAME = "mosquitto"
+LOCAL = "localhost"
 
+PORT = 1884
 
 class Settings:
     list_topics = list()
@@ -29,6 +26,7 @@ class Settings:
     @staticmethod
     def initialize_main_list():
         if not DICTIONARY_OBSERVABLE_TOPICS:
+            logging.warning("No dictionary!")
             return
 
         for key in DICTIONARY_OBSERVABLE_TOPICS:
@@ -39,44 +37,40 @@ class Settings:
 
             Settings.list_topics.append((list_string[0], 0))
 
-    @staticmethod
-    def initialize_additional_list():
-        Settings.list_topics.append(("GOST_LARGE_SCALE_TEST/Datastreams(23)/Observations", 0))
-        Settings.list_topics.append(("GOST_LARGE_SCALE_TEST/Datastreams(25)/Observations", 0))
-
 
 def on_message(client, userdata, message):
     try:
-        current_time = datetime.datetime.now()
-        current_time = current_time.astimezone(tz=datetime.timezone.utc)
+        current_time = arrow.utcnow()
 
-        print("message topic=",message.topic)
-        print("message received " ,str(message.payload.decode("utf-8")))
-        print("timestamp: {}".format(current_time.strftime("%Y-%m-%d, %H:%M:%S%Z")))
-        # print("message qos=",message.qos)
-        # print("message retain flag=",message.retain)
+        logging.info("Message topic: " + message.topic)
+        logging.info("Message received: " + str(message.payload))
+        logging.info("current_time: "+str(current_time.format('YYYY-MM-DD HH:mm:ss')))
+        # logging.info("message qos=",message.qos)
+        # logging.info("message retain flag=",message.retain)
 
         string_json = str(message.payload.decode("utf-8"))
         json_received = json.loads(string_json)
         timestamp_str = json_received["phenomenonTime"]
-		
-        timestamp = datetime.datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%S.%f%z')
+        timestamp = arrow.get(timestamp_str)
+        # timestamp = datetime.datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%S.%f%z')
         diff = current_time - timestamp
-        if abs(diff.total_seconds()) > Settings.time_diff:
-            print(" ============ Critical ============ ")
+        diff_sec = diff.total_seconds()
+        logging.info("Message received after: " + str(diff_sec))
+        if abs(diff_sec) > Settings.time_diff:
+            logging.error(" ---------- Critical ---------- ")
 
         Settings.counter_message_received += 1
 
-        print('OnMessage JSON Conversion Success, counter_messages: {}\n'
-        .format(str(Settings.counter_message_received)))
-		
-        if Settings.counter_message_received % 10 == 0:
-            print("======================================================================\n")
-		
-    except Exception as ex:
-        print('Exception OnMessage: {}'.format(ex))
+        logging.info('OnMessage JSON Conversion Success, counter_messages: {}\n'
+              .format(str(Settings.counter_message_received)))
 
-  
+        if Settings.counter_message_received % 10 == 0:
+            logging.info("======================================================================\n")
+
+    except Exception as ex:
+        logging.critical('Exception OnMessage: {}'.format(ex))
+
+
 def on_connect(client, userdata, flags, rc):
     try:
         if Settings.flag_connection == 1:
@@ -85,74 +79,72 @@ def on_connect(client, userdata, flags, rc):
         Settings.flag_connection = 1
         counter_topics = len(Settings.list_topics)
 
-        print('Client Connected, Subscribing to {} Elements'.format(str(counter_topics)))
+        logging.info('Client Connected, Subscribing to {} Elements'.format(str(counter_topics)))
+
+        client.subscribe("GOST/+", qos=2)
         # client.subscribe('GOST_IOTWEEK/Datastreams(583)/Observations')
-        # client.subscribe('#')
         # client.subscribe('GOST_IOTWEEK/+/Observations')
-        # client.subscribe('CrowdHeatmap')
         # client.subscribe('GOST_LARGE_SCALE_TEST//Antonio/Datastreams')
-        client.subscribe(Settings.list_topics)
+        # client.subscribe(Settings.list_topics, qos=0)
+
     except Exception as ex:
-        print('Exception: {}'.format(ex))
+        logging.critical('Exception: {}'.format(ex))
+
 
 def on_disconnect(client, userdata, flags, rc):
     try:
         Settings.flag_connection = 0
-        print('Client Disconnected')
+        logging.error('Client Disconnected')
         client.reconnect()
     except Exception as ex:
-        print('Exception: {}'.format(ex))
+        logging.critical('Exception: {}'.format(ex))
+
 
 def on_unsubscribe(client, userdata, level, buf):
-    print('Unsubscribed Success! {}'.format(buf))
+    logging.info('Unsubscribed Success! {}'.format(buf))
+
 
 def on_subscribe(client, userdata, level, buf):
-    print('Subscribed Success! {}'.format(len(buf)))
+    logging.info('Subscribed Success! {}'.format(len(buf)))
+
 
 def on_log(client, userdata, level, buf):
-    print('MQTT Log raised: {}'.format(buf))    
+    logging.info('MQTT Log raised: {}'.format(buf))
+
 
 def convert_stringtime_to_epoch(string_time):
     time.mktime(datetime.datetime.strptime(string_time).timetuple())
 
-def get_matrix(row, columns) -> np.matrix:
-    if row == 0:
-        return np.matrix([])
 
-    if columns == 0:
-        return np.matrix([])
-    return np.zeros(shape=(row, columns))
+if __name__ == '__main__':
+    now = arrow.utcnow().format('YYYY-MM-DD_HH:mm')
+    logging.basicConfig(filename="logs/"+str(now)+".log", level=logging.DEBUG)
+    broker_address = LOCAL
 
-from typing import Iterable
+    logging.info("Creating new instance 3")
+    client = mqtt.Client("LocalClientTest")  # create new instance
 
-try:
-    broker_address="mpclsifrmq01.monica-cloud.eu"
-  
-    print("Creating new instance 2")
-    client = mqtt.Client("LocalClientTest") #create new instance
-
-    client.on_connect     = on_connect
-    client.on_subscribe   = on_subscribe
+    client.on_connect = on_connect
+    client.on_subscribe = on_subscribe
     client.on_unsubscribe = on_unsubscribe
-    client.on_message     = on_message
-    client.on_disconnect  = on_disconnect
-    #client.on_log        = on_log
+    client.on_message = on_message
+    client.on_disconnect = on_disconnect
+    # client.on_log = on_log
 
     # client.username_pw_set(username='mosquitto',password='mosquitto')
 
     Settings.initialize_main_list()
 
-    print("connecting to broker: {}".format(broker_address))
-    client.connect(broker_address) #connect to broker
-    # print("Subscribing to topic","house/bulbs/bulb1")
-    # print("Publishing message to topic","house/bulbs/bulb1")
+    logging.info("connecting to broker: {}".format(broker_address))
+    client.connect(host=broker_address, port=PORT)  # connect to broker
+    # logging.info("Subscribing to topic","house/bulbs/bulb1")
+    # logging.info("Publishing message to topic","house/bulbs/bulb1")
     # client.publish("house/bulbs/bulb1","OFF")
 
-    # timer = threading.Timer(5.0, gfg) 
-    # timer.start() 
+    # timer = threading.Timer(5.0, gfg)
+    # timer.start()
+    try:
+        client.loop_forever()
 
-    client.loop_forever()
-	
-except Exception as ex:
-    print('Exception in Main Function: {}'.format(ex))
-	
+    except Exception as ex:
+        logging.critical('Exception in Main Function: {}'.format(ex))

@@ -184,7 +184,23 @@ class SCRALModule(object):
         if not info:
             return False
         elif info.rc == mqtt.MQTT_ERR_SUCCESS:
-            logging.debug("Message sent at: " + str(arrow.utcnow()))
+            now = arrow.utcnow()
+            logging.debug("Message successfully sent at: " + str(now))
+            dict_payload = json.loads(payload)
+            try:
+                phenomenon_time = dict_payload["phenomenonTime"]
+                diff = now - arrow.get(phenomenon_time)
+                logging.debug("Time elapsed since PhenomenonTime: %.3f seconds." % diff.total_seconds())
+            except KeyError:
+                pass
+
+            try:
+                result_time = dict_payload["resultTime"]
+                diff = now - arrow.get(result_time)
+                logging.debug("Time elapsed since ResultTime: %.3f seconds." % diff.total_seconds())
+            except KeyError:
+                pass
+
             return True
         else:
             logging.error("Something wrong during MQTT publish. Error code retrieved: {0}".format(str(info.rc)))
