@@ -18,7 +18,7 @@ import sys
 import scral_module as scral
 from scral_module import util
 from scral_module.constants import END_MESSAGE
-from module import start_module as module
+from wristband import start_wristband as module
 
 
 if __name__ == '__main__':

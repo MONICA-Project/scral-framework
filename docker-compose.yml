@@ -2,12 +2,14 @@ version: '2'
 services:
     node-red:
         image: nodered/node-red-docker:slim-v8
+        network_mode: "bridge"
         volumes:
             - nodered:/data
         ports:
             - "1880:1880"
     mosquitto:
         image: toke/mosquitto
+        network_mode: "bridge"
         volumes:
             - mosquitto_data:/mqtt/data
             - mosquitto_conf:/mqtt/config:ro
@@ -16,6 +18,7 @@ services:
             - "9001:9001"
     gost-db:
         image: geodan/gost-db:0.5
+        network_mode: "bridge"
         volumes:
             - postgis:/var/lib/postgresql/data
         environment:
@@ -24,6 +27,7 @@ services:
             POSTGRES_PASSWORD: postgres
     gost:
         image: geodan/gost:0.5
+        network_mode: "bridge"
         depends_on:
             - mosquitto
             - gost-db
@@ -32,6 +36,8 @@ services:
             gost_mqtt_host: mosquitto
     dashboard:
         image: geodan/gost-dashboard:0.5
+        network_mode: "host"
+        network_mode: "bridge"
         ports:
           - "8080:8080"
         depends_on:
