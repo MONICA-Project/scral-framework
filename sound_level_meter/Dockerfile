@@ -16,8 +16,13 @@ VOLUME /monica_scral/catalogs
 RUN pip3 install --no-cache-dir -r sound_level_meter/requirements.txt
 RUN pip3 install -e sound_level_meter
 
-### docker deploy - INTERNAL - KFF - new
-ENTRYPOINT python3 scral_startup.py -p KFF
+# Enabling bash
+RUN apk add --update bash
+
+### docker deploy - INTERNAL - WT
+ENTRYPOINT python3 scral_startup.py -p WT
+### docker deploy - INTERNAL - KFF
+# ENTRYPOINT python3 scral_startup.py -p KFF
 
 ### docker deploy - INTERNAL - MOVIDA
 # ENTRYPOINT python3 scral_startup.py -v -o sound_level_meter/config/ogc_config_slm.conf -c sound_level_meter/config/movida/connection_config_internal.json -p MOVIDA

@@ -12,9 +12,9 @@
     }
   },
   "cloud": {
+    "SiteName": "Woodstower 2019",
     "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
-    "SiteName": "Kappa FuturFestival 2019",
-    "SiteID": "efd33c2f-8d22-43a4-8e0a-d4e04dfa6ef8"
+    "SiteID": "62949bb5-c659-4f2c-9736-14f51cc31764"
   },
 
   "_comment": "Remember to change the \"cloud\" field with the desired pilot.",
@@ -43,5 +43,10 @@
     "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
     "SiteName": "Kappa FuturFestival 2019",
     "SiteID": "efd33c2f-8d22-43a4-8e0a-d4e04dfa6ef8"
+  },
+  "_cloud_WT": {
+    "SiteName": "Woodstower 2019",
+    "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
+    "SiteID": "62949bb5-c659-4f2c-9736-14f51cc31764"
   }
 }
