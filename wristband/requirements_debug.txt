@@ -1,0 +1,6 @@
+paho-mqtt
+arrow
+requests
+configparser
+Flask==1.0.2
+cherrypy

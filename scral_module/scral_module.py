@@ -217,9 +217,12 @@ class SCRALModule(object):
     def update_file_catalog(self):
         """ Update the resource catalog on file. """
 
-        with open(self._catalog_fullpath, 'w+') as outfile:
-            json.dump(self._resource_catalog, outfile)
-            outfile.write('\n')
+        # with open(self._catalog_fullpath, 'w+') as outfile:
+        #     json.dump(self._resource_catalog, outfile)
+        #     outfile.write('\n')
+        with open(self._catalog_fullpath, 'w') as f:
+            for chunk in json.JSONEncoder().iterencode(self._resource_catalog):
+                f.write(chunk)
 
     @abstractmethod
     def runtime(self):

@@ -46,7 +46,7 @@ def main():
 
     global module
     module = wb_util.instance_wb_module(pilot_config_folder)
-    module.runtime(flask_instance, 1)
+    module.runtime(flask_instance, 0)
 
 
 @flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST"])
