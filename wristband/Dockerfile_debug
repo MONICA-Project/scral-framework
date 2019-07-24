@@ -17,17 +17,18 @@ VOLUME /monica-scral/catalogs
 RUN pip3 install --no-cache-dir -r wristband/requirements_debug.txt
 RUN pip3 install -e wristband
 
+# Enabling bash
+RUN apk add --update bash
+
 ### docker deploy local testing
 # ENTRYPOINT python3 scral_startup.py -p local
 
 ### docker deploy - INTERNAL - LST
-ENTRYPOINT python3 scral_startup.py -p LST
-### docker deploy - EXTERNAL - LST
 # ENTRYPOINT python3 scral_startup.py -p LST
 
 ### docker deploy - INTERNAL - Movida
 # ENTRYPOINT python3 scral_startup.py -p MOVIDA
 ### docker deploy - INTERNAL - TIVOLI
-# ENTRYPOINT python3 scral_startup.py -p TIVOLI
+ENTRYPOINT python3 scral_startup.py -p TIVOLI
 ### docker deploy - INTERNAL - IoTWeek
 # ENTRYPOINT python3 scral_startup.py -p IOTWEEK

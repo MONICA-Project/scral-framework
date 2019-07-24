@@ -60,3 +60,8 @@ FILENAME_COMMAND_FILE = "cli_file.json"
 
 # log
 DEFAULT_LOG_FORMATTER = "%(asctime)s.%(msecs)04d %(name)-7s %(levelname)s: %(message)s"
+
+# REST ENDPOINTS
+ENABLE_FLASK = 0
+ENABLE_CHERRYPY = 1
+ENABLE_WSGISERVER = 2
