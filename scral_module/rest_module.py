@@ -62,7 +62,7 @@ class SCRALRestModule(SCRALModule):
 
         if mode == ENABLE_FLASK:
             # simply run Flask
-            flask_instance.run(host="0.0.0.0", port=8000)
+            flask_instance.run(host="0.0.0.0", port=8000, threaded=True)
         elif mode == ENABLE_CHERRYPY:
             # Run Flask wrapped by Cherrypy
             cherrypy.tree.graft(flask_instance, "/")

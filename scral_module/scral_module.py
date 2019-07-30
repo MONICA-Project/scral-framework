@@ -184,6 +184,8 @@ class SCRALModule(object):
         if not info:
             return False
         elif info.rc == mqtt.MQTT_ERR_SUCCESS:
+            # time_format = 'YYYY-MM-DDTHH:mm:ss.SZ'
+
             now = arrow.utcnow()
             logging.debug("Message successfully sent at: " + str(now))
             dict_payload = json.loads(payload)

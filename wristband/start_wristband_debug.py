@@ -22,7 +22,7 @@ from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import END_MESSAGE
+from scral_module.constants import END_MESSAGE, ENABLE_FLASK
 from wristband.constants import PROPERTY_BUTTON_NAME, PROPERTY_LOCALIZATION_NAME, SENSOR_ASSOCIATION_NAME, \
                                 URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, \
                                 URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
@@ -46,7 +46,7 @@ def main():
 
     global module
     module = wb_util.instance_wb_module(pilot_config_folder)
-    module.runtime(flask_instance, 0)
+    module.runtime(flask_instance, ENABLE_FLASK)
 
 
 @flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST"])

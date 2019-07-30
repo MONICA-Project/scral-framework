@@ -18,6 +18,7 @@ import logging
 import sys
 import signal
 
+import arrow
 from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
@@ -168,8 +169,9 @@ def get_active_devices():
     """
     logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
-    module = get_scral_module()
-    to_ret = jsonify(module.get_resource_catalog())
+    tmp_rc = dict(get_scral_module().get_resource_catalog())
+    tmp_rc["registered_devices"] = len(tmp_rc)
+    to_ret = jsonify(tmp_rc)
     return make_response(to_ret, 200)
 
 

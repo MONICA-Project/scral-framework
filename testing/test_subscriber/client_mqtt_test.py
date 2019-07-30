@@ -8,7 +8,8 @@ import logging
 import paho.mqtt.client as mqtt
 import arrow
 
-DICTIONARY_OBSERVABLE_TOPICS = {1: ['GOST_LARGE_SCALE_TEST/+/Observations']}
+# DICTIONARY_OBSERVABLE_TOPICS = {1: ["GOST_TIVOLI/Datastreams"]}
+DICTIONARY_OBSERVABLE_TOPICS = {1: ["GOST_LARGE_SCALE_TEST/+/Observations"]}
 # from dictionary_catalog_local import DICTIONARY_OBSERVABLE_TOPICS
 
 RABBITMQ_URL = "mpclsifrmq01.monica-cloud.eu"
@@ -19,6 +20,7 @@ LOCAL = "localhost"
 
 PORT = 1883
 LOCAL_PORT = 1884
+BURST_SIZE = 5000
 
 
 class Settings:
@@ -74,7 +76,7 @@ def on_message(client, userdata, message):
         logging.info('OnMessage JSON Conversion Success, counter_messages: {}\n'
                      .format(str(Settings.counter_message_received)))
 
-        if Settings.counter_message_received % 10 == 0:
+        if Settings.counter_message_received % BURST_SIZE == 0:
             logging.info("======================================================================\n")
 
     except Exception as ex:
@@ -134,9 +136,7 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
-def main():
-    broker_address = RABBITMQ_URL
-
+def main(broker_address: str, port: int):
     logging.info("Creating new instance 3")
     client = mqtt.Client("LocalClientTest")  # create new instance
 
@@ -151,8 +151,8 @@ def main():
 
     Settings.initialize_main_list()
 
-    logging.info("Connecting to broker: " + broker_address + ":" + str(PORT))
-    client.connect(host=broker_address, port=PORT)  # connect to broker
+    logging.info("Connecting to broker: " + broker_address + ":" + str(port))
+    client.connect(host=broker_address, port=port)  # connect to broker
     try:
         client.loop_forever()
 
@@ -169,4 +169,4 @@ if __name__ == '__main__':
 
     # signal.signal(signal.SIGINT, signal_handler)
 
-    main()
+    main(RABBITMQ_URL, PORT)

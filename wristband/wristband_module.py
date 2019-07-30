@@ -61,10 +61,11 @@ class SCRALWristband(SCRALRestModule):
             self._resource_catalog[wristband_id][property_name] = datastream_id
 
             topic = self._topic_prefix + "Datastreams"
-            payload = {"wristband_id": wristband_id,
-                       "observed_property": property_name,
-                       "datastream_id": datastream_id}
-            self.mqtt_publish(topic, json.dumps(payload), to_print=False)
+            mqtt_payload = {"wristband_id": wristband_id,
+                            "observed_property": property_name,
+                            "datastream_id": datastream_id}
+            self.mqtt_publish(topic, json.dumps(mqtt_payload), to_print=False)
+            # what should happens if an MQTT message is not properly sent?
 
         self.update_file_catalog()
         return True
@@ -72,7 +73,11 @@ class SCRALWristband(SCRALRestModule):
     def ogc_observation_registration(self, obs_property, payload):
         wristband_id = payload["tagId"]
         if wristband_id not in self._resource_catalog:
-            return None
+            logging.warning("Wristband '"+wristband_id+"' not yet registered, it will be automatically registered.")
+            ok = self.ogc_datastream_registration(wristband_id, payload)
+            if not ok:
+                logging.error("Registration of wristband: '"+wristband_id+"' failed!")
+                return None
 
         phenomenon_time = payload.pop("timestamp", False)  # Retrieving and removing the phenomenon time
         if not phenomenon_time:
@@ -89,7 +94,7 @@ class SCRALWristband(SCRALRestModule):
         ogc_observation = OGCObservation(datastream_id, phenomenon_time, payload, observation_time)
         observation_payload = json.dumps(ogc_observation.get_rest_payload())
 
-        return self.mqtt_publish(topic=topic, payload=observation_payload)
+        return self.mqtt_publish(topic=topic, payload=observation_payload, to_print=False)
 
     def ogc_service_observation_registration(self, datastream, payload):
         phenomenon_time = payload.pop("timestamp", False)  # Retrieving and removing the phenomenon time

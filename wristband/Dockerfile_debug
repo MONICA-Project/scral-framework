@@ -24,11 +24,11 @@ RUN apk add --update bash
 # ENTRYPOINT python3 scral_startup.py -p local
 
 ### docker deploy - INTERNAL - LST
-# ENTRYPOINT python3 scral_startup.py -p LST
+ENTRYPOINT python3 scral_startup.py -p LST
 
 ### docker deploy - INTERNAL - Movida
 # ENTRYPOINT python3 scral_startup.py -p MOVIDA
 ### docker deploy - INTERNAL - TIVOLI
-ENTRYPOINT python3 scral_startup.py -p TIVOLI
+# ENTRYPOINT python3 scral_startup.py -p TIVOLI
 ### docker deploy - INTERNAL - IoTWeek
 # ENTRYPOINT python3 scral_startup.py -p IOTWEEK
