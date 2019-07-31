@@ -1,0 +1,102 @@
+*********************************************
+***   Performance Tests on LST instance   ***
+*********************************************
+
+======================================================
+uswgi dumb - 5000 wb
+======================================================
+1 processo
+
+Tempo simulatore: 154 s
+Tempo SCRAL: 143.60 s *
+Tempo subscriber: n.a.
+-----------------------------------------------
+2 processi
+19 -> 3004 messaggi
+20 -> 1996 messaggi
+
+Tempo simulatore: 159 s
+Tempo SCRAL: 148.7 s *
+Tempo subscriber: n.a.
+-----------------------------------------------
+3 processi
+18 -> 1039 messaggi
+19 -> 1509 messaggi
+20 -> 2452 messaggi
+
+Tempo simulatore: 153 s
+Tempo SCRAL: 142.46 s *
+Tempo subscriber: n.a.
+-----------------------------------------------
+4 processi
+18 ->  855 messaggi
+19 -> 1307 messaggi
+20 ->  934 messaggi
+21 -> 1904 messaggi
+
+Tempo simulatore: 165 s
+Tempo SCRAL: 155 s *
+Tempo subscriber: n.a.
+-----------------------------------------------
+7 processi 
+17 ->  488 messaggi
+18 ->  524 messaggi
+19 ->  499 messaggi
+20 ->  582 messaggi
+21 ->  677 messaggi
+22 ->  838 messaggi
+23 -> 1392 messaggi
+
+Tempo simulatore: 190 s
+Tempo SCRAL: 180 s *
+Tempo subscriber: n.a.
+-----------------------------------------------
+9 processi 
+18 ->  401 messaggi
+19 ->  417 messaggi
+20 ->  399 messaggi
+21 ->  441 messaggi
+22 ->  426 messaggi
+23 ->  525 messaggi
+24 ->  774 messaggi
+25 ->  571 messaggi
+26 -> 1046 messaggi
+
+Tempo simulatore: 161 s
+Tempo SCRAL: 151.4 s *
+Tempo subscriber: n.a.
+-----------------------------------------------
+-----------------------------------------------
+3 Threads
+
+Tempo simulatore: 159 s
+Tempo SCRAL: 148.289 s *
+Tempo subscriber: n.a.
+-----------------------------------------------
+9 Threads
+
+Tempo simulatore: 163 s
+Tempo SCRAL: 148.969 s *
+Tempo subscriber: n.a.
+-----------------------------------------------
+-----------------------------------------------
+2 processi e 4 thread
+19 -> ? messaggi
+20 -> ? messaggi
+
+Tempo simulatore: 152 s
+Tempo SCRAL: 141.78 s *
+Tempo subscriber: n.a.
+-----------------------------------------------
+-----------------------------------------------
+
+======================================================
+Flask - no VPN - 5000 wb
+======================================================
+Tempo simulatore: 289.054 s
+Tempo SCRAL: 279.874 s *
+Tempo subscriber
+
+
+I tempi fanno riferimento all'ultimo messaggio ricevuto
+* considerare che gli orologi sono sfasati di circa 8/9 secondi (da aggiungere)
