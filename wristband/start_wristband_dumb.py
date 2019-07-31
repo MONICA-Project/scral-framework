@@ -14,7 +14,8 @@
 
 """
 #############################################################################
-import json
+import os
+from multiprocessing import Process, current_process
 import logging
 import sys
 import signal
@@ -35,6 +36,8 @@ from wristband import wristband_util as wb_util
 
 flask_instance = Flask(__name__)
 module: SCRALWristband = None
+logger: bool = False
+p_name: str = None
 
 MODULE_NAME: str = "SCRAL Module"
 ENDPOINT_PORT: int = 8000
@@ -106,17 +109,24 @@ def test_module():
 
 
 def print_time(method_name, payload):
+    global logger, p_name
+    if not logger:
+        # p_name = current_process().name
+        p_name = str(os.getpid())
+        util.init_logger(logging.DEBUG)
+        logger = True
+
     global COUNTER
     COUNTER += 1
     now = arrow.utcnow()
-    logging.debug("Method "+method_name+" called at: " + str(now))
-    logging.debug("Counter: "+str(COUNTER))
+    logging.debug(p_name+" --- Method "+method_name+" called at: " + str(now))
+    logging.debug(p_name+" --- Counter: "+str(COUNTER))
     try:
         phenomenon_time = payload["timestamp"]
         diff = now - arrow.get(phenomenon_time)
-        logging.debug("Time elapsed since PhenomenonTime: %.3f seconds." % diff.total_seconds())
+        logging.debug(p_name+" --- Time elapsed since PhenomenonTime: %.3f seconds." % diff.total_seconds())
     except KeyError:
-        logging.error("Wrong field!")
+        logging.error(p_name+" --- Wrong field!")
 
 
 if __name__ == '__main__':

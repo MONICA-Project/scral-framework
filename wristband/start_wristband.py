@@ -48,7 +48,7 @@ def get_scral_module():
         sys.stdout.flush()
         signal.signal(signal.SIGINT, util.signal_handler)
 
-        scral_module = instance_wb_module(FILENAME_PILOT)
+        scral_module = instance_wb_module(FILENAME_PILOT, MODULE_NAME, ENDPOINT_PORT, ENDPOINT_URL)
 
     return scral_module
 
