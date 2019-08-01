@@ -19,7 +19,7 @@ from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END
 from wristband.wristband_module import SCRALWristband
 
 
-def instance_wb_module(pilot_name: str, module_name, endpoint_port, endpoint_url):
+def instance_wb_module(pilot_name: str, documentation):
     # Preparing all the necessary configuration paths
     abs_path = os.path.abspath(os.path.dirname(__file__))
     config_path = os.path.join(abs_path, FILENAME_CONFIG)
@@ -35,9 +35,9 @@ def instance_wb_module(pilot_name: str, module_name, endpoint_port, endpoint_url
     ogc_config = SCRALWristband.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
     # Initialize documentation variable
-    module_name = args["module_name"]
-    endpoint_port = args["endpoint_port"]
-    endpoint_url = args["endpoint_url"]
+    documentation["module_name"] = args["module_name"]
+    documentation["endpoint_port"] = args["endpoint_port"]
+    documentation["endpoint_url"] = args["endpoint_url"]
 
     # Module initialization and runtime phase
     filename_connection = os.path.join(connection_path + args['connection_file'])

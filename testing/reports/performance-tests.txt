@@ -3,13 +3,12 @@
 *********************************************
 
 ======================================================
-uswgi dumb - 5000 wb
+uswgi dumb - 5000 wb - VPN
 ======================================================
 1 processo
 
 Tempo simulatore: 154 s
 Tempo SCRAL: 143.60 s *
-Tempo subscriber: n.a.
 -----------------------------------------------
 2 processi
 19 -> 3004 messaggi
@@ -17,7 +16,6 @@ Tempo subscriber: n.a.
 
 Tempo simulatore: 159 s
 Tempo SCRAL: 148.7 s *
-Tempo subscriber: n.a.
 -----------------------------------------------
 3 processi
 18 -> 1039 messaggi
@@ -26,7 +24,6 @@ Tempo subscriber: n.a.
 
 Tempo simulatore: 153 s
 Tempo SCRAL: 142.46 s *
-Tempo subscriber: n.a.
 -----------------------------------------------
 4 processi
 18 ->  855 messaggi
@@ -36,7 +33,6 @@ Tempo subscriber: n.a.
 
 Tempo simulatore: 165 s
 Tempo SCRAL: 155 s *
-Tempo subscriber: n.a.
 -----------------------------------------------
 7 processi 
 17 ->  488 messaggi
@@ -49,7 +45,6 @@ Tempo subscriber: n.a.
 
 Tempo simulatore: 190 s
 Tempo SCRAL: 180 s *
-Tempo subscriber: n.a.
 -----------------------------------------------
 9 processi 
 18 ->  401 messaggi
@@ -64,39 +59,53 @@ Tempo subscriber: n.a.
 
 Tempo simulatore: 161 s
 Tempo SCRAL: 151.4 s *
-Tempo subscriber: n.a.
 -----------------------------------------------
 -----------------------------------------------
 3 Threads
 
 Tempo simulatore: 159 s
 Tempo SCRAL: 148.289 s *
-Tempo subscriber: n.a.
 -----------------------------------------------
 9 Threads
 
 Tempo simulatore: 163 s
 Tempo SCRAL: 148.969 s *
-Tempo subscriber: n.a.
 -----------------------------------------------
 -----------------------------------------------
-2 processi e 4 thread
+2 processi e 4 thread - VPN
 19 -> ? messaggi
 20 -> ? messaggi
 
 Tempo simulatore: 152 s
 Tempo SCRAL: 141.78 s *
-Tempo subscriber: n.a.
 -----------------------------------------------
+2 processi e 4 thread - No VPN - Public endpoint
+18 -> 2143 messaggi
+19 -> 2861 messaggi
+
+Tempo simulatore: 292.476 s
+Tempo SCRAL: 283.39 s *
 -----------------------------------------------
+
+======================================================
+Flask - VPN - 5000 wb
+======================================================
+T1
+Tempo simulatore: 389.860 s
+Tempo SCRAL: 381.068 s *
 
 ======================================================
 Flask - no VPN - 5000 wb
 ======================================================
+T1
 Tempo simulatore: 289.054 s
 Tempo SCRAL: 279.874 s *
-Tempo subscriber
+Tempo subscriber: ?
 
+T2
+Tempo simulatore: 301.175 s
+Tempo SCRAL: 292.403 s *
+Tempo subscriber: ?
 
 I tempi fanno riferimento all'ultimo messaggio ricevuto
 * considerare che gli orologi sono sfasati di circa 8/9 secondi (da aggiungere)

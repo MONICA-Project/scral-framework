@@ -15,7 +15,6 @@
 """
 #############################################################################
 import os
-from multiprocessing import Process, current_process
 import logging
 import sys
 import signal
@@ -39,9 +38,7 @@ module: SCRALWristband = None
 logger: bool = False
 p_name: str = None
 
-MODULE_NAME: str = "SCRAL Module"
-ENDPOINT_PORT: int = 8000
-ENDPOINT_URL: str = "localhost"
+DOC = {"module_name": "SCRAL Module", "endpoint_port": 8000, "endpoint_url": "localhost"}
 COUNTER = 0
 
 
@@ -51,7 +48,7 @@ def main():
     pilot_config_folder = cmd_line.pilot.lower() + "/"
 
     global module
-    module = wb_util.instance_wb_module(pilot_config_folder)
+    module = wb_util.instance_wb_module(pilot_config_folder, DOC)
     module.runtime(flask_instance, ENABLE_FLASK)
 
 
@@ -87,7 +84,7 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    print_time(get_active_devices.__name__, request.json)
+    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr+" \n")
 
     to_ret = jsonify(module.get_resource_catalog())
     return make_response(to_ret, 200)
@@ -100,11 +97,11 @@ def test_module():
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
 
-    link = ENDPOINT_URL + ":" + str(ENDPOINT_PORT)
+    link = DOC["endpoint_url"] + ":" + str(DOC["endpoint_port"])
     posts = (URI_WRISTBAND_REGISTRATION, )
     puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
     gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation(MODULE_NAME+" (dumb version)", link, posts, puts, gets)
+    to_ret = util.to_html_documentation(DOC["module_name"] + "(dumb version)", link, posts, puts, gets)
     return to_ret
 
 

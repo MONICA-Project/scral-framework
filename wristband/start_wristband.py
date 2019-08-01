@@ -35,9 +35,7 @@ from wristband.wristband_util import instance_wb_module
 flask_instance = Flask(__name__)
 scral_module: SCRALWristband = None
 
-MODULE_NAME: str = "SCRAL Module"
-ENDPOINT_PORT: int = 8000
-ENDPOINT_URL: str = "localhost"
+DOC = {"module_name": "SCRAL Module", "endpoint_port": 8000, "endpoint_url": "localhost"}
 
 
 def get_scral_module():
@@ -48,7 +46,7 @@ def get_scral_module():
         sys.stdout.flush()
         signal.signal(signal.SIGINT, util.signal_handler)
 
-        scral_module = instance_wb_module(FILENAME_PILOT, MODULE_NAME, ENDPOINT_PORT, ENDPOINT_URL)
+        scral_module = instance_wb_module(FILENAME_PILOT, DOC)
 
     return scral_module
 
@@ -170,7 +168,18 @@ def get_active_devices():
     logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
     tmp_rc = dict(get_scral_module().get_resource_catalog())
+    # active_devices_count = 0
+    # for dev in tmp_rc:
+    #    if "last_msg" in dev:
+    #        timestamp = arrow.get(dev["last_msg"])
+    #        diff = arrow.utcnow() - timestamp
+    #        diff_sec = abs(diff.total_seconds())
+    #        if abs(diff_sec) > 120:
+    #            active_devices_count += 1
+
     tmp_rc["registered_devices"] = len(tmp_rc)
+    # tmp_rc["active_devices"] = active_devices_count
+
     to_ret = jsonify(tmp_rc)
     return make_response(to_ret, 200)
 
@@ -182,11 +191,11 @@ def test_module():
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
 
-    link = ENDPOINT_URL + ":" + str(ENDPOINT_PORT)
+    link = DOC["endpoint_url"] + ":" + str(DOC["endpoint_port"])
     posts = (URI_WRISTBAND_REGISTRATION, )
     puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
     gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation(MODULE_NAME, link, posts, puts, gets)
+    to_ret = util.to_html_documentation(DOC["module_name"] + "(nginx+uwsgi version)", link, posts, puts, gets)
     return to_ret
 
 

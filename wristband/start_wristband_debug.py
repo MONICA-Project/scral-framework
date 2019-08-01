@@ -34,9 +34,7 @@ from wristband import wristband_util as wb_util
 flask_instance = Flask(__name__)
 module: SCRALWristband = None
 
-MODULE_NAME: str = "SCRAL Module"
-ENDPOINT_PORT: int = 8000
-ENDPOINT_URL: str = "localhost"
+DOC = {"module_name": "SCRAL Module", "endpoint_port": 8000, "endpoint_url": "localhost"}
 
 
 def main():
@@ -45,7 +43,7 @@ def main():
     pilot_config_folder = cmd_line.pilot.lower() + "/"
 
     global module
-    module = wb_util.instance_wb_module(pilot_config_folder)
+    module = wb_util.instance_wb_module(pilot_config_folder, DOC)
     module.runtime(flask_instance, ENABLE_FLASK)
 
 
@@ -156,7 +154,10 @@ def get_active_devices():
     """
     logging.debug(get_active_devices.__name__+" method called from: "+request.remote_addr)
 
-    to_ret = jsonify(module.get_resource_catalog())
+    tmp_rc = dict(module.get_resource_catalog())
+    tmp_rc["registered_devices"] = len(tmp_rc)
+
+    to_ret = jsonify(tmp_rc)
     return make_response(to_ret, 200)
 
 
@@ -167,11 +168,11 @@ def test_module():
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
 
-    link = ENDPOINT_URL + ":" + str(ENDPOINT_PORT)
+    link = DOC["endpoint_url"] + ":" + str(DOC["endpoint_port"])
     posts = (URI_WRISTBAND_REGISTRATION, )
     puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
     gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation(MODULE_NAME+" (debug version)", link, posts, puts, gets)
+    to_ret = util.to_html_documentation(DOC["module_name"], link, posts, puts, gets)
     return to_ret
 
 

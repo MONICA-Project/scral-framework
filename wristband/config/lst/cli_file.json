@@ -1,6 +1,6 @@
 {
   "module_name": "SCRAL Wristband",
-  "endpoint_port": 8490,
+  "endpoint_port": 8494,
   "endpoint_url": "monapp-lst.monica-cloud.eu",
 
   "connection_file": "connection_config_internal_rabbitmq.json",
