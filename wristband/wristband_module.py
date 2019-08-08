@@ -41,6 +41,7 @@ class SCRALWristband(SCRALRestModule):
             logging.error("Wearable type: <"+wearable_type+"> is not registered in OGC Model.")
             return False
 
+        # with self._lock:
         self._resource_catalog[wristband_id] = {}
         for op in self._ogc_config.get_observed_properties():
             property_id = op.get_id()
@@ -58,6 +59,7 @@ class SCRALWristband(SCRALRestModule):
             datastream.set_id(datastream_id)
             self._ogc_config.add_datastream(datastream)
 
+            # with self._lock:
             self._resource_catalog[wristband_id][property_name] = datastream_id
 
             topic = self._topic_prefix + "Datastreams"
@@ -67,7 +69,9 @@ class SCRALWristband(SCRALRestModule):
             self.mqtt_publish(topic, json.dumps(mqtt_payload), to_print=False)
             # what should happens if an MQTT message is not properly sent?
 
+        # with self._lock:
         self.update_file_catalog()
+
         return True
 
     def ogc_observation_registration(self, obs_property, payload):
