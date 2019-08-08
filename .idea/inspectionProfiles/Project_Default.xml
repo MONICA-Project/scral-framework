@@ -12,6 +12,7 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="start_dumb_wristband.URI_WRISTBAND_BUTTON" />
+          <option value="super.runtime" />
         </list>
       </option>
     </inspection_tool>

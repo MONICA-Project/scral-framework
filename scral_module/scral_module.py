@@ -29,6 +29,7 @@ PHASE RUNTIME: INTEGRATION
 """
 
 #############################################################################
+import copy
 import json
 import logging
 import os
@@ -137,15 +138,26 @@ class SCRALModule(object):
         self._topic_prefix = pilot_mqtt_topic_prefix
         self._pub_broker_address = connection_config_file["mqtt"]["pub_broker"]
         self._pub_broker_port = connection_config_file["mqtt"]["pub_broker_port"]
+        self._pub_broker_keepalive = connection_config_file["mqtt"]["pub_broker_keepalive"]
 
         self._mqtt_publisher = mqtt.Client()
         self._mqtt_publisher.on_connect = mqtt_util.on_connect
         self._mqtt_publisher.on_disconnect = mqtt_util.automatic_reconnection
 
-        logging.info("Try to connect to broker: %s:%s for publishing" % (self._pub_broker_address, self._pub_broker_port))
+        logging.info(
+            "Try to connect to broker: %s:%s for PUBLISHING..." % (self._pub_broker_address, self._pub_broker_port))
         logging.debug("MQTT Client ID is: " + str(self._mqtt_publisher._client_id))
-        self._mqtt_publisher.connect(self._pub_broker_address, self._pub_broker_port, DEFAULT_KEEPALIVE)
+        self._mqtt_publisher.connect(self._pub_broker_address, self._pub_broker_port, self._pub_broker_keepalive)
         self._mqtt_publisher.loop_start()
+
+        # 5 Preparing module analysis informations
+        self._active_devices = {"actual_counter": 0, "last_update": arrow.utcnow()}
+        try:
+            self._active_devices["update_interval"] = connection_config_file["update_interval"]
+            logging.info("Number of active devices will be refreshed (if an observation is received) every "
+                         + str(self._active_devices["update_interval"]) + " seconds.")
+        except KeyError:
+            logging.warning("No update interval specified inside configuration file.")
 
     def get_mqtt_connection_address(self):
         return self._pub_broker_address
@@ -156,13 +168,36 @@ class SCRALModule(object):
     def get_ogc_config(self):
         return self._ogc_config
 
-    def get_resource_catalog(self):
+    def get_resource_catalog(self) -> dict:
         return self._resource_catalog
 
-    def get_topic_prefix(self):
+    def get_active_devices(self) -> dict:
+        """ This method gives access to the resource catalog with few additional informations. """
+
+        tmp_rc = dict(self._resource_catalog)
+        # active_devices_count = 0
+        # for dev in tmp_rc:
+        #    if "last_msg" in dev:
+        #        timestamp = arrow.get(dev["last_msg"])
+        #        diff = arrow.utcnow() - timestamp
+        #        diff_sec = abs(diff.total_seconds())
+        #        if abs(diff_sec) > 120:
+        #            active_devices_count += 1
+
+        tmp_rc["registered_devices"] = len(tmp_rc)
+        # tmp_rc["active_devices"] = active_devices_count
+
+        tmp_active_devices = copy.deepcopy(self._active_devices)
+        tmp_active_devices["last_update"] = str(tmp_active_devices["last_update"])
+        # x = json.dumps(tmp_active_devices, indent=2, sort_keys=True)
+        tmp_rc["active_devices"] = tmp_active_devices
+
+        return tmp_rc
+
+    def get_topic_prefix(self) -> str:
         return self._topic_prefix
 
-    def mqtt_publish(self, topic, payload, qos=DEFAULT_MQTT_QOS, to_print=True):
+    def mqtt_publish(self, topic: str, payload, qos=DEFAULT_MQTT_QOS, to_print=True) -> bool:
         """ Publish the payload given as parameter to the MQTT publisher
 
         :param topic: The MQTT topic on which the client will publish the message.
@@ -187,7 +222,7 @@ class SCRALModule(object):
             # time_format = 'YYYY-MM-DDTHH:mm:ss.SZ'
 
             now = arrow.utcnow()
-            logging.debug("Message successfully sent at: " + str(now))
+            logging.info("Message successfully sent at: " + str(now))
             dict_payload = json.loads(payload)
             try:
                 phenomenon_time = dict_payload["phenomenonTime"]

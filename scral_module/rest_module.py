@@ -27,6 +27,7 @@ import cherrypy
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher
 
 import scral_module.util as util
+from ogc_configuration import OGCConfiguration
 from scral_module.constants import CATALOG_FILENAME, ENABLE_FLASK, ENABLE_CHERRYPY, ENABLE_WSGISERVER
 from scral_module.scral_module import SCRALModule
 
@@ -35,11 +36,11 @@ class SCRALRestModule(SCRALModule):
     """ This class is the base entity of all REST Modules.
         When you want to develop a new Rest-SCRAL module, you have to extend this class and define what endpoints you
         want to expose.
-        If necessary, you can also extend the __init__ initializer and the runtime method. In runtime, we should call
-        super().runtime() as last instruction to start the cherrypy service.
+        If necessary, you can also extend the __init__ initializer and the runtime method.
+        Runtime method will start the web server and it is a blocking function.
     """
 
-    def __init__(self, ogc_config, connection_file, pilot, catalog_name=CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str, catalog_name=CATALOG_FILENAME):
         """ Load OGC configuration model, initialize MQTT Broker for publishing Observations and prepare Flask.
 
         :param ogc_config: The reference of the OGC configuration.
@@ -56,7 +57,7 @@ class SCRALRestModule(SCRALModule):
     # noinspection PyMethodOverriding
     def runtime(self, flask_instance: Flask, mode=ENABLE_FLASK):
         """
-            This method deploys an REST endpoint as Flask application based on CherryPy WSGI web server.
+            This method deploys a REST endpoint as using different technologies according to the "mode" value.
             This endpoint will listen for incoming REST requests on different route paths.
         """
 
@@ -84,8 +85,8 @@ class SCRALRestModule(SCRALModule):
         else:
             raise RuntimeError("Invalid runtime mode was selected.")
 
-    def get_address(self):
+    def get_address(self) -> str:
         return self._listening_address
 
-    def get_port(self):
+    def get_port(self) -> int:
         return self._listening_port
