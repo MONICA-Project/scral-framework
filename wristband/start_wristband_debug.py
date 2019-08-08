@@ -154,10 +154,7 @@ def get_active_devices():
     """
     logging.debug(get_active_devices.__name__+" method called from: "+request.remote_addr)
 
-    tmp_rc = dict(module.get_resource_catalog())
-    tmp_rc["registered_devices"] = len(tmp_rc)
-
-    to_ret = jsonify(tmp_rc)
+    to_ret = jsonify(module.get_active_devices())
     return make_response(to_ret, 200)
 
 

@@ -10,16 +10,18 @@
 #  It was adapted to be used for SCRAL testing.                                                     #
 #####################################################################################################
 import logging
+import signal
+import sys
 import time
 
 import paho.mqtt.client as mqtt
 
-# BROKER_ADDRESS = "test.geoportal-dom.de"
-# BROKER_ADDRESS = "130.192.85.32"
-# BROKER_ADDRESS = "monappdwp3.monica-cloud.eu"
-BROKER_ADDRESS = "localhost"
+BROKER_HAMBURG = "test.geoportal-dom.de"
+BROKER_PERT = "130.192.85.32"
+BROKER_MONICA = "monappdwp3.monica-cloud.eu"
+BROKER_LOCAL = "localhost"
 
-BROKER_PORT = 1883
+BROKER_PORT = 1884
 KEEPALIVE = 60
 CLIENT_ID = "MONICA_GPS"
 
@@ -27,8 +29,11 @@ TOPIC_ALL = "#"
 TOPIC_GOST_ALL_OBSERVATIONS = "GOST/+/Observations"
 TOPIC_THING_ID = "v1.0/Things(12295)/#"
 TOPIC_ALL_THINGS = "v1.0/+/Locations"
+TOPIC_WB_MQTT = "GOST/SCRAL/Wristband/Localization"
 
-TOPIC = TOPIC_ALL
+
+BROKER_ADDRESS = BROKER_LOCAL
+TOPIC = TOPIC_WB_MQTT
 
 
 def on_connect(client, userdata, flags, rc):
@@ -65,16 +70,27 @@ def log_configuration(debug_level):
         "%(asctime)s.%(msecs)04d %(levelname)s: %(message)s", datefmt="%H:%M:%S"))
 
 
+def signal_handler(signal, frame):
+    """ This signal handler overwrite the default behaviour of SIGKILL (pressing CTRL+C). """
+
+    logging.critical('You pressed Ctrl+C!')
+    print("\nThe MQTT listener is turning down now...\n")
+    sys.exit(0)
+
+
 if __name__ == '__main__':
     # configuring the logger
     log_configuration(logging.DEBUG)
+
+    # Signal Handler
+    signal.signal(signal.SIGINT, signal_handler)
 
     # Client(client_id="", clean_session=True, userdata=None, protocol=MQTTv311, transport="tcp")
     client = mqtt.Client(CLIENT_ID)
     client.on_connect = on_connect
     client.on_message = on_message
 
-    logging.info(" *** Connecting to the broker '" + BROKER_ADDRESS + "' *** ")
+    logging.info(" *** Connecting to broker '" + BROKER_ADDRESS + ":"+str(BROKER_PORT)+"' *** ")
     client.connect(BROKER_ADDRESS, BROKER_PORT, KEEPALIVE)
 
     # Blocking call that processes network traffic, dispatches callbacks and handles reconnecting.

@@ -21,7 +21,7 @@ from scral_module.rest_module import SCRALRestModule
 
 class SCRALWristband(SCRALRestModule):
 
-    def ogc_datastream_registration(self, wristband_id, payload):
+    def ogc_datastream_registration(self, wristband_id: str, payload: str, ):
         if self._ogc_config is None:
             return False
 
@@ -98,7 +98,9 @@ class SCRALWristband(SCRALRestModule):
         ogc_observation = OGCObservation(datastream_id, phenomenon_time, payload, observation_time)
         observation_payload = json.dumps(ogc_observation.get_rest_payload())
 
-        return self.mqtt_publish(topic=topic, payload=observation_payload, to_print=False)
+        mqtt_result = self.mqtt_publish(topic=topic, payload=observation_payload, to_print=False)
+        self._update_active_devices_counter()
+        return mqtt_result
 
     def ogc_service_observation_registration(self, datastream, payload):
         phenomenon_time = payload.pop("timestamp", False)  # Retrieving and removing the phenomenon time
@@ -109,11 +111,20 @@ class SCRALWristband(SCRALRestModule):
         logging.debug(
             "Service: '" + datastream.get_name() + "', Observation:\n" + json.dumps(payload) + ".")
 
-        topic_prefix = self._topic_prefix
-        topic = topic_prefix + "Datastreams(" + str(datastream.get_id()) + ")/Observations"
+        topic = self._topic_prefix + "Datastreams(" + str(datastream.get_id()) + ")/Observations"
 
         # Create OGC Observation and publish
         ogc_observation = OGCObservation(datastream.get_id(), phenomenon_time, payload, observation_time)
         observation_payload = json.dumps(ogc_observation.get_rest_payload())
 
         return self.mqtt_publish(topic=topic, payload=observation_payload)
+
+    def _update_active_devices_counter(self):
+        current_time = arrow.utcnow()
+        time_diff = (current_time - self._active_devices["last_update"]).total_seconds()
+        if time_diff < self._active_devices["update_interval"]:
+            self._active_devices["actual_counter"] += 1
+        else:
+            self._active_devices["counter"] = self._active_devices["actual_counter"]
+            self._active_devices["actual_counter"] = 1
+            self._active_devices["last_update"] = current_time

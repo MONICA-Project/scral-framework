@@ -165,22 +165,9 @@ def get_active_devices():
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
-    logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
+    logging.debug(get_active_devices.__name__+" method called from: "+request.remote_addr)
 
-    tmp_rc = dict(get_scral_module().get_resource_catalog())
-    # active_devices_count = 0
-    # for dev in tmp_rc:
-    #    if "last_msg" in dev:
-    #        timestamp = arrow.get(dev["last_msg"])
-    #        diff = arrow.utcnow() - timestamp
-    #        diff_sec = abs(diff.total_seconds())
-    #        if abs(diff_sec) > 120:
-    #            active_devices_count += 1
-
-    tmp_rc["registered_devices"] = len(tmp_rc)
-    # tmp_rc["active_devices"] = active_devices_count
-
-    to_ret = jsonify(tmp_rc)
+    to_ret = jsonify(scral_module.get_active_devices())
     return make_response(to_ret, 200)
 
 
@@ -189,7 +176,7 @@ def test_module():
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     link = DOC["endpoint_url"] + ":" + str(DOC["endpoint_port"])
     posts = (URI_WRISTBAND_REGISTRATION, )

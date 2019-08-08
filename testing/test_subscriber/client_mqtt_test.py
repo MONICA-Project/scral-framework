@@ -47,6 +47,30 @@ class Settings:
             # Settings.list_topics.append((list_string[0], 2))
 
 
+def main(broker_address: str, port: int):
+    logging.info("Creating new instance 3")
+    client = mqtt.Client("LocalClientTest")  # create new instance
+
+    client.on_connect = on_connect
+    client.on_subscribe = on_subscribe
+    client.on_unsubscribe = on_unsubscribe
+    client.on_message = on_message
+    client.on_disconnect = on_disconnect
+    # client.on_log = on_log
+
+    # client.username_pw_set(username='mosquitto',password='mosquitto')
+
+    Settings.initialize_main_list()
+
+    logging.info("Connecting to broker: " + broker_address + ":" + str(port))
+    client.connect(host=broker_address, port=port)  # connect to broker
+    try:
+        client.loop_forever()
+
+    except Exception as ex:
+        logging.critical('Exception in Main Function: {}'.format(ex))
+
+
 def on_message(client, userdata, message):
     try:
         current_time = arrow.utcnow()
@@ -134,30 +158,6 @@ def signal_handler(signal, frame):
     logging.critical('You pressed Ctrl+C!')
     print("\nThe MQTT listener is turning down now...\n")
     sys.exit(0)
-
-
-def main(broker_address: str, port: int):
-    logging.info("Creating new instance 3")
-    client = mqtt.Client("LocalClientTest")  # create new instance
-
-    client.on_connect = on_connect
-    client.on_subscribe = on_subscribe
-    client.on_unsubscribe = on_unsubscribe
-    client.on_message = on_message
-    client.on_disconnect = on_disconnect
-    # client.on_log = on_log
-
-    # client.username_pw_set(username='mosquitto',password='mosquitto')
-
-    Settings.initialize_main_list()
-
-    logging.info("Connecting to broker: " + broker_address + ":" + str(port))
-    client.connect(host=broker_address, port=port)  # connect to broker
-    try:
-        client.loop_forever()
-
-    except Exception as ex:
-        logging.critical('Exception in Main Function: {}'.format(ex))
 
 
 if __name__ == '__main__':

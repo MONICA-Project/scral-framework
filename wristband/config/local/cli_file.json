@@ -1,6 +1,6 @@
 {
   "module_name": "SCRAL Wristband",
-  "endpoint_port": 8001,
+  "endpoint_port": 8000,
   "endpoint_url": "localhost",
 
   "connection_file": "connection_config_local.json",
