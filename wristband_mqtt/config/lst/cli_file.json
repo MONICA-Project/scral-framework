@@ -1,0 +1,10 @@
+{
+  "module_name": "SCRAL MQTT Wristband",
+  "endpoint_port": 8790,
+  "endpoint_url": "monapp-lst.monica-cloud.eu",
+
+  "connection_file": "connection_config_internal_rabbitmq.json",
+  "ogc_file": "ogc_config_wristband.conf",
+  "pilot": "LST",
+  "verbose": true
+}

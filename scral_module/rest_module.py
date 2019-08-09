@@ -27,7 +27,7 @@ import cherrypy
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher
 
 import scral_module.util as util
-from ogc_configuration import OGCConfiguration
+from scral_module.ogc_configuration import OGCConfiguration
 from scral_module.constants import CATALOG_FILENAME, ENABLE_FLASK, ENABLE_CHERRYPY, ENABLE_WSGISERVER
 from scral_module.scral_module import SCRALModule
 

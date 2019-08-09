@@ -12,7 +12,8 @@ GPS          are between ports 8200 and 8299. \
 SFN          are between ports 8300 and 8399. \
 WRISTBAND    are between ports 8400 and 8499. \
 SLM          are between ports 8500 and 8599. \
-BLIMPS       are between ports 8600 and 8699.
+BLIMPS       are between ports 8600 and 8699. \
+WB MQTT      are between ports 8700 and 8799. \
 
 FUTURE USES  are between ports 8900 and 8999.
 
