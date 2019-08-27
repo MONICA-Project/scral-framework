@@ -27,6 +27,8 @@ RUN apk add --update bash
 ### docker deploy - INTERNAL - LST
 ENTRYPOINT python3 scral_startup.py -p LST
 
+### docker deploy - INTERNAL - WT
+ENTRYPOINT python3 scral_startup.py -p WT
 ### docker deploy - INTERNAL - Movida
 # ENTRYPOINT python3 scral_startup.py -p MOVIDA
 ### docker deploy - INTERNAL - TIVOLI
