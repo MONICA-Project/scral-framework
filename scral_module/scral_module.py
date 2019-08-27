@@ -172,7 +172,7 @@ class SCRALModule(object):
         return self._resource_catalog
 
     def get_active_devices(self) -> dict:
-        """ This method gives access to the resource catalog with few additional informations. """
+        """ This method gives access to the resource catalog with few additional information. """
 
         tmp_rc = dict(self._resource_catalog)
         # active_devices_count = 0
