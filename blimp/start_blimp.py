@@ -24,7 +24,6 @@ PHASE: INTEGRATION
 """
 
 ##############################################################################
-import json
 import logging
 import os
 import signal
@@ -143,25 +142,10 @@ def test_module():
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     link = ENDPOINT_URL+":"+str(ENDPOINT_PORT)
-
-    to_ret = "<h1>SCRAL is running!</h1>\n"
-    to_ret += "<h2> "+MODULE_NAME+" is listening on address \""+link+"\"</h2>"
-
-    to_ret += "<h3>"
-    to_ret += "To REGISTER a new device, please send a POST request to: <ul>"
-    to_ret += "<li>" + link + URI_DEFAULT + "</li>"
-    to_ret += "</ul>"
-
-    to_ret += "To send a new OBSERVATION, please send a PUT request to: <ul>"
-    to_ret += "<li>" + link + URI_DEFAULT+"/Datastreams(id)/Observations</li>"
-    to_ret += "</ul>"
-
-    to_ret += "To retrieve a particular resource, please send a GET request to: <ul>"
-    to_ret += "<li>" + link + URI_ACTIVE_DEVICES + "</li>"
-    to_ret += "</ul>"
-
-    to_ret += "</h3>"
-    return to_ret
+    posts = (URI_DEFAULT,)
+    puts = (URI_DEFAULT+"/Datastreams(id)/Observations",)
+    gets = (URI_ACTIVE_DEVICES, )
+    return util.to_html_documentation(MODULE_NAME, link, posts, puts, gets)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,10 @@
+{
+  "module_name": "SCRAL Blimp",
+  "endpoint_port": 8655,
+  "endpoint_url": "monappdwp3.monica-cloud.eu",
+
+  "connection_file": "connection_config_internal.json",
+  "ogc_file": "ogc_config_blimp.conf",
+  "pilot": "WT",
+  "verbose": true
+}
