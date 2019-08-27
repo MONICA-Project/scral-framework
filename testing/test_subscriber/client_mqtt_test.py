@@ -1,4 +1,4 @@
-import signal
+import random
 import sys
 import time
 import datetime
@@ -20,7 +20,9 @@ LOCAL = "localhost"
 
 PORT = 1883
 LOCAL_PORT = 1884
-BURST_SIZE = 5000
+BURST_SIZE = 10000
+
+CLIENT_ID = "LocalClientTest-"+str(random.randint(1, sys.maxsize))
 
 
 class Settings:
@@ -48,8 +50,8 @@ class Settings:
 
 
 def main(broker_address: str, port: int):
-    logging.info("Creating new instance 3")
-    client = mqtt.Client("LocalClientTest")  # create new instance
+    logging.info("Creating new instance 4")
+    client = mqtt.Client(CLIENT_ID)
 
     client.on_connect = on_connect
     client.on_subscribe = on_subscribe
@@ -63,6 +65,7 @@ def main(broker_address: str, port: int):
     Settings.initialize_main_list()
 
     logging.info("Connecting to broker: " + broker_address + ":" + str(port))
+    logging.info("Client id: " + CLIENT_ID)
     client.connect(host=broker_address, port=port)  # connect to broker
     try:
         client.loop_forever()

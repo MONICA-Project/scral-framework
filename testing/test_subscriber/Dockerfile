@@ -16,7 +16,6 @@ COPY testing/test_subscriber/dictionary_catalog_movida.py /test_subscriber
 RUN mkdir /test_subscriber/logs
 # VOLUME /test_subscriber/logs
 
-### docker deploy - INTERNAL - KFF - new
 ENTRYPOINT python3 client_mqtt_test.py
 # ENTRYPOINT python3 client_mqtt_test.py > /test_subscriber/logs/log.txt
 # ENTRYPOINT python3 client_mqtt_test.py
