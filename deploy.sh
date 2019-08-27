@@ -11,7 +11,7 @@ MODULE_NAME=$1
 DOCKER_FILE=$2
 
 echo " ----- STEP 1: Building docker image ----- "
-docker build --no-cache=true --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -t ${MODULE_NAME} -f ${DOCKER_FILE} .
+docker build --no-cache=true --build-arg BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" -t "${MODULE_NAME}" -f "${DOCKER_FILE}" .
 RESULT=$?
 echo
 echo
@@ -23,7 +23,7 @@ fi
 echo " ----- STEP 2: Tagging image ----- "
 REPOSITORY_NAME="scral/$MODULE_NAME"
 echo "Target repository: $REPOSITORY_NAME"
-docker tag ${MODULE_NAME} ${REPOSITORY_NAME}
+docker tag "${MODULE_NAME}" "${REPOSITORY_NAME}"
 RESULT=$?
 echo
 echo
@@ -33,7 +33,7 @@ if [[ ${RESULT} -ne 0 ]]; then
     exit 2
 fi
 echo " ----- STEP 3: Pushing image on repository ----- "
-docker push ${REPOSITORY_NAME}
+docker push "${REPOSITORY_NAME}"
 RESULT=$?
 echo
 echo

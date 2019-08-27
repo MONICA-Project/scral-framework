@@ -15,6 +15,10 @@
 - Miglioramento del processo di deployment
 - Controllare warning su libreria Arrow
 
+### KNOWN BUGS ###
+- Problema con la registrazione dei devices multi-processo,
+pare che qualche registrazione possa fallire se nel frattempo il catalogo viene aggioranto
+
 ### DONE ###
 - Storage resource catalog (tramite docker volume)
 - Dockerizza soluzione nginx + uwsgi + wristband
