@@ -8,9 +8,14 @@ import logging
 import paho.mqtt.client as mqtt
 import arrow
 
-# DICTIONARY_OBSERVABLE_TOPICS = {1: ["GOST_TIVOLI/Datastreams"]}
-DICTIONARY_OBSERVABLE_TOPICS = {1: ["GOST_LARGE_SCALE_TEST/+/Observations"]}
 # from dictionary_catalog_local import DICTIONARY_OBSERVABLE_TOPICS
+DICTIONARY_LOCAL_TOPICS = {1: ["GOST/+/Observations"]}
+DICTIONARY_LST_TOPICS = {1: ["GOST_LARGE_SCALE_TEST/+/Observations"]}
+DICTIONARY_WT_TOPICS = {1: ["GOST_WOODSTOWER/Datastreams(+)/Observations"]}
+DICTIONARY_OBSERVABLE_TOPICS = DICTIONARY_LST_TOPICS
+
+CLIENT_PREFIX = "ClientTest"
+BIG_BURST = 10000
 
 RABBITMQ_URL = "mpclsifrmq01.monica-cloud.eu"
 LST_URL = "monapp-lst.monica-cloud.eu"
@@ -18,19 +23,22 @@ MONICA_URL = "monappdwp3.monica-cloud.eu"
 INTERNAL_BROKER_NAME = "mosquitto"
 LOCAL = "localhost"
 
-PORT = 1883
+STD_PORT = 1883
 LOCAL_PORT = 1884
-BURST_SIZE = 10000
-
-CLIENT_ID = "LocalClientTest-"+str(random.randint(1, sys.maxsize))
 
 
 class Settings:
     list_topics = list()
     flag_connection = 0
     flag_subscribe = 0
+
     counter_message_received = 0
     time_diff = 30
+    burst_size = BIG_BURST
+
+    client_id = CLIENT_PREFIX+"-"+str(random.randint(1, sys.maxsize))
+    broker = RABBITMQ_URL
+    port = STD_PORT
 
     @staticmethod
     def initialize_main_list():
@@ -51,7 +59,7 @@ class Settings:
 
 def main(broker_address: str, port: int):
     logging.info("Creating new instance 4")
-    client = mqtt.Client(CLIENT_ID)
+    client = mqtt.Client(Settings.client_id)
 
     client.on_connect = on_connect
     client.on_subscribe = on_subscribe
@@ -65,7 +73,7 @@ def main(broker_address: str, port: int):
     Settings.initialize_main_list()
 
     logging.info("Connecting to broker: " + broker_address + ":" + str(port))
-    logging.info("Client id: " + CLIENT_ID)
+    logging.info("Client id: " + Settings.client_id)
     client.connect(host=broker_address, port=port)  # connect to broker
     try:
         client.loop_forever()
@@ -103,7 +111,7 @@ def on_message(client, userdata, message):
         logging.info('OnMessage JSON Conversion Success, counter_messages: {}\n'
                      .format(str(Settings.counter_message_received)))
 
-        if Settings.counter_message_received % BURST_SIZE == 0:
+        if Settings.counter_message_received % Settings.burst_size == 0:
             logging.info("======================================================================\n")
 
     except Exception as ex:
@@ -172,4 +180,4 @@ if __name__ == '__main__':
 
     # signal.signal(signal.SIGINT, signal_handler)
 
-    main(RABBITMQ_URL, PORT)
+    main(Settings.broker, Settings.port)
