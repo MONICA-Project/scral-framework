@@ -92,7 +92,7 @@ class SCRALBlimp(SCRALRestModule):
             return make_response(jsonify({"Error": "Wrong request!"}), 400)
 
         blimp_id = str(payload[BLIMP_KEY])
-        logging.info("New OBSERVATION from Blimp: '" + str(blimp_id) + "'.")
+        logging.debug("New OBSERVATION from Blimp: '" + str(blimp_id) + "'.")
 
         observation_result = payload["result"]  # Load the measure
         phenomenon_time = payload["phenomenonTime"]  # Time of the phenomenon

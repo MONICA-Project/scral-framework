@@ -41,6 +41,7 @@ from blimp.blimp_module import SCRALBlimp
 
 flask_instance = Flask(__name__)
 scral_module: SCRALBlimp = None
+BLIMP_NAME = "blimp"
 
 MODULE_NAME: str = "SCRAL Module"
 ENDPOINT_PORT: int = 8000
@@ -65,6 +66,13 @@ def main():
 
     # OGC-Configuration
     ogc_config = SCRALBlimp.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
+
+    # Initialize constants
+    global BLIMP_NAME
+    try:
+        BLIMP_NAME = args["blimp_name"]
+    except KeyError:
+        logging.warning("No blimp_name specified. Default name was used '"+BLIMP_NAME+"'")
 
     # Initialize documentation variable
     global MODULE_NAME, ENDPOINT_PORT, ENDPOINT_URL
@@ -117,7 +125,10 @@ def new_blimp_observation(datastream_id=None):
         return make_response(jsonify({"Error": "Internal server error"}), 500)
 
     # Just for this particular case
-    request.json[BLIMP_KEY] = "kappa-blimp"
+    try:
+        blimp_name = request.json[BLIMP_KEY]
+    except KeyError:
+        request.json[BLIMP_KEY] = BLIMP_NAME
 
     response = module.ogc_observation_registration(datastream_id, request.json)
     return response
