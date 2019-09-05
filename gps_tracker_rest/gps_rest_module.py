@@ -49,4 +49,6 @@ class SCRALGPSRest(SCRALRestModule, SCRALGPS):
         ogc_observation = OGCObservation(datastream_id, phenomenon_time, payload, observation_time)
         observation_payload = json.dumps(ogc_observation.get_rest_payload())
 
-        return self.mqtt_publish(topic, observation_payload)
+        mqtt_response = self.mqtt_publish(topic, observation_payload)
+        self._update_active_devices_counter()
+        return mqtt_response

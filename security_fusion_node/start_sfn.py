@@ -206,7 +206,7 @@ def get_active_devices():
     """
     logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
-    to_ret = jsonify(module.get_resource_catalog())
+    to_ret = jsonify(module.get_active_devices())
     return make_response(to_ret, 200)
 
 

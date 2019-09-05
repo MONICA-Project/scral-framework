@@ -2,7 +2,7 @@
   "mqtt": {
     "pub_broker": "mosquitto",
     "pub_broker_port": 1883,
-    "broker_keepalive": 60
+    "pub_broker_keepalive": 60
   },
   "REST": {
     "ogc_server_address": "http://bgw-http-proxy:5050/gost_kff/v1.0",

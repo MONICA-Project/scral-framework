@@ -66,6 +66,8 @@ def get_publish_mqtt_topic(pilot_name):
         mqtt_topic = "GOST_KFF/"
     elif pilot_name == "WT":
         mqtt_topic = "GOST_WOODSTOWER/"
+    elif pilot_name == "PM":
+        mqtt_topic = "GOST_PUETZ/"
     elif pilot_name == "LST":
         mqtt_topic = "GOST_LARGE_SCALE_TEST/"
     else:

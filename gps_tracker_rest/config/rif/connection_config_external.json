@@ -2,7 +2,7 @@
   "mqtt": {
     "pub_broker": "monappdwp3.monica-cloud.eu",
     "pub_broker_port": 1883,
-    "broker_keepalive": 60
+    "pub_broker_keepalive": 60
   },
   "REST": {
     "ogc_server_address": "http://monappdwp3.monica-cloud.eu:5050/gost_rif/v1.0",

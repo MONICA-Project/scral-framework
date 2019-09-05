@@ -18,10 +18,16 @@ VOLUME /monica-scral/catalogs
 RUN pip3 install --no-cache-dir -r gps_tracker_rest/requirements.txt
 RUN pip3 install -e gps_tracker_rest
 
-### docker deploy - INTERNAL - LOCAL - new
-ENTRYPOINT python3 scral_startup.py -p local
+# Enabling bash
+RUN apk add --update bash
 
-### docker deploy - INTERNAL - RIF
-# ENTRYPOINT python3 scral_startup.py -v -o gps_tracker_rest/config/ogc_config_gps.conf -c gps_tracker_rest/config/rif/connection_config_internal.json -p RIF
-### docker deploy - INTERNAL - Nuits Sonores
-# ENTRYPOINT python3 scral_startup.py -v -o gps_tracker_rest/config/ogc_config_gps.conf -c gps_tracker_rest/config/ns/connection_config_internal.json -p NS
+### local testing:
+# ENTRYPOINT python3 scral_startup.py -p local
+
+### docker deploy - INTERNAL Configurations
+## PM
+ENTRYPOINT python3 scral_startup.py -p PM
+## RIF
+# ENTRYPOINT python3 scral_startup.py -p RIF
+## Nuits Sonores
+# ENTRYPOINT python3 scral_startup.py -p NS

@@ -29,6 +29,7 @@ The pilot is characterized by a 2 digits value. Values with a final zero are pre
 - PORT modules            use ports xx60.
 - Nuits Sonores modules   use ports xx65.
 - Movida modules          use ports xx70.
+- Pützchens Markt modules use ports xx75.
 - IoT Week modules        use ports xx80.
 
 LST modules             use ports xx90.
