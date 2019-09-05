@@ -38,7 +38,8 @@ from abc import abstractmethod
 import arrow
 import paho.mqtt.client as mqtt
 
-from scral_module.constants import CATALOG_FOLDER, CATALOG_FILENAME, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, \
+from scral_module.constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, DEFAULT_UPDATE_INTERVAL, \
+    CATALOG_FOLDER, CATALOG_FILENAME, \
     ERROR_MISSING_CONNECTION_FILE, ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_WRONG_PILOT_NAME
 from scral_module.ogc_configuration import OGCConfiguration
 from scral_module import util
@@ -150,14 +151,16 @@ class SCRALModule(object):
         self._mqtt_publisher.connect(self._pub_broker_address, self._pub_broker_port, self._pub_broker_keepalive)
         self._mqtt_publisher.loop_start()
 
-        # 5 Preparing module analysis informations
+        # 5 Preparing module analysis information
         self._active_devices = {"actual_counter": 0, "last_update": arrow.utcnow()}
         try:
             self._active_devices["update_interval"] = connection_config_file["update_interval"]
             logging.info("Number of active devices will be refreshed (if an observation is received) every "
                          + str(self._active_devices["update_interval"]) + " seconds.")
         except KeyError:
-            logging.warning("No update interval specified inside configuration file.")
+            logging.warning("No update interval specified inside configuration file..." +
+                            "Default value "+str(DEFAULT_UPDATE_INTERVAL)+" will be used!")
+            self._active_devices["update_interval"] = DEFAULT_UPDATE_INTERVAL
 
     def get_mqtt_connection_address(self):
         return self._pub_broker_address
@@ -260,6 +263,24 @@ class SCRALModule(object):
         with open(self._catalog_fullpath, 'w') as f:
             for chunk in json.JSONEncoder().iterencode(self._resource_catalog):
                 f.write(chunk)
+
+    def _update_active_devices_counter(self):
+        if not self._active_devices:
+            logging.error("Trying to update active_devices structure... But was not initialized!")
+            return
+
+        try:
+            current_time = arrow.utcnow()
+            time_diff = (current_time - self._active_devices["last_update"]).total_seconds()
+            if time_diff < self._active_devices["update_interval"]:
+                self._active_devices["actual_counter"] += 1
+            else:
+                self._active_devices["counter"] = self._active_devices["actual_counter"]
+                self._active_devices["actual_counter"] = 1
+                self._active_devices["last_update"] = current_time
+        except KeyError:
+            logging.error("KeyError: trying to update active_devices structure... But a field is missing!")
+
 
     @abstractmethod
     def runtime(self):

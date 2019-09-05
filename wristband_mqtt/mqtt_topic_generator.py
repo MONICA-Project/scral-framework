@@ -21,31 +21,32 @@ from scral_module.constants import END_MESSAGE, DEFAULT_CONFIG, FILENAME_CONFIG
 
 
 def main():
-    util.init_logger(logging.debug)
+    util.init_logger(logging.DEBUG)
 
     parser = argparse.ArgumentParser(prog='MQTT Topic Generator',
-                                     epilog="example: mqtt_topic_generator.py -p LST -d Wristband",
+                                     epilog="example: mqtt_topic_generator.py -p LST -d Wristband -n 10",
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-p', '--pilot', default=DEFAULT_CONFIG, type=str, help='the name of the desired pilot')
     parser.add_argument('-d', '--device', type=str, help='the name of the device to integrate')
     parser.add_argument('-n', '--number', type=int, help='number of devices')
     args = parser.parse_args()
 
-    path = FILENAME_CONFIG+"/"+args.pilot+"/"
+    path = FILENAME_CONFIG+args.pilot+"/"
     filename = args.device + "_" + args.pilot + ".txt"
 
     topic_prefix = mqtt_util.get_publish_mqtt_topic(args.pilot)
-    topic = topic_prefix + "SCRAL/" + args.device + "/"
+    topic = topic_prefix + "SCRAL/" + args.device
 
     with open(path+filename, 'w+') as outfile:
         for i in range(1, args.number):
             w_topic = topic+"("+str(i)+")/Observations"
-            outfile.write(w_topic)
+            outfile.write(w_topic+"\n")
         outfile.write('\n')
 
 
 if __name__ == '__main__':
     print(scral.BANNER % scral.VERSION)
+    print('This application generate a list of topic and write them on file "<config>/<pilot>/<device>_<pilot>.txt"')
     sys.stdout.flush()
 
     signal.signal(signal.SIGINT, util.signal_handler)

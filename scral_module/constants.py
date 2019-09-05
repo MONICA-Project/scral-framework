@@ -24,6 +24,7 @@ REST_HEADERS = {'Content-Type': 'application/json'}
 
 # default value for pilot and configuration approach
 DEFAULT_CONFIG = "local"
+DEFAULT_UPDATE_INTERVAL = 60
 
 # Username and password necessary for accessing OGC server
 OGC_SERVER_USERNAME = "scral"

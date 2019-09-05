@@ -21,7 +21,7 @@ from scral_module.rest_module import SCRALRestModule
 
 class SCRALWristband(SCRALRestModule):
 
-    def ogc_datastream_registration(self, wristband_id: str, payload: str, ):
+    def ogc_datastream_registration(self, wristband_id: str, payload: dict):
         if self._ogc_config is None:
             return False
 
@@ -118,13 +118,3 @@ class SCRALWristband(SCRALRestModule):
         observation_payload = json.dumps(ogc_observation.get_rest_payload())
 
         return self.mqtt_publish(topic=topic, payload=observation_payload)
-
-    def _update_active_devices_counter(self):
-        current_time = arrow.utcnow()
-        time_diff = (current_time - self._active_devices["last_update"]).total_seconds()
-        if time_diff < self._active_devices["update_interval"]:
-            self._active_devices["actual_counter"] += 1
-        else:
-            self._active_devices["counter"] = self._active_devices["actual_counter"]
-            self._active_devices["actual_counter"] = 1
-            self._active_devices["last_update"] = current_time
