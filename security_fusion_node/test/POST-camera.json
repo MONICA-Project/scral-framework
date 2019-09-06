@@ -1,4 +1,5 @@
 {
+  "camera_id": "TESTING-CAMERA",
   "camera_type": "RGB",
   "ground_plane_size": [
     20,
@@ -275,7 +276,6 @@
       505
     ]
   ],
-  "camera_id": "CAMERA_KU",
   "ground_plane_orientation": 174,
   "module_types": [
     "crowd_density_local",

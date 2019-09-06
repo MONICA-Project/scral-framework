@@ -46,7 +46,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
                     return make_response(jsonify({"Error": "Internal server error."}), 500)
 
             elif sensor_type == 'Crowd-Density-Global' and property_name == "CDG-Estimation":
-                ok = self._ogc_datastream_registration(sensor_type, resource_id, op, payload)
+                ok = self._ogc_datastream_registration(resource_id, sensor_type, op, payload)
                 if not ok:
                     return make_response(jsonify({"Error": "Internal server error."}), 500)
 

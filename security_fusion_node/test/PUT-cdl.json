@@ -1,6 +1,23 @@
 {
   "camera_ids": [
-    "LEEDS_4"
+    "TESTING-CAMERA"
+  ],
+  "type_module": "crowd_density_local",
+  "ground_plane_position": "",
+  "image_dims": "",
+  "frame_byte_array": "",
+  "camera_bearing": [
+    172
+  ],
+  "density_count": 1,
+  "module_id": "435ae19f-0eab-5561-b11a-9ead485180d6_crowd_density_local",
+  "timestamp_1": "2019-03-27T10:34:00.357047+00:00",
+  "timestamp_2": "2019-03-27T10:34:00.357047+00:00",
+  "camera_position": [
+    [
+      53.8175451,
+      -1.58338257
+    ]
   ],
   "density_map": [
     [
@@ -182,23 +199,6 @@
       0,
       0,
       0
-    ]
-  ],
-  "type_module": "crowd_density_local",
-  "ground_plane_position": "",
-  "image_dims": "",
-  "frame_byte_array": "",
-  "camera_bearing": [
-    172
-  ],
-  "density_count": 1,
-  "module_id": "435ae19f-0eab-5561-b11a-9ead485180d6_crowd_density_local",
-  "timestamp_1": "2019-03-27T10:34:00.357047+00:00",
-  "timestamp_2": "2019-03-27T10:34:00.357047+00:00",
-  "camera_position": [
-    [
-      53.8175451,
-      -1.58338257
     ]
   ]
 }
