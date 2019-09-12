@@ -75,12 +75,13 @@ class SCRALSmartGlasses(SCRALRestModule):
         logging.debug(
             "Glasses: '"+glasses_id+"', Property: '"+obs_property+"', Observation:\n"+json.dumps(observation_result)+".")
 
-        topic_prefix = self._topic_prefix
         datastream_id = self._resource_catalog[glasses_id][obs_property]
-        topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
+        topic = self._topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
 
         # Create OGC Observation and publish
         ogc_observation = OGCObservation(datastream_id, phenomenon_time, observation_result, observation_time)
         observation_payload = json.dumps(ogc_observation.get_rest_payload())
 
-        return self.mqtt_publish(topic, observation_payload)
+        mqtt_response = self.mqtt_publish(topic, observation_payload)
+        self._update_active_devices_counter()
+        return mqtt_response

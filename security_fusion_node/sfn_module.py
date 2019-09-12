@@ -106,9 +106,8 @@ class SCRALSecurityFusionNode(SCRALRestModule):
 
         logging.debug("Device: '"+resource_id+"', Property: '"+obs_property+"', Observation:\n"+json.dumps(payload)+".")
 
-        topic_prefix = self._topic_prefix
         datastream_id = self._resource_catalog[resource_id][obs_property]
-        topic = topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
+        topic = self._topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
 
         # Create OGC Observation and publish
         ogc_observation = OGCObservation(datastream_id, phenomenon_time, payload, observation_time)

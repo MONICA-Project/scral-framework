@@ -3,31 +3,31 @@
 FROM python:3.6-alpine
 LABEL authors="Jacopo Foglietti, Luca Mannella"
 
-WORKDIR /monica-scral
+WORKDIR /monica_scral
 EXPOSE 8000
 
-COPY scral_startup.py /monica-scral
-COPY scral_ogc /monica-scral/scral_ogc
-COPY scral_module /monica-scral/scral_module
-COPY smart_glasses /monica-scral/smart_glasses
+COPY scral_startup.py /monica_scral
+COPY scral_ogc /monica_scral/scral_ogc
+COPY scral_module /monica_scral/scral_module
+COPY smart_glasses /monica_scral/smart_glasses
 
-RUN mkdir /monica-scral/catalogs
-VOLUME /monica-scral/catalogs
+RUN mkdir /monica_scral/catalogs
+VOLUME /monica_scral/catalogs
 
 RUN pip3 install --no-cache-dir -r smart_glasses/requirements.txt
 RUN pip3 install -e smart_glasses
 
-### docker deploy - INTERNAL - LOCAL - new
-ENTRYPOINT python3 scral_startup.py -p local
+# Enabling bash
+# RUN apk add --no-cache bash
+RUN apk add --update bash
 
-### docker deploy - INTERNAL - LST
-# ENTRYPOINT python3 scral_startup.py -v -o smart_glasses/config/ogc_config_glasses.conf -c smart_glasses/config/lst/connection_config_internal.json -p LST
-### docker deploy - EXTERNAL - LST
-# ENTRYPOINT python3 scral_startup.py -v -o smart_glasses/config/ogc_config_glasses.conf -c smart_glasses/config/lst/connection_config_external.json -p LST
-
-### docker deploy - INTERNAL - Leeds
-# ENTRYPOINT python3 scral_startup.py -v -o smart_glasses/config/ogc_config_glasses.conf -c smart_glasses/config/leeds/connection_config_internal.json -p LEEDS
-### docker deploy - INTERNAL - Tivoli
-# ENTRYPOINT python3 scral_startup.py -v -o smart_glasses/config/ogc_config_glasses.conf -c smart_glasses/config/tivoli/connection_config_internal.json -p TIVOLI
 ### local testing:
-# ENTRYPOINT python3 scral_startup.py -v -o smart_glasses/config/ogc_config_glasses.conf -c smart_glasses/config/connection_config_local.json -p local
+# ENTRYPOINT python3 scral_startup.py -p local
+
+### docker deploy - INTERNAL Configurations
+## LST
+# ENTRYPOINT python3 scral_startup.py -p LST
+## LEEDS
+ENTRYPOINT python3 scral_startup.py -p LEEDS
+## TIVOLI
+# ENTRYPOINT python3 scral_startup.py -p TIVOLI

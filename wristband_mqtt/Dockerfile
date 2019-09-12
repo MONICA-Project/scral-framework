@@ -25,7 +25,7 @@ RUN apk add --update bash
 # ENTRYPOINT python3 scral_startup.py -p local
 
 ### docker deploy - INTERNAL - LST
-ENTRYPOINT python3 scral_startup.py -p LST
+# ENTRYPOINT python3 scral_startup.py -p LST
 
 ### docker deploy - INTERNAL - WT
 ENTRYPOINT python3 scral_startup.py -p WT

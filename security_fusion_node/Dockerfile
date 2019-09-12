@@ -26,7 +26,7 @@ RUN apk add --update bash
 
 ### docker deploy - INTERNAL Configurations
 ## PM
-ENTRYPOINT python3 scral_startup.py -p PM
+# ENTRYPOINT python3 scral_startup.py -p PM
 ## KFF
 # ENTRYPOINT python3 scral_startup.py -p KFF
 ## MOVIDA
@@ -38,4 +38,4 @@ ENTRYPOINT python3 scral_startup.py -p PM
 ## DOM
 # ENTRYPOINT python3 scral_startup.py -p DOM
 ## LEEDS
-# ENTRYPOINT python3 scral_startup.py -p LEEDS
+ENTRYPOINT python3 scral_startup.py -p LEEDS

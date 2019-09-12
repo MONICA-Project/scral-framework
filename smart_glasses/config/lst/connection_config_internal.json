@@ -2,7 +2,7 @@
   "mqtt": {
     "pub_broker": "mpclsifrmq01.monica-cloud.eu",
     "pub_broker_port": 1883,
-    "broker_keepalive": 60
+    "pub_broker_keepalive": 60
   },
   "REST": {
     "ogc_server_address": "http://gost_large_scale_test:8090/v1.0",
