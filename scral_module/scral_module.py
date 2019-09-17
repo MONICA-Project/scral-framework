@@ -33,13 +33,15 @@ import copy
 import json
 import logging
 import os
+import random
+import sys
 from abc import abstractmethod
 
 import arrow
 import paho.mqtt.client as mqtt
 
 from scral_module.constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, DEFAULT_UPDATE_INTERVAL, \
-    CATALOG_FOLDER, CATALOG_FILENAME, \
+    CATALOG_FOLDER, CATALOG_FILENAME, MQTT_CLIENT_PREFIX, \
     ERROR_MISSING_CONNECTION_FILE, ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_WRONG_PILOT_NAME
 from scral_module.ogc_configuration import OGCConfiguration
 from scral_module import util
@@ -107,7 +109,7 @@ class SCRALModule(object):
 
     def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str, catalog_name=CATALOG_FILENAME):
         """ Initialize the SCRALModule:
-            Preparing the catalog, instantiating tje MQTT Client and stores all relevant connection information.
+            Preparing the catalog, instantiating the MQTT Client and stores all relevant connection information.
 
         :param ogc_config: An instance of an OGCConfiguration.
         :param connection_file: The path of the connection file, it has to contain the address of the MQTT broker.
@@ -141,7 +143,13 @@ class SCRALModule(object):
         self._pub_broker_port = connection_config_file["mqtt"]["pub_broker_port"]
         self._pub_broker_keepalive = connection_config_file["mqtt"]["pub_broker_keepalive"]
 
-        self._mqtt_publisher = mqtt.Client()
+        if catalog_name != CATALOG_FILENAME:
+            client_id = MQTT_CLIENT_PREFIX + "-" + str(catalog_name)
+        else:
+            client_id = MQTT_CLIENT_PREFIX
+        client_id = client_id + "-" + str(random.randint(1, sys.maxsize))
+        self._mqtt_publisher = mqtt.Client(client_id=client_id)
+
         self._mqtt_publisher.on_connect = mqtt_util.on_connect
         self._mqtt_publisher.on_disconnect = mqtt_util.automatic_reconnection
 

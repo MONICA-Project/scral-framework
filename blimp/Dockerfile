@@ -23,8 +23,8 @@ RUN pip3 install -e blimp
 RUN apk add --no-cache bash
 
 ### docker deploy - LOCAL - new
-# ENTRYPOINT python3 scral_startup.py -p local
+ENTRYPOINT python3 scral_startup.py -p local
 
 ### docker deploy - INTERNAL
-ENTRYPOINT python3 scral_startup.py -p WT
+# ENTRYPOINT python3 scral_startup.py -p WT
 # ENTRYPOINT python3 scral_startup.py -p KFF

@@ -12,7 +12,7 @@ import arrow
 DICTIONARY_LOCAL_TOPICS = {1: ["GOST/+/Observations"]}
 DICTIONARY_LST_TOPICS = {1: ["GOST_LARGE_SCALE_TEST/+/Observations"]}
 DICTIONARY_WT_TOPICS = {1: ["GOST_WOODSTOWER/Datastreams(+)/Observations"]}
-DICTIONARY_OBSERVABLE_TOPICS = DICTIONARY_LST_TOPICS
+DICTIONARY_OBSERVABLE_TOPICS = DICTIONARY_LOCAL_TOPICS
 
 CLIENT_PREFIX = "ClientTest"
 BIG_BURST = 10000
@@ -37,7 +37,7 @@ class Settings:
     burst_size = BIG_BURST
 
     client_id = CLIENT_PREFIX+"-"+str(random.randint(1, sys.maxsize))
-    broker = RABBITMQ_URL
+    broker = INTERNAL_BROKER_NAME
     port = STD_PORT
 
     @staticmethod

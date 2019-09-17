@@ -5,7 +5,7 @@ RUN apk add --update bash
 
 ARG BUILD_DATE
 LABEL build-date=$BUILD_DATE
-LABEL authors="Antonio Defina, Jacopo Foglietti and Luca Mannella"
+LABEL authors="Jacopo Foglietti and Luca Mannella"
 
 WORKDIR /test_subscriber
 
