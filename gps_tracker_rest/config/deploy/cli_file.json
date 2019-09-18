@@ -1,5 +1,5 @@
 {
-  "module_name": "SCRAL GPS Tracker Polling instance",
+  "module_name": "SCRAL GPS REST",
   "endpoint_url": "localhost",
   "endpoint_port": 8000,
 

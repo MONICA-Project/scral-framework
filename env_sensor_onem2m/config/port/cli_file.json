@@ -1,5 +1,5 @@
 {
-  "module_name": "SCRAL-OneM2M Environmental Sensors adapter instance",
+  "module_name": "SCRAL-OneM2M Environmental Sensors adapter",
   "endpoint_port": 8760,
   "endpoint_url": "monappdwp3.monica-cloud.eu",
 

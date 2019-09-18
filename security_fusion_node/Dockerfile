@@ -1,6 +1,8 @@
 # to be launched from parent folder
 
 FROM python:3.6-alpine
+ARG BUILD_DATE
+LABEL build-date=$BUILD_DATE
 LABEL authors="Jacopo Foglietti, Luca Mannella"
 
 WORKDIR /monica_scral
@@ -18,11 +20,13 @@ RUN pip3 install --no-cache-dir -r security_fusion_node/requirements.txt
 RUN pip3 install -e security_fusion_node
 
 # Enabling bash
-# RUN apk add --no-cache bash
 RUN apk add --update bash
 
 ### local testing:
 # ENTRYPOINT python3 scral_startup.py -p local
+
+### docker-compose deployment
+ENTRYPOINT python3 scral_startup.py -p deploy
 
 ### docker deploy - INTERNAL Configurations
 ## PM
@@ -38,4 +42,4 @@ RUN apk add --update bash
 ## DOM
 # ENTRYPOINT python3 scral_startup.py -p DOM
 ## LEEDS
-ENTRYPOINT python3 scral_startup.py -p LEEDS
+# ENTRYPOINT python3 scral_startup.py -p LEEDS

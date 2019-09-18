@@ -1,10 +1,10 @@
 {
-  "module_name": "SCRAL GPS Tracker Polling instance",
+  "module_name": "SCRAL Smart Glasses",
   "endpoint_url": "localhost",
   "endpoint_port": 8000,
 
   "connection_file": "connection_config_local.json",
-  "ogc_file": "ogc_config_gps.conf",
+  "ogc_file": "ogc_config_glasses.conf",
   "pilot": "local",
   "verbose": true
 }
