@@ -144,7 +144,7 @@ class SCRALModule(object):
         self._pub_broker_keepalive = connection_config_file["mqtt"]["pub_broker_keepalive"]
 
         if catalog_name != CATALOG_FILENAME:
-            client_id = MQTT_CLIENT_PREFIX + "-" + str(catalog_name)
+            client_id = MQTT_CLIENT_PREFIX + "-" + str(catalog_name).replace(".json", "")
         else:
             client_id = MQTT_CLIENT_PREFIX
         client_id = client_id + "-" + str(random.randint(1, sys.maxsize))

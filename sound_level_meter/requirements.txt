@@ -1,5 +1,5 @@
 paho-mqtt
-arrow
+arrow==0.14.2
 requests
 configparser
 flask
