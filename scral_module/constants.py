@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #############################################################################
 #      _____ __________  ___    __                                          #
 #     / ___// ____/ __ \/   |  / /                                          #
@@ -19,8 +21,18 @@
 CATALOG_FILENAME = "resource_catalog.json"
 CATALOG_FOLDER = "catalogs/"
 
-# REST headers
+# HTTP STRINGS
 REST_HEADERS = {'Content-Type': 'application/json'}
+
+SUCCESS_RETURN_STRING = "Success"
+SUCCESS_DELETE = "Device deleted"
+
+ERROR_RETURN_STRING = "Error"
+ERROR_DELETE = "Delete failed"
+INTERNAL_SERVER_ERROR = "Internal server error"
+WRONG_PAYLOAD_REQUEST = "Wrong payload request"
+DUPLICATE_REQUEST = "Duplicate request"
+INVALID_DATASTREAM = "Invalid DATASTREAM"
 
 # default value for pilot and configuration approach
 DEFAULT_CONFIG = "local"
@@ -41,7 +53,7 @@ DEFAULT_KEEPALIVE = 60
 # 2 --> Exactly 1 message is received by the broker
 DEFAULT_MQTT_QOS = 1
 
-# Debug, graphic and similiar
+# Debug, graphic and similar
 CREDITS = "(c) 2019, LINKS Foundation\ndeveloped by Jacopo Foglietti & Luca Mannella.\n"
 END_MESSAGE = "\nThat's all folks! Thanks for choosing SCRAL!\n"+CREDITS
 

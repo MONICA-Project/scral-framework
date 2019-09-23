@@ -179,6 +179,9 @@ class SCRALModule(object):
     def get_ogc_config(self):
         return self._ogc_config
 
+    def get_topic_prefix(self) -> str:
+        return self._topic_prefix
+
     def get_resource_catalog(self) -> dict:
         return self._resource_catalog
 
@@ -205,8 +208,66 @@ class SCRALModule(object):
 
         return tmp_rc
 
-    def get_topic_prefix(self) -> str:
-        return self._topic_prefix
+    def print_catalog(self):
+        """ Print resource catalog on log. """
+
+        logging.info("[PHASE-INIT] Resource Catalog <" + self._catalog_fullpath + ">:")
+        for key, value in self._resource_catalog.items():
+            logging.info(key + ": " + json.dumps(value))
+        logging.info("--- End of Resource Catalog ---\n")
+
+    def update_file_catalog(self):
+        """ Update the resource catalog on file. """
+
+        # with open(self._catalog_fullpath, 'w+') as outfile:
+        #     json.dump(self._resource_catalog, outfile)
+        #     outfile.write('\n')
+        with open(self._catalog_fullpath, 'w') as f:
+            for chunk in json.JSONEncoder().iterencode(self._resource_catalog):
+                f.write(chunk)
+
+    def _update_active_devices_counter(self):
+        if not self._active_devices:
+            logging.error("Trying to update active_devices structure... But was not initialized!")
+            return
+
+        try:
+            current_time = arrow.utcnow()
+            time_diff = (current_time - self._active_devices["last_update"]).total_seconds()
+            if time_diff < self._active_devices["update_interval"]:
+                self._active_devices["actual_counter"] += 1
+            else:
+                self._active_devices["counter"] = self._active_devices["actual_counter"]
+                self._active_devices["actual_counter"] = 1
+                self._active_devices["last_update"] = current_time
+        except KeyError:
+            logging.error("KeyError: trying to update active_devices structure... But a field is missing!")
+
+    def delete_device(self, device_id: str, remove_only_from_catalog=False) -> (bool, bool):
+        if device_id not in self._resource_catalog:
+            logging.error("There is no device: " + device_id)
+            return False, True
+
+        deleted = False
+
+        if not remove_only_from_catalog:
+            device_catalog = self._resource_catalog[device_id]
+            for datastream, ds_id in device_catalog.items():
+                ds_removed = self._ogc_config.delete_datastream(ds_id)
+                if ds_removed:
+                    logging.debug('From device "' + device_id + '" DATASTREAM "' + datastream + '" removed')
+                else:
+                    logging.error('Impossible to remove DATASTREAM "'+datastream+'" from device "'+device_id+'"')
+
+        logging.info('From SCRAL resource_catalog removing element: "'+str(device_id)+'"\n'
+                     'Content: "'+str(self._resource_catalog[device_id])+'"')
+        del(self._resource_catalog[device_id])
+        deleted = True
+
+        if not remove_only_from_catalog:
+            self.update_file_catalog()
+
+        return deleted, False
 
     def mqtt_publish(self, topic: str, payload, qos=DEFAULT_MQTT_QOS, to_print=True) -> bool:
         """ Publish the payload given as parameter to the MQTT publisher
@@ -253,42 +314,6 @@ class SCRALModule(object):
         else:
             logging.error("Something wrong during MQTT publish. Error code retrieved: {0}".format(str(info.rc)))
             return False
-
-    def print_catalog(self):
-        """ Print resource catalog on log. """
-
-        logging.info("[PHASE-INIT] Resource Catalog <" + self._catalog_fullpath + ">:")
-        for key, value in self._resource_catalog.items():
-            logging.info(key + ": " + json.dumps(value))
-        logging.info("--- End of Resource Catalog ---\n")
-
-    def update_file_catalog(self):
-        """ Update the resource catalog on file. """
-
-        # with open(self._catalog_fullpath, 'w+') as outfile:
-        #     json.dump(self._resource_catalog, outfile)
-        #     outfile.write('\n')
-        with open(self._catalog_fullpath, 'w') as f:
-            for chunk in json.JSONEncoder().iterencode(self._resource_catalog):
-                f.write(chunk)
-
-    def _update_active_devices_counter(self):
-        if not self._active_devices:
-            logging.error("Trying to update active_devices structure... But was not initialized!")
-            return
-
-        try:
-            current_time = arrow.utcnow()
-            time_diff = (current_time - self._active_devices["last_update"]).total_seconds()
-            if time_diff < self._active_devices["update_interval"]:
-                self._active_devices["actual_counter"] += 1
-            else:
-                self._active_devices["counter"] = self._active_devices["actual_counter"]
-                self._active_devices["actual_counter"] = 1
-                self._active_devices["last_update"] = current_time
-        except KeyError:
-            logging.error("KeyError: trying to update active_devices structure... But a field is missing!")
-
 
     @abstractmethod
     def runtime(self):

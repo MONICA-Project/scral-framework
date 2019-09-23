@@ -218,7 +218,6 @@ class OGCConfiguration:
         :return: Returns the @iot.id of the entity if it is correctly registered,
                  if something goes wrong during registration, an exception will be generated.
         """
-        # Build URL for LOCATION discovery based on Location name
         ogc_entity_name = ogc_entity.get_name()
         url_discovery = url_entity + url_filter + "'" + ogc_entity_name + "'"
 
@@ -248,6 +247,17 @@ class OGCConfiguration:
 
             else:
                 return discovery_result[0][OGC_ID_KEY]
+
+    def delete_datastream(self, datastream_id: int) -> bool:
+        url = self.URL_DATASTREAMS + "("+str(datastream_id)+")"
+
+        r = requests.delete(url=url, headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
+        if r.ok:
+            logging.info("DATASTREAM: " + str(datastream_id) + " correctly deleted!")
+            return True
+        else:
+            logging.error("Impossible to delete DATASTREAM: " + str(datastream_id) + ". Maybe it did not exist!")
+            return False
 
     def get_thing(self):
         return self._ogc_thing

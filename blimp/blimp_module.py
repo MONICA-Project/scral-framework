@@ -20,6 +20,8 @@ from scral_module.rest_module import SCRALRestModule
 import scral_module.util as util
 from scral_ogc import OGCDatastream, OGCObservation
 
+from scral_module.constants import ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, WRONG_PAYLOAD_REQUEST, \
+                                   DUPLICATE_REQUEST, INVALID_DATASTREAM, SUCCESS_RETURN_STRING
 from blimp.constants import BLIMP_KEY
 
 
@@ -27,21 +29,21 @@ class SCRALBlimp(SCRALRestModule):
     """ Resource manager for integration of Blimps. """
 
     def ogc_datastream_registration(self, payload):
-        """ """
+        """ This method allow to register the DATASTREAMs related to a blimp in the GOST database. """
         ogc_config = self.get_ogc_config()
         if ogc_config is None:
-            return make_response(jsonify({"Error": "Internal server error"}), 500)
+            return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
         try:
             blimp_id = payload[BLIMP_KEY]
         except KeyError:
             logging.error("Wrong payload received:")
             logging.error(json.dumps(payload))
-            return make_response(jsonify({"Error": "Wrong payload request!"}), 422)
+            return make_response(jsonify({ERROR_RETURN_STRING: WRONG_PAYLOAD_REQUEST}), 422)
 
         if blimp_id in self._resource_catalog:
             logging.error("Blimp: '" + str(blimp_id) + "' already registered!")
-            return make_response(jsonify({"Error": "Duplicate request!"}), 422)
+            return make_response(jsonify({ERROR_RETURN_STRING: DUPLICATE_REQUEST}), 422)
 
         logging.info("Blimp: '" + str(blimp_id) + "' registration.")
 
@@ -72,7 +74,7 @@ class SCRALBlimp(SCRALRestModule):
 
             if not datastream_id:
                 logging.error("No datastream ID for Blimp: " + blimp_id + ", property: " + property_name)
-                return make_response(jsonify({"Error:": "Invalid DATASTREAM"}), 500)
+                return make_response(jsonify({ERROR_RETURN_STRING: INVALID_DATASTREAM}), 500)
             else:
                 datastream.set_id(datastream_id)
                 ogc_config.add_datastream(datastream)
@@ -87,9 +89,9 @@ class SCRALBlimp(SCRALRestModule):
     def ogc_observation_registration(self, datastream_id, payload):
         """ """
         if not datastream_id:
-            return make_response(jsonify({"Error": "Missing DATASTREAM id!"}), 400)
+            return make_response(jsonify({ERROR_RETURN_STRING: "Missing DATASTREAM id!"}), 400)
         if not payload:
-            return make_response(jsonify({"Error": "Wrong request!"}), 400)
+            return make_response(jsonify({ERROR_RETURN_STRING: WRONG_PAYLOAD_REQUEST}), 400)
 
         blimp_id = str(payload[BLIMP_KEY])
         logging.debug("New OBSERVATION from Blimp: '" + str(blimp_id) + "'.")
@@ -109,6 +111,6 @@ class SCRALBlimp(SCRALRestModule):
 
         published = self.mqtt_publish(topic, observation_payload, to_print=True)
         if published:
-            return make_response(jsonify({"Result": "Ok"}), 201)
+            return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
         else:
-            return make_response(jsonify({"Error": "Internal server error"}), 500)
+            return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)

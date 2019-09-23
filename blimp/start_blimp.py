@@ -32,7 +32,7 @@ import sys
 from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
-from scral_module import util
+from scral_module import util, rest_util
 from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
                                    FILENAME_CONFIG, FILENAME_COMMAND_FILE
 
@@ -96,15 +96,29 @@ def new_blimp_registration():
     """
     logging.debug(new_blimp_registration.__name__ + ", " + request.method + " method called from: " + request.remote_addr)
 
-    if not request.json:
-        return make_response(jsonify({"Error": "Wrong request!"}), 400)
+    ok, status = rest_util.tests_and_checks(MODULE_NAME, module, request)
+    if not ok:
+        return status
+    else:
+        response = module.ogc_datastream_registration(request.json)
+        return response
 
-    if not module:
-        logging.critical("SCRAL Blimp module is not available!")
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
 
-    response = module.ogc_datastream_registration(request.json)
-    return response
+@flask_instance.route(URI_DEFAULT, methods=["DELETE"])
+def remove_blimp():
+    """ This function delete all the DATASTREAM associated with a particular Blimp
+        on the resource catalog and on the OGC server.
+
+    :return: An HTTP Response.
+    """
+    logging.debug(remove_blimp.__name__ + ", " + request.method + " method called from: " + request.remote_addr)
+
+    ok, status = rest_util.tests_and_checks(MODULE_NAME, module, request)
+    if not ok:
+        return status
+    else:
+        response = module.delete_device(request.json[BLIMP_KEY])
+        return response
 
 
 @flask_instance.route(URI_DEFAULT+"/Datastreams(<datastream_id>)/Observations", methods=["PUT"])
@@ -115,23 +129,21 @@ def new_blimp_observation(datastream_id=None):
     """
     logging.debug(new_blimp_observation.__name__ + ", " + request.method + " method called from: " + request.remote_addr)
 
-    if not request.json:
-        return make_response(jsonify({"Error": "Wrong request!"}), 400)
-    if datastream_id is None:
-        return make_response(jsonify({"Error": "Missing DATASTREAM id!"}), 400)
+    ok, status = rest_util.tests_and_checks(MODULE_NAME, module, request)
+    if not ok:
+        return status
+    elif datastream_id is None:
+        logging.error("Missing DATASTREAM ID!")
+        return make_response(jsonify({"Error": "Missing DATASTREAM ID!"}), 400)
+    else:
+        # Just for this particular case
+        try:
+            blimp_name = request.json[BLIMP_KEY]
+        except KeyError:
+            request.json[BLIMP_KEY] = BLIMP_NAME
 
-    if not module:
-        logging.critical("SCRAL Blimp module is not available!")
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
-
-    # Just for this particular case
-    try:
-        blimp_name = request.json[BLIMP_KEY]
-    except KeyError:
-        request.json[BLIMP_KEY] = BLIMP_NAME
-
-    response = module.ogc_observation_registration(datastream_id, request.json)
-    return response
+        response = module.ogc_observation_registration(datastream_id, request.json)
+        return response
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])

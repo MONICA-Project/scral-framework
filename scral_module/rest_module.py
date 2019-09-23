@@ -22,13 +22,14 @@ PHASE RUNTIME: INTEGRATION
 """
 
 #############################################################################
-from flask import Flask
+from flask import Flask, make_response, jsonify
 import cherrypy
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher
 
 import scral_module.util as util
 from scral_module.ogc_configuration import OGCConfiguration
-from scral_module.constants import CATALOG_FILENAME, ENABLE_FLASK, ENABLE_CHERRYPY, ENABLE_WSGISERVER
+from scral_module.constants import CATALOG_FILENAME, ENABLE_FLASK, ENABLE_CHERRYPY, ENABLE_WSGISERVER,\
+                                   SUCCESS_RETURN_STRING, SUCCESS_DELETE, ERROR_RETURN_STRING, ERROR_DELETE
 from scral_module.scral_module import SCRALModule
 
 
@@ -84,6 +85,17 @@ class SCRALRestModule(SCRALModule):
                 server.stop()
         else:
             raise RuntimeError("Invalid runtime mode was selected.")
+
+    def delete_device(self, device_id: str, remove_only_from_catalog=False):
+        result, client_fault = super().delete_device(device_id, remove_only_from_catalog)
+        if result:
+            return make_response(jsonify({SUCCESS_RETURN_STRING: SUCCESS_DELETE}), 200)
+        else:
+            if client_fault:
+                error_code = 400
+            else:
+                error_code = 500
+            return make_response(jsonify({ERROR_RETURN_STRING: ERROR_DELETE}), error_code)
 
     def get_address(self) -> str:
         return self._listening_address
