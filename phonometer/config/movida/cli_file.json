@@ -5,5 +5,7 @@
   "connection_file": "connection_config_internal.json",
   "ogc_file": "ogc_config_phonometer.conf",
   "pilot": "MOVIDA",
+
+  "catalog_name": "movida_phonometer.json",
   "verbose": true
 }

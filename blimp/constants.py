@@ -20,4 +20,7 @@ URI_DEFAULT = "/scral/v1.0/blimp"
 URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"
 
 # KEYS
-BLIMP_KEY = "blimpId"
+BLIMP_ID_KEY = "blimpId"
+
+# ARGUMENTS
+BLIMP_NAME_KEY = "blimp_name"

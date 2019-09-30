@@ -33,59 +33,41 @@ from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util, rest_util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
-                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
+from scral_module.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, \
+                                   MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, CATALOG_NAME_KEY, PILOT_KEY, \
+                                   ERROR_RETURN_STRING, NO_DATASTREAM_ID
 
-from blimp.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, BLIMP_KEY
+from blimp.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, BLIMP_ID_KEY, BLIMP_NAME_KEY
 from blimp.blimp_module import SCRALBlimp
 
 flask_instance = Flask(__name__)
 scral_module: SCRALBlimp = None
 BLIMP_NAME = "blimp"
 
-MODULE_NAME: str = "SCRAL Module"
-ENDPOINT_PORT: int = 8000
-ENDPOINT_URL: str = "localhost"
+DOC = DEFAULT_REST_CONFIG
 
 
 def main():
+    # scral_module initialization
     module_description = "SCRAL Blimps integration instance"
-    cmd_line = util.parse_small_command_line(module_description)
-    pilot_config_folder = cmd_line.pilot.lower() + "/"
-
-    # Preparing all the necessary configuration paths
     abs_path = os.path.abspath(os.path.dirname(__file__))
-    config_path = os.path.join(abs_path, FILENAME_CONFIG)
-    connection_path = os.path.join(config_path, pilot_config_folder)
-    command_line_file = os.path.join(connection_path + FILENAME_COMMAND_FILE)
+    global scral_module, DOC
+    scral_module, args, doc = util.initialize_module(module_description, abs_path, SCRALBlimp)
 
-    # Taking and setting application parameters
-    args = util.load_from_file(command_line_file)
-    args["config_path"] = config_path
-    args["connection_path"] = connection_path
-
-    # OGC-Configuration
-    ogc_config = SCRALBlimp.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
-
-    # Initialize constants
+    # Taking additional parameters
     global BLIMP_NAME
     try:
-        BLIMP_NAME = args["blimp_name"]
+        BLIMP_NAME = args[BLIMP_NAME_KEY]
     except KeyError:
-        logging.warning("No blimp_name specified. Default name was used '"+BLIMP_NAME+"'")
+        logging.warning("No "+BLIMP_NAME_KEY+" specified. Default name was used '"+BLIMP_NAME+"'")
+    try:
+        catalog_name = args[CATALOG_NAME_KEY]
+    except KeyError:
+        catalog_name = args[PILOT_KEY] + "_Blimp.json"
+        logging.warning("No "+CATALOG_NAME_KEY+" specified. Default name was used '"+catalog_name+"'")
 
-    # Initialize documentation variable
-    global MODULE_NAME, ENDPOINT_PORT, ENDPOINT_URL
-    MODULE_NAME = args["module_name"]
-    ENDPOINT_PORT = args["endpoint_port"]
-    ENDPOINT_URL = args["endpoint_url"]
-
-    # Module initialization and runtime phase
-    global module
-    filename_connection = os.path.join(connection_path + args['connection_file'])
-    catalog_name = args["pilot"] + "_Blimp.json"
-    module = SCRALBlimp(ogc_config, filename_connection, args['pilot'], catalog_name)
-    module.runtime(flask_instance, 1)
+    # runtime
+    scral_module.runtime(flask_instance, ENABLE_CHERRYPY)
 
 
 @flask_instance.route(URI_DEFAULT, methods=["POST"])
@@ -96,11 +78,11 @@ def new_blimp_registration():
     """
     logging.debug(new_blimp_registration.__name__ + ", " + request.method + " method called from: " + request.remote_addr)
 
-    ok, status = rest_util.tests_and_checks(MODULE_NAME, module, request)
+    ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
     if not ok:
         return status
     else:
-        response = module.ogc_datastream_registration(request.json)
+        response = scral_module.ogc_datastream_registration(request.json)
         return response
 
 
@@ -113,11 +95,11 @@ def remove_blimp():
     """
     logging.debug(remove_blimp.__name__ + ", " + request.method + " method called from: " + request.remote_addr)
 
-    ok, status = rest_util.tests_and_checks(MODULE_NAME, module, request)
+    ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
     if not ok:
         return status
     else:
-        response = module.delete_device(request.json[BLIMP_KEY])
+        response = scral_module.delete_device(request.json[BLIMP_ID_KEY])
         return response
 
 
@@ -129,20 +111,20 @@ def new_blimp_observation(datastream_id=None):
     """
     logging.debug(new_blimp_observation.__name__ + ", " + request.method + " method called from: " + request.remote_addr)
 
-    ok, status = rest_util.tests_and_checks(MODULE_NAME, module, request)
+    ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
     if not ok:
         return status
     elif datastream_id is None:
         logging.error("Missing DATASTREAM ID!")
-        return make_response(jsonify({"Error": "Missing DATASTREAM ID!"}), 400)
+        return make_response(jsonify({ERROR_RETURN_STRING: NO_DATASTREAM_ID}), 400)
     else:
         # Just for this particular case
         try:
-            blimp_name = request.json[BLIMP_KEY]
+            blimp_name = request.json[BLIMP_ID_KEY]
         except KeyError:
-            request.json[BLIMP_KEY] = BLIMP_NAME
+            request.json[BLIMP_ID_KEY] = BLIMP_NAME
 
-        response = module.ogc_observation_registration(datastream_id, request.json)
+        response = scral_module.ogc_observation_registration(datastream_id, request.json)
         return response
 
 
@@ -153,7 +135,7 @@ def get_active_devices():
     """
     logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
-    to_ret = jsonify(module.get_resource_catalog())
+    to_ret = jsonify(scral_module.get_resource_catalog())
     return make_response(to_ret, 200)
 
 
@@ -164,11 +146,11 @@ def test_module():
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
-    link = ENDPOINT_URL+":"+str(ENDPOINT_PORT)
+    link = DOC[ENDPOINT_URL_KEY]+":"+str(DOC[ENDPOINT_PORT_KEY])
     posts = (URI_DEFAULT,)
     puts = (URI_DEFAULT+"/Datastreams(id)/Observations",)
     gets = (URI_ACTIVE_DEVICES, )
-    return util.to_html_documentation(MODULE_NAME, link, posts, puts, gets)
+    return util.to_html_documentation(DOC[MODULE_NAME_KEY], link, posts, puts, gets)
 
 
 if __name__ == '__main__':

@@ -29,39 +29,21 @@ import signal
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
-                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
+from scral_module.constants import END_MESSAGE, DEFAULT_REST_CONFIG
 
 from phonometer_module import SCRALPhonometer
 
-module: SCRALPhonometer = None
+scral_module: SCRALPhonometer = None
+DOC = DEFAULT_REST_CONFIG
 
 
 def main():
     module_description = "Phonometer integration instance"
-    cmd_line = util.parse_small_command_line(module_description)
-    pilot_config_folder = cmd_line.pilot.lower() + "/"
-
-    # Preparing all the necessary configuration paths
     abs_path = os.path.abspath(os.path.dirname(__file__))
-    config_path = os.path.join(abs_path, FILENAME_CONFIG)
-    connection_path = os.path.join(config_path, pilot_config_folder)
-    command_line_file = os.path.join(connection_path + FILENAME_COMMAND_FILE)
 
-    # Taking and setting application parameters
-    args = util.load_from_file(command_line_file)
-    args["config_path"] = config_path
-    args["connection_path"] = connection_path
-
-    # OGC-Configuration
-    ogc_config = SCRALPhonometer.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
-
-    # Module initialization and runtime phase
-    global module
-    filename_connection = os.path.join(connection_path + args['connection_file'])
-    catalog_name = args["pilot"] + "_phonometer.json"
-    module = SCRALPhonometer(ogc_config, filename_connection, args['pilot'], catalog_name)
-    module.runtime()
+    global scral_module, DOC
+    scral_module, args, DOC = util.initialize_module(module_description, abs_path, SCRALPhonometer)
+    scral_module.runtime()
 
 
 if __name__ == '__main__':

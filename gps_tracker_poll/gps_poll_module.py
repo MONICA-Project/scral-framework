@@ -150,5 +150,6 @@ class SCRALGPSPoll(SCRALGPS):
         ogc_observation = OGCObservation(datastream_id, observation_time, observation_result, observation_time)
         observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
         ok = self.mqtt_publish(topic, observation_payload)
+        self._update_active_devices_counter()
         if not ok:
             logging.error("Impossible to send MQTT message")

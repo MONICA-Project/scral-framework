@@ -6,5 +6,7 @@
   "connection_file": "connection_config_internal.json",
   "ogc_file": "ogc_config_slm.conf",
   "pilot": "WT",
+
+  "catalog_name": "wt_slm.json",
   "verbose": true
 }

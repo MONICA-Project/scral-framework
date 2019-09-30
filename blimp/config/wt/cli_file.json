@@ -6,7 +6,8 @@
   "connection_file": "connection_config_internal.json",
   "ogc_file": "ogc_config_blimp.conf",
   "pilot": "WT",
-  "verbose": true,
 
+  "catalog_name": "wt_blimp.json",
+  "verbose": true,
   "blimp_name": "wt-blimp"
 }

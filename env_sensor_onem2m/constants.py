@@ -10,11 +10,11 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
-VPN_PORT = 8760
 
 # URI
 URI_DEFAULT = "/scral/v1.0/onem2m"
 URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"
 URI_ENV_NODE = URI_DEFAULT + "/env-node"
 
+# OneM2M Payload
 ONEM2M_CONTENT_TYPE = "application/json:0"

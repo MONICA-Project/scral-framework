@@ -6,5 +6,7 @@
   "connection_file": "connection_config_local.json",
   "ogc_file": "ogc_config_gps.conf",
   "pilot": "local",
+
+  "catalog_name": "local_gps-poll.json",
   "verbose": true
 }

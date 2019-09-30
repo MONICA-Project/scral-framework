@@ -18,24 +18,26 @@ from scral_ogc import OGCObservation
 from scral_module.rest_module import SCRALRestModule
 from gps_tracker.gps_module import SCRALGPS
 
+from gps_tracker_rest.constants import TAG_ID_KEY, TYPE_KEY, TIMESTAMP_KEY
+
 
 class SCRALGPSRest(SCRALRestModule, SCRALGPS):
 
     def new_datastream(self, payload):
-        device_id = payload["tagId"]
-        description = payload["type"]
+        device_id = payload[TAG_ID_KEY]
+        description = payload[TYPE_KEY]
         datastream = self.ogc_datastream_registration(device_id, description, "position")
         self.update_file_catalog()
         return datastream
 
     def ogc_observation_registration(self, observed_property, payload):
-        gps_tag_id = payload["tagId"]
+        gps_tag_id = payload[TAG_ID_KEY]
         if gps_tag_id not in self._resource_catalog:
             return None
 
         observation_time = str(arrow.utcnow())
         try:
-            phenomenon_time = payload["timestamp"]
+            phenomenon_time = payload[TIMESTAMP_KEY]
         except KeyError:
             phenomenon_time = str(arrow.utcnow())
 

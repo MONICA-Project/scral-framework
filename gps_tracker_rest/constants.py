@@ -22,3 +22,8 @@ URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"
 URI_GPS_TAG_REGISTRATION = URI_DEFAULT + "/gps-tag"
 URI_GPS_TAG_LOCALIZATION = URI_GPS_TAG_REGISTRATION + "/localization"
 URI_GPS_TAG_ALERT = URI_GPS_TAG_REGISTRATION + "/alert"
+
+# Dictionary keys
+TIMESTAMP_KEY = "timestamp"
+TAG_ID_KEY = "tagId"
+TYPE_KEY = "type"

@@ -6,5 +6,7 @@
   "connection_file": "connection_config_local.json",
   "ogc_file": "ogc_config_slm.conf",
   "pilot": "local",
+
+  "catalog_name": "testing_slm.json",
   "verbose": true
 }

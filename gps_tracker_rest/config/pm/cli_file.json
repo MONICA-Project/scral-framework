@@ -6,5 +6,7 @@
   "connection_file": "connection_config_internal.json",
   "ogc_file": "ogc_config_gps.conf",
   "pilot": "PM",
+
+  "catalog_name": "pm_gps-rest.json",
   "verbose": true
 }

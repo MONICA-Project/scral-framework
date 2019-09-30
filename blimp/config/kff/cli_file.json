@@ -6,7 +6,8 @@
   "connection_file": "connection_config_internal.json",
   "ogc_file": "ogc_config_blimp.conf",
   "pilot": "KFF",
-  "verbose": true,
 
+  "catalog_name": "kappa_blimp.json",
+  "verbose": true,
   "blimp_name": "kappa-blimp"
 }

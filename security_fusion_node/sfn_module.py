@@ -18,8 +18,10 @@ from flask import make_response, jsonify
 
 from scral_ogc import OGCObservation
 from scral_ogc.ogc_datastream import OGCDatastream
+from scral_module.constants import TIMESTAMP_KEY, SUCCESS_RETURN_STRING, ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR
 from scral_module import util
 from scral_module.rest_module import SCRALRestModule
+from security_fusion_node.constants import CAMERA_SENSOR_TYPE, CAMERA_POSITION_KEY, CDG_SENSOR_TYPE, CDG_PROPERTY
 
 
 class SCRALSecurityFusionNode(SCRALRestModule):
@@ -34,24 +36,24 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         :return: An HTTP response.
         """
         if self._ogc_config is None:
-            return make_response(jsonify({"Error": "Internal server error"}), 500)
+            return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
         self._resource_catalog[resource_id] = {}
         for op in self._ogc_config.get_observed_properties():
             property_name = op.get_name()
-            if sensor_type == 'Camera' and property_name != "CDG-Estimation":
-                coordinates = payload['camera_position']
+            if sensor_type == CAMERA_SENSOR_TYPE and property_name != CDG_PROPERTY:
+                coordinates = payload[CAMERA_POSITION_KEY]
                 ok = self._ogc_datastream_registration(resource_id, sensor_type, op, payload, coordinates)
                 if not ok:
-                    return make_response(jsonify({"Error": "Internal server error."}), 500)
+                    return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
-            elif sensor_type == 'Crowd-Density-Global' and property_name == "CDG-Estimation":
+            elif sensor_type == CDG_SENSOR_TYPE and property_name == CDG_PROPERTY:
                 ok = self._ogc_datastream_registration(resource_id, sensor_type, op, payload)
                 if not ok:
-                    return make_response(jsonify({"Error": "Internal server error."}), 500)
+                    return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
         self.update_file_catalog()
-        return make_response(jsonify({"result": "Ok"}), 201)
+        return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
 
     def _ogc_datastream_registration(self, resource_id, sensor_type, observed_property, payload,
                                      coordinates=(0.0, 0.0)):
@@ -97,7 +99,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         if resource_id not in self._resource_catalog:
             return None
 
-        phenomenon_time = payload.pop("timestamp", False)  # Retrieving and removing the phenomenon time
+        phenomenon_time = payload.pop(TIMESTAMP_KEY, False)  # Retrieving and removing the phenomenon time
         if not phenomenon_time:
             phenomenon_time = payload.pop("timestamp_1", False)
             if not phenomenon_time:

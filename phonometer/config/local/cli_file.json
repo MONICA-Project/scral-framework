@@ -5,5 +5,7 @@
   "connection_file": "connection_config_local.json",
   "ogc_file": "ogc_config_phonometer.conf",
   "pilot": "local",
+
+  "catalog_name": "local_phonometer.json",
   "verbose": true
 }

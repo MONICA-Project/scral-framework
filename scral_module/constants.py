@@ -31,12 +31,14 @@ ERROR_RETURN_STRING = "Error"
 ERROR_DELETE = "Delete failed"
 INTERNAL_SERVER_ERROR = "Internal server error"
 WRONG_PAYLOAD_REQUEST = "Wrong payload request"
+WRONG_REQUEST = "Wrong request"
+WRONG_CONTENT_TYPE = "Wrong content type format"
+UNKNOWN_CONTENT_TYPE = "Unrecognized content type"
+UNKNOWN_PROPERTY = "Unknown property"
 DUPLICATE_REQUEST = "Duplicate request"
 INVALID_DATASTREAM = "Invalid DATASTREAM"
-
-# default value for pilot and configuration approach
-DEFAULT_CONFIG = "local"
-DEFAULT_UPDATE_INTERVAL = 60
+NO_DATASTREAM_ID = "Missing DATASTREAM ID"
+DEVICE_NOT_REGISTERED = "Device not registered"
 
 # Username and password necessary for accessing OGC server
 OGC_SERVER_USERNAME = "scral"
@@ -79,3 +81,27 @@ DEFAULT_LOG_FORMATTER = "%(asctime)s.%(msecs)04d %(name)-7s %(levelname)s: %(mes
 ENABLE_FLASK = 0
 ENABLE_CHERRYPY = 1
 ENABLE_WSGISERVER = 2
+
+# Documentation
+MODULE_NAME_KEY = "module_name"
+ENDPOINT_PORT_KEY = "endpoint_port"
+ENDPOINT_URL_KEY = "endpoint_url"
+
+# Arguments
+PILOT_KEY = "pilot"
+CONNECTION_PATH_KEY = "connection_path"
+CONNECTION_FILE_KEY = "connection_file"
+CATALOG_NAME_KEY = "catalog_name"
+CONFIG_PATH_KEY = "config_path"
+
+# default values
+DEFAULT_CONFIG = "local"
+DEFAULT_UPDATE_INTERVAL = 60
+DEFAULT_REST_CONFIG = {
+    MODULE_NAME_KEY: "SCRAL Module",
+    ENDPOINT_PORT_KEY: 8000,
+    ENDPOINT_URL_KEY: "localhost"
+}
+
+# Payload keys
+TIMESTAMP_KEY = "timestamp"

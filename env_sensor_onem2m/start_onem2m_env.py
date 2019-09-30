@@ -34,8 +34,9 @@ from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
-                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
+from scral_module.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, \
+                                   ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, \
+                                   ERROR_RETURN_STRING, WRONG_CONTENT_TYPE, INTERNAL_SERVER_ERROR, UNKNOWN_CONTENT_TYPE
 
 from env_sensor_onem2m.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, URI_ENV_NODE, ONEM2M_CONTENT_TYPE
 from env_sensor_onem2m.env_onem2m_module import SCRALEnvOneM2M
@@ -43,42 +44,16 @@ from env_sensor_onem2m.env_onem2m_module import SCRALEnvOneM2M
 flask_instance = Flask(__name__)
 scral_module: SCRALEnvOneM2M = None
 
-MODULE_NAME: str = "SCRAL Module"
-ENDPOINT_PORT: int = 8000
-ENDPOINT_URL: str = "localhost"
+DOC = DEFAULT_REST_CONFIG
 
 
 def main():
     module_description = "SCRAL-OneM2M Environmental Sensors adapter instance"
-    cmd_line = util.parse_small_command_line(module_description)
-    pilot_config_folder = cmd_line.pilot.lower() + "/"
-
-    # Preparing all the necessary configuration paths
     abs_path = os.path.abspath(os.path.dirname(__file__))
-    config_path = os.path.join(abs_path, FILENAME_CONFIG)
-    connection_path = os.path.join(config_path, pilot_config_folder)
-    command_line_file = os.path.join(connection_path + FILENAME_COMMAND_FILE)
 
-    # Taking and setting application parameters
-    args = util.load_from_file(command_line_file)
-    args["config_path"] = config_path
-    args["connection_path"] = connection_path
-
-    # OGC-Configuration
-    ogc_config = SCRALEnvOneM2M.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
-
-    # Initialize documentation variable
-    global MODULE_NAME, VPN_PORT, VPN_URL
-    MODULE_NAME = args["module_name"]
-    VPN_PORT = args["endpoint_port"]
-    VPN_URL = args["endpoint_url"]
-
-    # Module initialization and runtime phase
-    global module
-    filename_connection = os.path.join(connection_path + args['connection_file'])
-    catalog_name = args["pilot"] + "_OneM2M.json"
-    module = SCRALEnvOneM2M(ogc_config, filename_connection, args['pilot'], catalog_name)
-    module.runtime(flask_instance, 1)
+    global scral_module, DOC
+    scral_module, args, DOC = util.initialize_module(module_description, abs_path, SCRALEnvOneM2M)
+    scral_module.runtime(flask_instance, ENABLE_CHERRYPY)
 
 
 @flask_instance.route(URI_ENV_NODE, methods=["POST"])
@@ -94,13 +69,13 @@ def new_onem2m_request():
             env_node_id = substrings[i]
             break
     if env_node_id is None:
-        return make_response(jsonify({"Error": "Environmental Node ID not found!"}), 400)
+        return make_response(jsonify({ERROR_RETURN_STRING: "Environmental Node ID not found!"}), 400)
 
     # logging.debug(request.json)
     content_type = request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["cnf"]
     if content_type != ONEM2M_CONTENT_TYPE:
         # raise TypeError("The content: <"+content_type+"> was not recognized! <"+ONEM2M_CONTENT_TYPE+"> is expected!")
-        return make_response(jsonify({"Error": "Unrecognized content type!"}), 400)
+        return make_response(jsonify({ERROR_RETURN_STRING: UNKNOWN_CONTENT_TYPE}), 400)
 
     raw_content = request.json["m2m:sgn"]["nev"]["rep"]["m2m:cin"]["con"]
     if type(raw_content) is str:
@@ -109,13 +84,13 @@ def new_onem2m_request():
         content = raw_content
     else:
         # raise TypeError("The content type is "+str(type(raw_content))+", it must be a String or a Dictionary")
-        return make_response(jsonify({"Error": "Wrong content type format!"}), 400)
+        return make_response(jsonify({ERROR_RETURN_STRING: WRONG_CONTENT_TYPE}), 400)
 
-    if module is None:
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
+    if scral_module is None:
+        return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
     # -> ### DATASTREAM REGISTRATION ###
-    rc = module.get_resource_catalog()
+    rc = scral_module.get_resource_catalog()
     if env_node_id not in rc:
         logging.info("Node: " + str(env_node_id) + " registration.")
         try:
@@ -126,12 +101,12 @@ def new_onem2m_request():
             longitude = content["lon"]
         except KeyError:
             longitude = content["longitude"]
-        response = module.ogc_datastream_registration(env_node_id, (latitude, longitude))
+        response = scral_module.ogc_datastream_registration(env_node_id, (latitude, longitude))
         if response.status_code != 200:
             return response
 
     # -> ### OBSERVATION REGISTRATION ###
-    response = module.ogc_observation_registration(env_node_id, content, request.json["m2m:sgn"])
+    response = scral_module.ogc_observation_registration(env_node_id, content, request.json["m2m:sgn"])
     return response
 
 
@@ -142,7 +117,7 @@ def get_active_devices():
     """
     logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
-    to_ret = jsonify(module.get_resource_catalog())
+    to_ret = jsonify(scral_module.get_resource_catalog())
     return make_response(to_ret, 200)
 
 
@@ -154,7 +129,7 @@ def test_module():
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     to_ret = "<h1>SCRAL is running!</h1>\n"
-    link = ENDPOINT_URL + ":" + str(ENDPOINT_PORT)
+    link = DOC[ENDPOINT_URL_KEY] + ":" + str(DOC[ENDPOINT_PORT_KEY])
     to_ret += "<h2>SCRALEnvOneM2M is listening on address: "+link+"</h2>"
     to_ret += "<h3>To have access to all active devices and to the relative DATASTREAM id, send a GET requesto to: " \
               + link + URI_ACTIVE_DEVICES + "</h3>"

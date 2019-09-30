@@ -22,7 +22,7 @@ from scral_ogc import OGCDatastream, OGCObservation
 
 from scral_module.constants import ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, WRONG_PAYLOAD_REQUEST, \
                                    DUPLICATE_REQUEST, INVALID_DATASTREAM, SUCCESS_RETURN_STRING
-from blimp.constants import BLIMP_KEY
+from blimp.constants import BLIMP_ID_KEY
 
 
 class SCRALBlimp(SCRALRestModule):
@@ -35,7 +35,7 @@ class SCRALBlimp(SCRALRestModule):
             return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
         try:
-            blimp_id = payload[BLIMP_KEY]
+            blimp_id = payload[BLIMP_ID_KEY]
         except KeyError:
             logging.error("Wrong payload received:")
             logging.error(json.dumps(payload))
@@ -87,13 +87,18 @@ class SCRALBlimp(SCRALRestModule):
         return make_response(response_payload, 200)
 
     def ogc_observation_registration(self, datastream_id, payload):
-        """ """
+        """ This method stores an OGC OBSERVATION inside the GOST database.
+
+        :param datastream_id: The ID of the DATASTREAM related to the OBSERVATION.
+        :param payload: The payload to be inserted inside OGC "result" field.
+        :return: An HTTP 201 response if it's possible to publish the OBSERVATION through MQTT, an error code otherwise.
+        """
         if not datastream_id:
             return make_response(jsonify({ERROR_RETURN_STRING: "Missing DATASTREAM id!"}), 400)
         if not payload:
             return make_response(jsonify({ERROR_RETURN_STRING: WRONG_PAYLOAD_REQUEST}), 400)
 
-        blimp_id = str(payload[BLIMP_KEY])
+        blimp_id = str(payload[BLIMP_ID_KEY])
         logging.debug("New OBSERVATION from Blimp: '" + str(blimp_id) + "'.")
 
         observation_result = payload["result"]  # Load the measure
@@ -110,6 +115,7 @@ class SCRALBlimp(SCRALRestModule):
         observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
 
         published = self.mqtt_publish(topic, observation_payload, to_print=True)
+        self._update_active_devices_counter()
         if published:
             return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
         else:

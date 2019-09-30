@@ -18,6 +18,7 @@
 import argparse
 import json
 import logging
+import os
 import re
 import sys
 
@@ -25,9 +26,11 @@ import configparser
 import requests
 from arrow.arrow import Arrow
 
-from scral_module.constants import DEFAULT_CONFIG, CREDITS, DEFAULT_LOG_FORMATTER, \
-                                   OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, \
-                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
+from scral_module.constants import DEFAULT_CONFIG, DEFAULT_REST_CONFIG, CREDITS, DEFAULT_LOG_FORMATTER, \
+                                   MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY, \
+                                   CONNECTION_PATH_KEY, CONNECTION_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
+                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE, \
+                                   OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD
 
 
 def init_logger(debug_level):
@@ -104,6 +107,55 @@ def parse_command_line(description):
     args = parser.parse_args()
 
     return args
+
+
+def initialize_variables(description: str, abs_path: str):
+    cmd_line = parse_small_command_line(description)
+    pilot_config_folder = cmd_line.pilot.lower() + "/"
+
+    # Preparing all the necessary configuration paths
+    config_path = os.path.join(abs_path, FILENAME_CONFIG)
+    connection_path = os.path.join(config_path, pilot_config_folder)
+    command_line_file = os.path.join(connection_path + FILENAME_COMMAND_FILE)
+
+    # Taking and setting application parameters
+    args = load_from_file(command_line_file)
+    args[CONFIG_PATH_KEY] = config_path
+    args[CONNECTION_PATH_KEY] = connection_path
+
+    # Initialize documentation variable
+    try:
+        doc = {
+            MODULE_NAME_KEY: args[MODULE_NAME_KEY],
+            ENDPOINT_PORT_KEY: args[ENDPOINT_PORT_KEY],
+            ENDPOINT_URL_KEY: args[ENDPOINT_URL_KEY]
+        }
+    except KeyError:
+        doc = DEFAULT_REST_CONFIG
+
+    return args, doc
+
+
+def scral_ogc_startup(scral_module, args: dict):
+    ogc_config = scral_module.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
+
+    # Module initialization and runtime phase
+    filename_connection = os.path.join(args[CONNECTION_PATH_KEY] + args[CONNECTION_FILE_KEY])
+    try:
+        catalog_name = args[CATALOG_NAME_KEY]
+    except KeyError:
+        catalog_name = args[PILOT_KEY] + "_resource-catalog.json"
+        logging.warning("No " + CATALOG_NAME_KEY + " specified. Default name was used '" + catalog_name + "'")
+
+    return ogc_config, filename_connection, catalog_name
+
+
+def initialize_module(description: str, abs_path: str, scral_module):
+    args, doc = initialize_variables(description, abs_path)
+    ogc_config, filename_connection, catalog_name = scral_ogc_startup(scral_module, args)
+
+    module = scral_module(ogc_config, filename_connection, args[PILOT_KEY], catalog_name)
+    return module, args, doc
 
 
 def load_from_file(filename):

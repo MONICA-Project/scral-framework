@@ -34,53 +34,29 @@ from flask import Flask, request, jsonify, make_response
 import scral_module as scral
 import scral_ogc
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
-                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
+from scral_module.constants import DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, END_MESSAGE, \
+                                   ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, PILOT_KEY
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
 from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, \
     URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT, DEVICE_NAME_KEY
 
 flask_instance = Flask(__name__)
-module: SCRALSoundLevelMeter = None
-
-MODULE_NAME: str = "SCRAL Module"
-ENDPOINT_PORT: int = 8000
-ENDPOINT_URL: str = "localhost"
+scral_module: SCRALSoundLevelMeter = None
+DOC = DEFAULT_REST_CONFIG
 
 
 def main():
+    global scral_module, DOC
+
     module_description = "Sound Level Meter integration instance"
-    cmd_line = util.parse_small_command_line(module_description)
-    pilot_config_folder = cmd_line.pilot.lower() + "/"
-
-    # Preparing all the necessary configuration paths
     abs_path = os.path.abspath(os.path.dirname(__file__))
-    config_path = os.path.join(abs_path, FILENAME_CONFIG)
-    connection_path = os.path.join(config_path, pilot_config_folder)
-    command_line_file = os.path.join(connection_path + FILENAME_COMMAND_FILE)
+    args, DOC = util.initialize_variables(module_description, abs_path)
 
-    # Taking and setting application parameters
-    args = util.load_from_file(command_line_file)
-    args["config_path"] = config_path
-    args["connection_path"] = connection_path
-
-    # OGC-Configuration
-    ogc_config = SCRALSoundLevelMeter.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
-
-    # Initialize documentation variable
-    global MODULE_NAME, ENDPOINT_PORT, ENDPOINT_URL
-    MODULE_NAME = args["module_name"]
-    ENDPOINT_PORT = args["endpoint_port"]
-    ENDPOINT_URL = args["endpoint_url"]
-
-    # Module initialization and runtime phase
-    global module
-    filename_connection = os.path.join(connection_path + args['connection_file'])
-    catalog_name = args["pilot"] + "_SLM.json"
-    module = SCRALSoundLevelMeter(ogc_config, filename_connection, args['pilot'],
-                                  URL_SLM_LOGIN, CREDENTIALS, catalog_name, SLM_LOGIN_PREFIX)
-    module.runtime(flask_instance, 1)
+    ogc_config, filename_connection, catalog_name = util.scral_ogc_startup(SCRALSoundLevelMeter, args)
+    scral_module = SCRALSoundLevelMeter(ogc_config, filename_connection, args[PILOT_KEY],
+                                        URL_SLM_LOGIN, CREDENTIALS, catalog_name, SLM_LOGIN_PREFIX)
+    scral_module.runtime(flask_instance, ENABLE_CHERRYPY)
 
 
 @flask_instance.route(URI_SOUND_EVENT, methods=["PUT"])
@@ -107,13 +83,13 @@ def new_sound_event():
     obs_prop = scral_ogc.OGCObservedProperty(property_name, property_description, property_definition)
     device_id = payload["deviceId"]
 
-    datastream_id = module.new_datastream(device_id, obs_prop)
+    datastream_id = scral_module.new_datastream(device_id, obs_prop)
     if datastream_id is False:
         return make_response(jsonify({"Error": "deviceId not recognized."}), 400)
     elif datastream_id is None:
         return make_response(jsonify({"Error": "Internal server error."}), 500)
     else:
-        module.ogc_observation_registration(datastream_id, payload["startTime"], payload)
+        scral_module.ogc_observation_registration(datastream_id, payload["startTime"], payload)
         return make_response(jsonify({"Result": "Ok"}), 201)
 
 
@@ -124,7 +100,7 @@ def get_active_devices():
     """
     logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
-    rc_copy = copy.deepcopy(module.get_resource_catalog())
+    rc_copy = copy.deepcopy(scral_module.get_resource_catalog())
     new_rc = {}
     for item in rc_copy.values():
         key = item.pop(DEVICE_NAME_KEY)
@@ -140,11 +116,11 @@ def test_module():
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
-    link = ENDPOINT_URL+":"+str(ENDPOINT_PORT)
+    link = DOC[ENDPOINT_URL_KEY]+":"+str(DOC[ENDPOINT_PORT_KEY])
     posts = ()
     puts = (URI_SOUND_EVENT, )
     gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation(MODULE_NAME, link, posts, puts, gets)
+    to_ret = util.to_html_documentation(DOC[MODULE_NAME_KEY], link, posts, puts, gets)
     return to_ret
 
 

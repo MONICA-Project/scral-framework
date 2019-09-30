@@ -17,13 +17,15 @@
 import logging
 from flask import make_response, jsonify
 
+from scral_module.constants import ERROR_RETURN_STRING, WRONG_REQUEST, INTERNAL_SERVER_ERROR
+
 
 def tests_and_checks(module_name, module, request):
     if not request.json:
-        return False, make_response(jsonify({"Error": "Wrong request!"}), 400)
+        return False, make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
 
     if not module:
         logging.critical(module_name + "module is not available!")
-        return False, make_response(jsonify({"Error": "Internal server error"}), 500)
+        return False, make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
     return True, "Ok"

@@ -6,5 +6,7 @@
   "connection_file": "connection_config_internal.json",
   "ogc_file": "ogc_config_sfn.conf",
   "pilot": "KFF",
+
+  "catalog_name": "kff_sfn.json",
   "verbose": true
 }

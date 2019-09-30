@@ -6,5 +6,7 @@
   "connection_file": "connection_config_internal.json",
   "ogc_file": "ogc_config_onem2m.conf",
   "pilot": "PORT",
+
+  "catalog_name": "port_env-onem2m.json",
   "verbose": true
 }

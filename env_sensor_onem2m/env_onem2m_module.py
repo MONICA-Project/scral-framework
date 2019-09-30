@@ -16,9 +16,12 @@ import logging
 import arrow
 from flask import jsonify, make_response
 
-from scral_module.rest_module import SCRALRestModule
-import scral_module.util as util
 from scral_ogc import OGCDatastream, OGCObservation
+from scral_ogc.constants import OGC_RESULT, OGC_RESULT_TIME
+
+from scral_module.constants import ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, INVALID_DATASTREAM, SUCCESS_RETURN_STRING
+import scral_module.util as util
+from scral_module.rest_module import SCRALRestModule
 
 
 class SCRALEnvOneM2M(SCRALRestModule):
@@ -33,7 +36,7 @@ class SCRALEnvOneM2M(SCRALRestModule):
         """
         ogc_config = self.get_ogc_config()
         if ogc_config is None:
-            return make_response(jsonify({"Error": "Internal server error"}), 500)
+            return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
         # Collect OGC information needed to build DATASTREAMs payload
         thing = ogc_config.get_thing()
@@ -62,7 +65,7 @@ class SCRALEnvOneM2M(SCRALRestModule):
 
             if not datastream_id:
                 logging.error("No datastream ID for Env-Node: "+env_node_id+", property: "+property_name)
-                return make_response(jsonify({"Error:": "Invalid DATASTREAM"}), 500)
+                return make_response(jsonify({ERROR_RETURN_STRING: INVALID_DATASTREAM}), 500)
             else:
                 datastream.set_id(datastream_id)
                 ogc_config.add_datastream(datastream)
@@ -70,7 +73,7 @@ class SCRALEnvOneM2M(SCRALRestModule):
                 rc[env_node_id][property_name] = datastream_id  # Store Hamburg to MONICA coupled information
 
         self.update_file_catalog()
-        return make_response(jsonify({"Result": "ok"}), 200)
+        return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 200)
 
     def ogc_observation_registration(self, env_node_id, content, onem2m_payload):
         """ Given an Environmental Node ID, this method registers an OBSERVATION in the OGC model.
@@ -80,8 +83,8 @@ class SCRALEnvOneM2M(SCRALRestModule):
         :param onem2m_payload: A payload from which will be extracted the OBSERVATION id.
         :return: An HTTP response to be returned to the client.
         """
-        observation_result = content["result"]  # Load the measure
-        phenomenon_time = content["resultTime"]  # Time of the phenomenon
+        observation_result = content[OGC_RESULT]  # Load the measure
+        phenomenon_time = content[OGC_RESULT_TIME]  # Time of the phenomenon
         observation_time = str(arrow.utcnow())
         labels = onem2m_payload["nev"]["rep"]["m2m:cin"]["lbl"]
         obs_property = labels[0]  # label
@@ -97,7 +100,8 @@ class SCRALEnvOneM2M(SCRALRestModule):
         observation_payload = json.dumps(dict(ogc_observation.get_rest_payload()))
 
         published = self.mqtt_publish(topic, observation_payload, to_print=False)
+        self._update_active_devices_counter()
         if published:
-            return make_response(jsonify({"result": "Ok"}), 201)
+            return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
         else:
-            return make_response(jsonify({"Error": "Internal server error"}), 500)
+            return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)

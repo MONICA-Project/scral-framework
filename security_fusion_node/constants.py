@@ -28,3 +28,20 @@ URI_CDG = URI_DEFAULT + "/crowd-density-global"
 # Types
 CAMERA_SENSOR_TYPE = "Camera"
 CDG_SENSOR_TYPE = "Crowd-Density-Global"
+
+CDG_PROPERTY = "CDG-Estimation"
+
+# Keys
+CAMERA_ID_KEY = "camera_id"
+CAMERA_IDS_KEY = "camera_ids"
+CAMERA_POSITION_KEY = 'camera_position'
+MODULE_ID_KEY = "module_id"
+TYPE_MODULE_KEY = "type_module"
+
+FIGHT_KEY = "fighting_detection"
+CROWD_KEY = "crowd_density_local"
+FLOW_KEY = "flow_analysis"
+OBJECT_KEY = "object_detection"
+GATE_COUNT_KEY = "gate_count"
+
+CDG_KEY = "crowd_density_global"

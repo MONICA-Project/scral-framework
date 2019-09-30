@@ -5,6 +5,8 @@
 
   "connection_file": "connection_config_internal.json",
   "ogc_file": "ogc_config_sfn.conf",
-  "pilot": "KFF",
+  "pilot": "TIVOLI",
+
+  "catalog_name": "tivoli_sfn.json",
   "verbose": true
 }
