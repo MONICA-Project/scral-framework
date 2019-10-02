@@ -60,10 +60,9 @@ def main():
 def new_gps_tag_request():
     logging.debug(new_gps_tag_request.__name__ + " method called from: "+request.remote_addr)
 
-    if not request.json:
-        return make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
-    if scral_module is None:
-        return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
+    ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
+    if not ok:
+        return status
 
     gps_tag_id = request.json["tagId"]
 
@@ -150,10 +149,10 @@ def test_module():
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     link = DOC[ENDPOINT_URL_KEY] + ":" + str(DOC[ENDPOINT_PORT_KEY])
-    posts = (URI_GPS_TAG_REGISTRATION,)
+    deletes = posts = (URI_GPS_TAG_REGISTRATION,)
     puts = (URI_GPS_TAG_LOCALIZATION, URI_GPS_TAG_ALERT)
     gets = (URI_ACTIVE_DEVICES,)
-    to_ret = util.to_html_documentation(DOC[MODULE_NAME_KEY], link, posts, puts, gets)
+    to_ret = util.to_html_documentation(DOC[MODULE_NAME_KEY], link, posts, puts, gets, deletes)
     return to_ret
 
 

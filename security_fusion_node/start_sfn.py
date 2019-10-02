@@ -218,10 +218,10 @@ def test_module():
     logging.debug(test_module.__name__+" method called from: "+request.remote_addr)
 
     link = DOC[ENDPOINT_URL_KEY] + ":" + str(DOC[ENDPOINT_PORT_KEY])
-    posts = (URI_CAMERA, URI_CDG)
+    deletes = posts = (URI_CAMERA, URI_CDG)
     puts = (URI_CAMERA, URI_CDG)
     gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation(DOC[MODULE_NAME_KEY], link, posts, puts, gets)
+    to_ret = util.to_html_documentation(DOC[MODULE_NAME_KEY], link, posts, puts, gets, deletes)
     return to_ret
 
 

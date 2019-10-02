@@ -17,4 +17,10 @@
 
 # MQTT
 CLIENT_ID = "Wb-MQTT-Listener"
+DEFAULT_SUBSCRIPTION_WB = "Wristband"
 
+LOCALIZATION_SUBTOPIC = "Localization"
+BUTTON_SUBTOPIC = "Button"
+
+# KEYS
+TAG_ID_KEY = "tagId"

@@ -39,6 +39,7 @@ DUPLICATE_REQUEST = "Duplicate request"
 INVALID_DATASTREAM = "Invalid DATASTREAM"
 NO_DATASTREAM_ID = "Missing DATASTREAM ID"
 DEVICE_NOT_REGISTERED = "Device not registered"
+NO_MQTT_PUBLICATION = "Impossible to publish on MQTT broker."
 
 # Username and password necessary for accessing OGC server
 OGC_SERVER_USERNAME = "scral"
@@ -54,6 +55,12 @@ DEFAULT_KEEPALIVE = 60
 # 1 --> At least one message will be received by the broker
 # 2 --> Exactly 1 message is received by the broker
 DEFAULT_MQTT_QOS = 1
+
+# MQTT connector & resource manager
+MQTT_KEY = "mqtt"
+MQTT_SUB_BROKER_KEY = "sub_broker"
+MQTT_SUB_BROKER_PORT_KEY = "sub_broker_port"
+MQTT_SUB_BROKER_KEEP_KEY = "sub_broker_keepalive"
 
 # Debug, graphic and similar
 CREDITS = "(c) 2019, LINKS Foundation\ndeveloped by Jacopo Foglietti & Luca Mannella.\n"
@@ -82,17 +89,17 @@ ENABLE_FLASK = 0
 ENABLE_CHERRYPY = 1
 ENABLE_WSGISERVER = 2
 
-# Documentation
-MODULE_NAME_KEY = "module_name"
-ENDPOINT_PORT_KEY = "endpoint_port"
-ENDPOINT_URL_KEY = "endpoint_url"
-
 # Arguments
 PILOT_KEY = "pilot"
 CONNECTION_PATH_KEY = "connection_path"
 CONNECTION_FILE_KEY = "connection_file"
 CATALOG_NAME_KEY = "catalog_name"
 CONFIG_PATH_KEY = "config_path"
+
+# Documentation
+MODULE_NAME_KEY = "module_name"
+ENDPOINT_PORT_KEY = "endpoint_port"
+ENDPOINT_URL_KEY = "endpoint_url"
 
 # default values
 DEFAULT_CONFIG = "local"

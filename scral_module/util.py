@@ -150,11 +150,11 @@ def scral_ogc_startup(scral_module, args: dict):
     return ogc_config, filename_connection, catalog_name
 
 
-def initialize_module(description: str, abs_path: str, scral_module):
+def initialize_module(description: str, abs_path: str, scral_module_class):
     args, doc = initialize_variables(description, abs_path)
-    ogc_config, filename_connection, catalog_name = scral_ogc_startup(scral_module, args)
+    ogc_config, filename_connection, catalog_name = scral_ogc_startup(scral_module_class, args)
 
-    module = scral_module(ogc_config, filename_connection, args[PILOT_KEY], catalog_name)
+    module = scral_module_class(ogc_config, filename_connection, args[PILOT_KEY], catalog_name)
     return module, args, doc
 
 
@@ -295,31 +295,37 @@ def from_utc_to_query(utc_timestamp: Arrow, remove_milliseconds=True, html_forma
     return time_stamp
 
 
-def to_html_documentation(module_name, link, posts, puts, gets):
+def to_html_documentation(module_name: str, link: str, posts=None, puts=None, gets=None, deletes=None):
     """ This function create a piece of HTML containing the list of the desired endpoints.
 
     :param module_name: The name of the SCRAL module, it will be visualized in the generated HTML.
     :param link: The base link of the endpoints.
-    :param posts: All the available POST endpoints, if not available please provide an empty list.
-    :param puts: All the available PUT endpoints, if not available please provide an empty list.
-    :param gets: All the available GET endpoints, if not available please provide an empty list.
+    :param posts: All the available POST endpoints, if not available you can also provide an empty tuple/list.
+    :param puts: All the available PUT endpoints, if not available you can also provide an empty tuple/list.
+    :param gets: All the available GET endpoints, if not available you can also provide an empty tuple/list.
+    :param deletes: All the available DELETE endpoints, if not available you can also provide an empty tuple/list.
     :return: Some HTML code properly formatted.
     """
     to_ret = "<h1>SCRAL is running!</h1>\n"
     to_ret += "<h2> "+module_name+" is listening on address \""+link+"\"</h2>"
 
     to_ret += "<h3>"
-    if len(posts) > 0:
+    if (posts is not None) and (len(posts) > 0):
         to_ret += "To REGISTER a new device, please send a POST request to: <ul>"
         for post_url in posts:
             to_ret += "<li>" + link + post_url + "</li>"
         to_ret += "</ul>"
-    if len(puts) > 0:
+    if (deletes is not None) and (len(deletes) > 0):
+        to_ret += "To DELETE a registered device, please send a DELETE request to: <ul>"
+        for delete_url in deletes:
+            to_ret += "<li>" + link + delete_url + "</li>"
+        to_ret += "</ul>"
+    if (puts is not None) and (len(puts) > 0):
         to_ret += "To send a new OBSERVATION, please send a PUT request to: <ul>"
         for put_url in puts:
             to_ret += "<li>" + link + put_url + "</li>"
         to_ret += "</ul>"
-    if len(gets) > 0:
+    if (gets is not None) and (len(gets) > 0):
         to_ret += "To retrieve a particular resource, please send a GET request to: <ul>"
         for get_url in gets:
             to_ret += "<li>" + link + get_url + "</li>"

@@ -23,13 +23,12 @@ import arrow
 from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
+from scral_module.constants import END_MESSAGE, ENABLE_FLASK, DEFAULT_REST_CONFIG, SUCCESS_RETURN_STRING, \
+                                   ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, TIMESTAMP_KEY
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
-                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE, ENABLE_FLASK
-from wristband.constants import PROPERTY_BUTTON_NAME, PROPERTY_LOCALIZATION_NAME, SENSOR_ASSOCIATION_NAME, \
-                                URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, \
-                                URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
 
+from wristband.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, \
+                                URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
 from wristband.wristband_module import SCRALWristband
 from wristband import wristband_util as wb_util
 
@@ -38,7 +37,7 @@ module: SCRALWristband = None
 logger: bool = False
 p_name: str = None
 
-DOC = {"module_name": "SCRAL Module", "endpoint_port": 8000, "endpoint_url": "localhost"}
+DOC = DEFAULT_REST_CONFIG
 COUNTER = 0
 
 
@@ -55,28 +54,25 @@ def main():
 @flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST"])
 def new_wristband_request():
     print_time(new_wristband_request.__name__, request.json)
-    return make_response(jsonify({"result": "Ok"}), 200)
+    return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 200)
 
 
 @flask_instance.route(URI_WRISTBAND_ASSOCIATION, methods=["PUT"])
 def new_wristband_association_request():
     print_time(new_wristband_association_request.__name__, request.json)
-
-    return make_response(jsonify({"result": "Ok"}), 200)
+    return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 200)
 
 
 @flask_instance.route(URI_WRISTBAND_LOCALIZATION, methods=["PUT"])
 def new_wristband_localization():
     print_time(new_wristband_localization.__name__, request.json)
-
-    return make_response(jsonify({"result": "Ok"}), 200)
+    return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 200)
 
 
 @flask_instance.route(URI_WRISTBAND_BUTTON, methods=["PUT"])
 def new_wristband_button():
     print_time(new_wristband_button.__name__, request.json)
-
-    return make_response(jsonify({"result": "Ok"}), 200)
+    return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 200)
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
@@ -96,13 +92,8 @@ def test_module():
     :return: A str containing some information about possible endpoints.
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
-
-    link = DOC["endpoint_url"] + ":" + str(DOC["endpoint_port"])
-    posts = (URI_WRISTBAND_REGISTRATION, )
-    puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
-    gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation(DOC["module_name"] + "(dumb version)", link, posts, puts, gets)
-    return to_ret
+    return wb_util.wristband_documentation(DOC[MODULE_NAME_KEY]+" (dumb version)",
+                                           DOC[ENDPOINT_URL_KEY] + ":" + str(DOC[ENDPOINT_PORT_KEY]))
 
 
 def print_time(method_name, payload):
@@ -119,7 +110,7 @@ def print_time(method_name, payload):
     logging.debug(p_name+" --- Method "+method_name+" called at: " + str(now))
     logging.debug(p_name+" --- Counter: "+str(COUNTER))
     try:
-        phenomenon_time = payload["timestamp"]
+        phenomenon_time = payload[TIMESTAMP_KEY]
         diff = now - arrow.get(phenomenon_time)
         logging.debug(p_name+" --- Time elapsed since PhenomenonTime: %.3f seconds." % diff.total_seconds())
     except KeyError:

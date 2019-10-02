@@ -147,10 +147,10 @@ def test_module():
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     link = DOC[ENDPOINT_URL_KEY]+":"+str(DOC[ENDPOINT_PORT_KEY])
-    posts = (URI_DEFAULT,)
+    deletes = posts = (URI_DEFAULT,)
     puts = (URI_DEFAULT+"/Datastreams(id)/Observations",)
     gets = (URI_ACTIVE_DEVICES, )
-    return util.to_html_documentation(DOC[MODULE_NAME_KEY], link, posts, puts, gets)
+    return util.to_html_documentation(DOC[MODULE_NAME_KEY], link, posts, puts, gets, deletes)
 
 
 if __name__ == '__main__':

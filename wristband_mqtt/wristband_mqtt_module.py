@@ -16,11 +16,11 @@ import logging
 import paho.mqtt.client as mqtt
 
 from scral_module import mqtt_util, util
-from scral_module.constants import ENABLE_FLASK, CATALOG_FILENAME, \
-                                   BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, \
-                                   ERROR_WRONG_PILOT_NAME
+from scral_module.constants import CATALOG_FILENAME, \
+                                   MQTT_KEY, MQTT_SUB_BROKER_KEY, MQTT_SUB_BROKER_PORT_KEY, MQTT_SUB_BROKER_KEEP_KEY
+
 from wristband.constants import PROPERTY_LOCALIZATION_NAME, PROPERTY_BUTTON_NAME
-from wristband_mqtt.constants import CLIENT_ID
+from wristband_mqtt.constants import CLIENT_ID, TAG_ID_KEY, BUTTON_SUBTOPIC, LOCALIZATION_SUBTOPIC
 from wristband.wristband_module import SCRALWristband
 
 MESSAGE_RECEIVED = 0
@@ -43,9 +43,9 @@ class SCRALMQTTWristband(SCRALWristband):
 
         # Retrieving MQTT connection info from connection_file
         connection_config_file = util.load_from_file(connection_file)
-        self._sub_broker_address = connection_config_file["mqtt"]["sub_broker"]
-        self._sub_broker_port = connection_config_file["mqtt"]["sub_broker_port"]
-        self._sub_keepalive = connection_config_file["mqtt"]["sub_broker_keepalive"]
+        self._sub_broker_address = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEY]
+        self._sub_broker_port = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_PORT_KEY]
+        self._sub_keepalive = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEEP_KEY]
 
         # Associate callback functions
         self._mqtt_subscriber.on_connect = mqtt_util.on_connect
@@ -53,8 +53,8 @@ class SCRALMQTTWristband(SCRALWristband):
         self._mqtt_subscriber.on_message = self.on_message_received
 
         #  MQTT Subscriber setting configuration
-        logging.info(
-            "Try to connect to broker: %s:%s for LISTENING..." % (self._sub_broker_address, self._sub_broker_port))
+        logging.info("Try to connect to broker: %s:%s for LISTENING..."
+                     % (self._sub_broker_address, self._sub_broker_port))
         logging.debug("MQTT Client ID is: " + str(self._mqtt_subscriber._client_id))
         self._mqtt_subscriber.connect(self._sub_broker_address, self._sub_broker_port, self._sub_keepalive)
 
@@ -80,12 +80,12 @@ class SCRALMQTTWristband(SCRALWristband):
 
         topic = msg.topic
         payload = json.loads(msg.payload)
-        logging.info("Messages Number: "+str(MESSAGE_RECEIVED)+" - Device: "+payload["tagId"]+" -  topic: "+topic)
+        logging.info("Messages Number: "+str(MESSAGE_RECEIVED)+" - Device: "+payload[TAG_ID_KEY]+" -  topic: "+topic)
 
         result = None
-        if "Localization" in topic:
+        if LOCALIZATION_SUBTOPIC in topic:
             result = self.ogc_observation_registration(PROPERTY_LOCALIZATION_NAME, payload)
-        elif "Button" in topic:
+        elif BUTTON_SUBTOPIC in topic:
             result = self.ogc_observation_registration(PROPERTY_BUTTON_NAME, payload)
         else:
             logging.error("Unrecognized topic: " + topic)

@@ -30,3 +30,7 @@ FILTER_VIRTUAL_SENSOR = "?$filter=startswith(name,'Incident')"
 # Values
 PROPERTY_LOCALIZATION_NAME = "Localization-Smart-Glasses"
 PROPERTY_INCIDENT_NAME = "Incident-Reporting"
+
+# KEYS
+TAG_ID_KEY = "tagId"
+TYPE_KEY = "type"

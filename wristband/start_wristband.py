@@ -18,24 +18,25 @@ import logging
 import sys
 import signal
 
-import arrow
 from flask import Flask, request, jsonify, make_response
 
 import scral_module as scral
-from scral_module import util
-from scral_module.constants import END_MESSAGE
-from wristband.constants import FILENAME_PILOT, \
+from scral_module.constants import END_MESSAGE, DEFAULT_REST_CONFIG, SUCCESS_RETURN_STRING, \
+                                   ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, \
+                                   ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, WRONG_REQUEST, NO_MQTT_PUBLICATION
+from scral_module import util, rest_util
+
+from wristband.constants import FILENAME_PILOT, TAG_ID_KEY, ID1_ASSOCIATION_KEY, ID2_ASSOCIATION_KEY,\
                                 PROPERTY_BUTTON_NAME, PROPERTY_LOCALIZATION_NAME, SENSOR_ASSOCIATION_NAME, \
                                 URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, \
                                 URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
-
 from wristband.wristband_module import SCRALWristband
-from wristband.wristband_util import instance_wb_module
+from wristband import wristband_util as wb_util
 
 flask_instance = Flask(__name__)
 scral_module: SCRALWristband = None
 
-DOC = {"module_name": "SCRAL Module", "endpoint_port": 8000, "endpoint_url": "localhost"}
+DOC = DEFAULT_REST_CONFIG
 
 
 def get_scral_module():
@@ -46,65 +47,66 @@ def get_scral_module():
         sys.stdout.flush()
         signal.signal(signal.SIGINT, util.signal_handler)
 
-        scral_module = instance_wb_module(FILENAME_PILOT, DOC)
+        scral_module = wb_util.instance_wb_module(FILENAME_PILOT, DOC)
 
     return scral_module
 
 
-@flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST"])
-def new_wristband_request():
-    logging.debug(new_wristband_request.__name__ + " method called from: "+request.remote_addr)
+@flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST", "DELETE"])
+def wristband_request():
+    logging.debug(wristband_request.__name__ + " method called from: " + request.remote_addr)
 
     module = get_scral_module()
-    if module is None:
-        return make_response(jsonify({"Error": "Internal server error"}), 600)
-
-    if not request.json:
-        return make_response(jsonify({"Error": "Wrong request!"}), 400)
-
-    wristband_id = request.json["tagId"]
-
-    # -> ### DATASTREAM REGISTRATION ###
-    rc = module.get_resource_catalog()
-
-    if wristband_id not in rc:
-        logging.info("Wristband: '" + str(wristband_id) + "' registration.")
-    else:
-        # logging.error("Device "+wristband_id+" already registered!")
-        # return make_response(jsonify({"Error": "Duplicate request!"}), 422)
-        logging.warning("Device '" + str(wristband_id) + "' already registered... It will be overwritten on RC!")
-
-    ok = module.ogc_datastream_registration(wristband_id, request.json)
+    ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], module, request)
     if not ok:
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
-    else:
-        return make_response(jsonify({"result": "Ok"}), 201)
+        return status
+
+    wristband_id = request.json[TAG_ID_KEY]
+
+    if request.method == "POST": # Device Registration
+        rc = module.get_resource_catalog()
+
+        if wristband_id not in rc:
+            logging.info("Wristband: '" + str(wristband_id) + "' registration.")
+        else:
+            # old version
+            # logging.error("Device "+wristband_id+" already registered!")
+            # return make_response(jsonify({ERROR_RETURN_STRING: DUPLICATE_REQUEST}), 422)
+            logging.warning("Device '" + str(wristband_id) + "' already registered... It will be overwritten on RC!")
+
+        ok = module.ogc_datastream_registration(wristband_id, request.json)
+        if not ok:
+            return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
+        else:
+            return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
+
+    elif request.method == "DELETE":
+        response = scral_module.delete_device(wristband_id)
+        return response
 
 
 @flask_instance.route(URI_WRISTBAND_ASSOCIATION, methods=["PUT"])
-def new_wristband_association_request():
-    logging.debug(new_wristband_association_request.__name__ + " method called from: "+request.remote_addr)
+def wristband_association_request():
+    logging.debug(wristband_association_request.__name__ + " method called from: " + request.remote_addr)
 
     module = get_scral_module()
-    if not module:
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
-    if not request.json:
-        return make_response(jsonify({"Error": "Wrong request!"}), 400)
+    ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], module, request)
+    if not ok:
+        return status
 
-    wristband_id_1 = request.json["tagId_1"]
-    wristband_id_2 = request.json["tagId_2"]
+    wristband_id_1 = request.json[ID1_ASSOCIATION_KEY]
+    wristband_id_2 = request.json[ID2_ASSOCIATION_KEY]
 
     rc = module.get_resource_catalog()
     if wristband_id_1 not in rc or wristband_id_2 not in rc:
         logging.error("One of the wristbands is not registered.")
-        return make_response(jsonify({"Error": "One of the wristbands is not registered!"}), 400)
+        return make_response(jsonify({ERROR_RETURN_STRING: "One of the wristbands is not registered!"}), 400)
 
     vds = module.get_ogc_config().get_virtual_datastream(SENSOR_ASSOCIATION_NAME)
     if not vds:
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
+        return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
     response = put_service_observation(vds, request.json)
-
     return response
 
 
@@ -126,38 +128,38 @@ def new_wristband_button():
 
 def put_observation(observed_property, payload):
     if not payload:
-        return make_response(jsonify({"Error": "Wrong request!"}), 400)
+        return make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
 
     module = get_scral_module()
     if not module:
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
+        return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
-    wristband_id = payload["tagId"]
+    wristband_id = payload[TAG_ID_KEY]
     result = module.ogc_observation_registration(observed_property, payload)
     if result is True:
-        return make_response(jsonify({"result": "Ok"}), 201)
+        return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
     elif result is None:
         logging.error("Wristband: '" + str(wristband_id) + "' was not registered.")
-        return make_response(jsonify({"Error": "Wristband not registered!"}), 400)
+        return make_response(jsonify({ERROR_RETURN_STRING: "Wristband not registered!"}), 400)
     else:
         logging.error("Impossible to publish on MQTT server.")
-        return make_response(jsonify({"Error": "Impossible to publish on MQTT server."}), 502)
+        return make_response(jsonify({ERROR_RETURN_STRING: NO_MQTT_PUBLICATION}), 502)
 
 
 def put_service_observation(datastream, payload):
     if not payload:
-        return make_response(jsonify({"Error": "Wrong request!"}), 400)
+        return make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
 
     module = get_scral_module()
     if not module:
-        return make_response(jsonify({"Error": "Internal server error"}), 500)
+        return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
     result = module.ogc_service_observation_registration(datastream, payload)
     if result is True:
-        return make_response(jsonify({"result": "Ok"}), 201)
+        return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
     else:
         logging.error("Impossible to publish on MQTT server.")
-        return make_response(jsonify({"Error": "Impossible to publish on MQTT server."}), 502)
+        return make_response(jsonify({ERROR_RETURN_STRING: NO_MQTT_PUBLICATION}), 502)
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
@@ -177,13 +179,8 @@ def test_module():
     :return: A str containing some information about possible endpoints.
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
-
-    link = DOC["endpoint_url"] + ":" + str(DOC["endpoint_port"])
-    posts = (URI_WRISTBAND_REGISTRATION, )
-    puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
-    gets = (URI_ACTIVE_DEVICES, )
-    to_ret = util.to_html_documentation(DOC["module_name"] + "(nginx+uwsgi version)", link, posts, puts, gets)
-    return to_ret
+    return wb_util.wristband_documentation(DOC[MODULE_NAME_KEY] + "(nginx+uwsgi version)",
+                                           DOC[ENDPOINT_URL_KEY] + ":" + str(DOC[ENDPOINT_PORT_KEY]))
 
 
 if __name__ == '__main__':

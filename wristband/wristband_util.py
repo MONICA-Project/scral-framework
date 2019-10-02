@@ -13,9 +13,11 @@
 import os
 
 from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, END_MESSAGE, \
+from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, \
                                    FILENAME_CONFIG, FILENAME_COMMAND_FILE
 
+from wristband.constants import URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, \
+                                URI_WRISTBAND_BUTTON, URI_ACTIVE_DEVICES
 from wristband.wristband_module import SCRALWristband
 
 
@@ -43,3 +45,11 @@ def instance_wb_module(pilot_name: str, documentation):
     filename_connection = os.path.join(connection_path + args['connection_file'])
     catalog_name = args["pilot"] + "_wristband.json"
     return SCRALWristband(ogc_config, filename_connection, args['pilot'], catalog_name)
+
+
+def wristband_documentation(module_name: str, url: str) -> str:
+    deletes = posts = (URI_WRISTBAND_REGISTRATION,)
+    puts = (URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
+    gets = (URI_ACTIVE_DEVICES,)
+    to_ret = util.to_html_documentation(module_name+" (dumb version)", url, posts, puts, gets, deletes)
+    return to_ret
