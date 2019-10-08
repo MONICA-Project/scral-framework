@@ -17,23 +17,28 @@
 
 import argparse
 import json
+from logging import Logger
 import logging
 import os
 import re
 import sys
 
-import configparser
+from configparser import ConfigParser
+from typing import Union, Optional, Dict
+
 import requests
 from arrow.arrow import Arrow
 
-from scral_module.constants import DEFAULT_CONFIG, DEFAULT_REST_CONFIG, CREDITS, DEFAULT_LOG_FORMATTER, \
-                                   MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY, \
-                                   CONNECTION_PATH_KEY, CONNECTION_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
-                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE, \
-                                   OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD
+from ogc_configuration import OGCConfiguration
+from scral_core.scral_module import SCRALModule
+from scral_core.constants import DEFAULT_CONFIG, DEFAULT_REST_CONFIG, CREDITS, DEFAULT_LOG_FORMATTER, \
+                                 MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY, \
+                                 CONNECTION_PATH_KEY, CONNECTION_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
+                                 FILENAME_CONFIG, FILENAME_COMMAND_FILE, \
+                                 OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OPT_LIST
 
 
-def init_logger(debug_level):
+def init_logger(debug_level: Union[int, str]):
     """ This function configure the logger according to the specified debug_level taken from logging class. """
 
     logging.basicConfig(format="%(message)s")
@@ -41,7 +46,7 @@ def init_logger(debug_level):
     logging.getLogger().handlers[0].setFormatter(logging.Formatter(DEFAULT_LOG_FORMATTER, datefmt="(%b-%d) %H:%M:%S"))
 
 
-def init_mirrored_logger(log_name, debug_level, output_filename=None):
+def init_mirrored_logger(log_name: str, debug_level: Union[int, str], output_filename: Optional[str] = None) -> Logger:
     """ This function configure the logger according to the specified debug_level taken from logging class.
         It is possible also to specify a filename on which the log will be mirrored.
 
@@ -62,8 +67,8 @@ def init_mirrored_logger(log_name, debug_level, output_filename=None):
     return logger
 
 
-def init_parser(file_to_parse):
-    parser = configparser.ConfigParser()
+def init_parser(file_to_parse: str) -> ConfigParser:
+    parser = ConfigParser()
     files_read = parser.read(file_to_parse)
     if len(files_read) <= 0:
         raise FileNotFoundError("File: '" + file_to_parse + "' not found or you don't have permission to read it!")
@@ -71,7 +76,7 @@ def init_parser(file_to_parse):
     return parser
 
 
-def parse_small_command_line(description):
+def parse_small_command_line(description: str) -> argparse.Namespace:
     """ This function parses a small version of the "original" command line.
 
     :param description: The module description that you want to show in -h option.
@@ -88,7 +93,7 @@ def parse_small_command_line(description):
     return args
 
 
-def parse_command_line(description):
+def parse_command_line(description: str) -> argparse.Namespace:
     """ This function parses the command line.
 
     :param description: The module description that you want to show in -h option.
@@ -109,7 +114,7 @@ def parse_command_line(description):
     return args
 
 
-def initialize_variables(description: str, abs_path: str):
+def initialize_variables(description: str, abs_path: str) -> (dict, Dict[str, str]):
     cmd_line = parse_small_command_line(description)
     pilot_config_folder = cmd_line.pilot.lower() + "/"
 
@@ -136,8 +141,8 @@ def initialize_variables(description: str, abs_path: str):
     return args, doc
 
 
-def scral_ogc_startup(scral_module, args: dict):
-    ogc_config = scral_module.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
+def scral_ogc_startup(scral_module_class: SCRALModule.__class__, args: dict) -> (OGCConfiguration, str, str):
+    ogc_config = scral_module_class.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
 
     # Module initialization and runtime phase
     filename_connection = os.path.join(args[CONNECTION_PATH_KEY] + args[CONNECTION_FILE_KEY])
@@ -150,7 +155,8 @@ def scral_ogc_startup(scral_module, args: dict):
     return ogc_config, filename_connection, catalog_name
 
 
-def initialize_module(description: str, abs_path: str, scral_module_class):
+def initialize_module(description: str, abs_path: str, scral_module_class: SCRALModule.__class__)\
+        -> (SCRALModule, dict, Dict[str, str]):
     args, doc = initialize_variables(description, abs_path)
     ogc_config, filename_connection, catalog_name = scral_ogc_startup(scral_module_class, args)
 
@@ -158,7 +164,7 @@ def initialize_module(description: str, abs_path: str, scral_module_class):
     return module, args, doc
 
 
-def load_from_file(filename):
+def load_from_file(filename: str) -> dict:
     """ Read information about a specific configuration from a file and return a JSON object with the related data.
 
         :param filename: the full-path of the configuration file.
@@ -174,7 +180,7 @@ def load_from_file(filename):
         raise FileNotFoundError("File: "+filename+" not found or you don't have permission to read it!")
 
 
-def write_to_file(filename, data):
+def write_to_file(filename: str, data):
     """ Update a configuration file (it will be created if does not exists.
 
         :param filename: the full-path of the configuration file.
@@ -186,7 +192,8 @@ def write_to_file(filename, data):
         outfile.write('\n')
 
 
-def test_connectivity(server_address, server_username=None, server_password=None):
+def test_connectivity(server_address: str,
+                      server_username: Optional[str] = None, server_password: Optional[str] = None):
     """ This function checks if a REST connection is correctly configured.
 
     :param server_address: The address of the OGC server.
@@ -212,7 +219,8 @@ def test_connectivity(server_address, server_username=None, server_password=None
         return False
 
 
-def get_server_access_token(url, credentials, headers, token_prefix="", token_suffix=""):
+def get_server_access_token(url: str, credentials, headers,
+                            token_prefix: Optional[str] = "", token_suffix: Optional[str] = ""):
     """ This function get authorized token from a target server.
 
     :param: url: The URL of the target server.
@@ -248,7 +256,7 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
-def build_ogc_unit_of_measure(property_name):
+def build_ogc_unit_of_measure(property_name: str) -> Dict[str, str]:
     """ This utility function build a unit of measure dictionary from the specified property_name.
         It was developed for OneM2M Environmental Sensors integration.
 
@@ -276,7 +284,7 @@ def build_ogc_unit_of_measure(property_name):
     return uom
 
 
-def from_utc_to_query(utc_timestamp: Arrow, remove_milliseconds=True, html_formatting=False):
+def from_utc_to_query(utc_timestamp: Arrow, remove_milliseconds: bool = True, html_formatting: bool = False) -> str:
     """ This function convert an arrow UTC timestamp in a data format adapted for a REST request.
 
     :param utc_timestamp: A timestamp in Arrow format (e.g. 2019-05-13T11:22:33+01:00).
@@ -295,7 +303,9 @@ def from_utc_to_query(utc_timestamp: Arrow, remove_milliseconds=True, html_forma
     return time_stamp
 
 
-def to_html_documentation(module_name: str, link: str, posts=None, puts=None, gets=None, deletes=None):
+def to_html_documentation(module_name: str, link: str,
+                          posts: OPT_LIST = None, puts: OPT_LIST = None,
+                          gets: OPT_LIST = None, deletes: OPT_LIST = None) -> str:
     """ This function create a piece of HTML containing the list of the desired endpoints.
 
     :param module_name: The name of the SCRAL module, it will be visualized in the generated HTML.

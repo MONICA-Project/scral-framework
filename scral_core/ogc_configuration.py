@@ -12,18 +12,19 @@
 #############################################################################
 import json
 import logging
+from typing import List, Dict, Union
 
 import requests
 
-import scral_ogc
-from scral_module import util
-from scral_module.constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID_KEY
+from scral_ogc import OGCThing, OGCLocation, OGCSensor, OGCObservedProperty, OGCDatastream, OGCObservation
+from scral_core import util
+from scral_core.constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID_KEY
 
 
 class OGCConfiguration:
     """ This class is a representation of an OGC SensorThings model. """
 
-    def __init__(self, ogc_file_name, ogc_server_address):
+    def __init__(self, ogc_file_name: str, ogc_server_address: str):
         """ This function reads an OGC Model file and creates a Python object representation of it.
             Furthermore, it prepares all the appropriate REST URL to contact the OGC server.
 
@@ -48,13 +49,13 @@ class OGCConfiguration:
         description = parser['LOCATION']['DESCRIPTION']
         x = parser['LOCATION']['COORDINATES_X']
         y = parser['LOCATION']['COORDINATES_Y']
-        self._ogc_location = scral_ogc.OGCLocation(name, description, float(x), float(y))
+        self._ogc_location = OGCLocation(name, description, float(x), float(y))
 
         # THING
         name = parser['THING']['NAME']  # only one THING for each configuration file
         description = parser['THING']['DESCRIPTION']
         props_type = {"type": parser['THING']['PROPERTY_TYPE']}
-        self._ogc_thing = scral_ogc.OGCThing(name, description, props_type)
+        self._ogc_thing = OGCThing(name, description, props_type)
 
         # COUNTABLE
         num_sensors = int(parser['THING']['NUM_OF_SENSORS'])
@@ -73,7 +74,7 @@ class OGCConfiguration:
             sensor_encoding = parser[section]['ENCODING']
             sensor_metadata = parser[section]['METADATA']
 
-            self._sensors.append(scral_ogc.OGCSensor(sensor_name, sensor_description, sensor_metadata, sensor_encoding))
+            self._sensors.append(OGCSensor(sensor_name, sensor_description, sensor_metadata, sensor_encoding))
 
         i = 0  # OBSERVED PROPERTIES
         self._observed_properties = []
@@ -85,7 +86,7 @@ class OGCConfiguration:
             property_definition = parser[section]['PROPERTY_TYPE']
 
             self._observed_properties.append(
-                scral_ogc.OGCObservedProperty(property_name, property_description, property_definition))
+                OGCObservedProperty(property_name, property_description, property_definition))
 
         self._virtual_sensors = []    # Virtual SENSORS
         if num_v_sensors > 0:
@@ -99,7 +100,7 @@ class OGCConfiguration:
                 sensor_metadata = parser[section]['METADATA']
 
                 self._virtual_sensors.append(
-                    scral_ogc.OGCSensor(sensor_name, sensor_description, sensor_metadata, sensor_encoding))
+                    OGCSensor(sensor_name, sensor_description, sensor_metadata, sensor_encoding))
 
         self._virtual_properties = []  # Virtual SENSORS
         if num_v_properties > 0:
@@ -112,12 +113,12 @@ class OGCConfiguration:
                 property_definition = parser[section]['PROPERTY_TYPE']
 
                 self._virtual_properties.append(
-                    scral_ogc.OGCObservedProperty(property_name, property_description, property_definition))
+                    OGCObservedProperty(property_name, property_description, property_definition))
 
         self._datastreams = {}
         self._virtual_datastreams = {}
 
-    def discovery(self, verbose=False):
+    def discovery(self, verbose: bool = False):
         """ This method uploads the OGC model on the OGC Server and retrieves the @iot.id assigned by the server.
             If entities were already registered, they are not overwritten (or registered twice)
             and only their @iot.id are retrieved.
@@ -196,9 +197,9 @@ class OGCConfiguration:
                 if not virtual_property_id:
                     raise ValueError("Property ID not defined for VIRTUAL PROPERTY: "+virtual_property_name)
 
-                virtual_datastream = scral_ogc.OGCDatastream(v_datastream_name, v_datastream_description,
-                                                             virtual_property_id, virtual_sensor_id, thing_id,
-                                                             v_ds_unit_of_measure, v_ds_coord_x, v_ds_coord_y)
+                virtual_datastream = OGCDatastream(v_datastream_name, v_datastream_description,
+                                                   virtual_property_id, virtual_sensor_id, thing_id,
+                                                   v_ds_unit_of_measure, v_ds_coord_x, v_ds_coord_y)
                 vds_id = self.entity_discovery(virtual_datastream, self.URL_DATASTREAMS, self.FILTER_NAME, verbose)
                 logging.info('Virtual DATASTREAM: "' + v_datastream_name + '" with id: ' + str(vds_id))
                 virtual_datastream.set_id(vds_id)
@@ -207,7 +208,7 @@ class OGCConfiguration:
         logging.info("--- End of OGC discovery---\n")
 
     @staticmethod
-    def entity_discovery(ogc_entity, url_entity, url_filter, verbose=False):
+    def entity_discovery(ogc_entity, url_entity: str, url_filter: str, verbose: bool = False) -> int:
         """ This method retrieves the @iot.id associated to an OGC resource automaticcaly assigned by the server.
             If the entity was not already registered, it will be uploaded on the OGC Server and the @iot.id is returned.
 
@@ -216,7 +217,7 @@ class OGCConfiguration:
         :param url_filter: The filter to apply.
         :param verbose: Set it to true to have more logging prints.
         :return: Returns the @iot.id of the entity if it is correctly registered,
-                 if something goes wrong during registration, an exception will be generated.
+                 if something goes wrong during registration, an exception will be thrown.
         """
         ogc_entity_name = ogc_entity.get_name()
         url_discovery = url_entity + url_filter + "'" + ogc_entity_name + "'"
@@ -259,35 +260,35 @@ class OGCConfiguration:
             logging.error("Impossible to delete DATASTREAM: " + str(datastream_id) + ". Maybe it did not exist!")
             return False
 
-    def get_thing(self):
+    def get_thing(self) -> OGCThing:
         return self._ogc_thing
 
-    def get_location(self):
+    def get_location(self) -> OGCLocation:
         return self._ogc_location
 
-    def get_sensors(self):
+    def get_sensors(self) -> List[OGCSensor]:
         return self._sensors
 
-    def get_observed_properties(self):
+    def get_observed_properties(self) -> List[OGCObservedProperty]:
         return self._observed_properties
 
-    def get_sensors_number(self):
+    def get_sensors_number(self) -> int:
         return len(self._sensors)
 
-    def get_properties_number(self):
+    def get_properties_number(self) -> int:
         return len(self._observed_properties)
 
-    def get_virtual_datastream(self, name):
+    def get_virtual_datastream(self, name: str) -> Union[OGCDatastream, bool]:
         for vds_key, vds_value in self._virtual_datastreams.items():
             if vds_value.get_name() == name:
                 return vds_value
 
         return False
 
-    def get_datastreams(self):
+    def get_datastreams(self) -> Dict[int, OGCDatastream]:
         return self._datastreams
 
-    def get_datastream(self, datastream_id):
+    def get_datastream(self, datastream_id) -> OGCDatastream:
         return self._datastreams[datastream_id]
 
     def add_observed_property(self, ogc_obs_property):

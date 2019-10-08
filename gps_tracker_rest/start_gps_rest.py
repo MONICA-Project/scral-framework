@@ -27,12 +27,13 @@ import logging
 import os
 import sys
 import signal
+from typing import Optional
 
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, Response
 
-import scral_module as scral
-from scral_module import util, rest_util
-from scral_module.constants import END_MESSAGE, DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, \
+import scral_core as scral
+from scral_core import util, rest_util
+from scral_core.constants import END_MESSAGE, DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, TAG_ID_KEY, \
                                    SUCCESS_RETURN_STRING, ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, \
                                    ERROR_RETURN_STRING, WRONG_REQUEST, INTERNAL_SERVER_ERROR, DUPLICATE_REQUEST, \
                                    DEVICE_NOT_REGISTERED
@@ -43,7 +44,7 @@ from gps_tracker_rest.constants import TAG_ID_KEY, \
 from gps_tracker_rest.gps_rest_module import SCRALGPSRest
 
 flask_instance = Flask(__name__)
-scral_module: SCRALGPSRest = None
+scral_module: Optional[SCRALGPSRest] = None
 DOC = DEFAULT_REST_CONFIG
 
 
@@ -57,14 +58,14 @@ def main():
 
 
 @flask_instance.route(URI_GPS_TAG_REGISTRATION, methods=["POST"])
-def new_gps_tag_request():
+def new_gps_tag_request() -> Response:
     logging.debug(new_gps_tag_request.__name__ + " method called from: "+request.remote_addr)
 
     ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
     if not ok:
         return status
 
-    gps_tag_id = request.json["tagId"]
+    gps_tag_id = request.json[TAG_ID_KEY]
 
     # -> ### DATASTREAM REGISTRATION ###
     rc = scral_module.get_resource_catalog()
@@ -82,7 +83,7 @@ def new_gps_tag_request():
 
 
 @flask_instance.route(URI_GPS_TAG_REGISTRATION, methods=["DELETE"])
-def remove_gps_tag():
+def remove_gps_tag() -> Response:
     """ This function delete all the DATASTREAM associated with a particular device
         on the resource catalog and on the OGC server.
 
@@ -99,7 +100,7 @@ def remove_gps_tag():
 
 
 @flask_instance.route(URI_GPS_TAG_LOCALIZATION, methods=["PUT"])
-def new_gps_tag_localization():
+def new_gps_tag_localization() -> Response:
     logging.debug(new_gps_tag_alert.__name__ + " method called from: "+request.remote_addr)
 
     response = put_observation(LOCALIZATION, request.json)
@@ -107,14 +108,14 @@ def new_gps_tag_localization():
 
 
 @flask_instance.route(URI_GPS_TAG_ALERT, methods=["PUT"])
-def new_gps_tag_alert():
+def new_gps_tag_alert() -> Response:
     logging.debug(new_gps_tag_alert.__name__ + " method called from: "+request.remote_addr)
 
     response = put_observation(ALERT, request.json)
     return response
 
 
-def put_observation(observed_property, payload):
+def put_observation(observed_property: str, payload: dict) -> Response:
     if not payload:
         return make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
     if not scral_module:
@@ -133,7 +134,7 @@ def put_observation(observed_property, payload):
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
-def get_active_devices():
+def get_active_devices() -> Response:
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
@@ -144,7 +145,7 @@ def get_active_devices():
 
 
 @flask_instance.route(URI_DEFAULT)
-def test_module():
+def test_module() -> str:
     """ Checking if SCRAL is running. """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 

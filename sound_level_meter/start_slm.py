@@ -28,21 +28,25 @@ import logging
 import os
 import sys
 import signal
+from typing import Optional
 
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, Response
 
-import scral_module as scral
-import scral_ogc
-from scral_module import util
-from scral_module.constants import DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, END_MESSAGE, \
-                                   ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, PILOT_KEY
+from scral_ogc import OGCObservedProperty
+
+import scral_core as scral
+from scral_core import util, rest_util
+from scral_core.constants import DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, END_MESSAGE, SUCCESS_RETURN_STRING, \
+                                 ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, PILOT_KEY, \
+                                 ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, DEVICE_NOT_REGISTERED
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
 from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, \
-    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT, DEVICE_NAME_KEY
+    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT, \
+    DEVICE_ID_KEY, DEVICE_NAME_KEY, DESCRIPTION_KEY, DEFINITION_KEY, TYPE_KEY, START_TIME_KEY
 
 flask_instance = Flask(__name__)
-scral_module: SCRALSoundLevelMeter = None
+scral_module: Optional[SCRALSoundLevelMeter] = None
 DOC = DEFAULT_REST_CONFIG
 
 
@@ -60,7 +64,7 @@ def main():
 
 
 @flask_instance.route(URI_SOUND_EVENT, methods=["PUT"])
-def new_sound_event():
+def new_sound_event() -> Response:
     """ This function can register an OBSERVATION in the OGC server.
         It is able to accept any new OBSERVED PROPERTY according to the content of "type" field.
         This new property is run-time generated.
@@ -69,32 +73,36 @@ def new_sound_event():
     """
     logging.debug(new_sound_event.__name__ + " method called from: "+request.remote_addr)
 
+    ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
+    if not ok:
+        return status
+
     payload = request.json
-    property_name = payload["type"]
+    property_name = payload[TYPE_KEY]
     try:
-        property_description = payload["description"]
+        property_description = payload[DESCRIPTION_KEY]
     except KeyError:
         property_description = property_name + " description"
     try:
-        property_definition = payload["definition"]
+        property_definition = payload[DEFINITION_KEY]
     except KeyError:
         property_definition = property_name + " definition"
 
-    obs_prop = scral_ogc.OGCObservedProperty(property_name, property_description, property_definition)
-    device_id = payload["deviceId"]
+    obs_prop = OGCObservedProperty(property_name, property_description, property_definition)
+    device_id = payload[DEVICE_ID_KEY]
 
     datastream_id = scral_module.new_datastream(device_id, obs_prop)
     if datastream_id is False:
-        return make_response(jsonify({"Error": "deviceId not recognized."}), 400)
+        return make_response(jsonify({ERROR_RETURN_STRING: DEVICE_NOT_REGISTERED}), 400)
     elif datastream_id is None:
-        return make_response(jsonify({"Error": "Internal server error."}), 500)
+        return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
     else:
-        scral_module.ogc_observation_registration(datastream_id, payload["startTime"], payload)
-        return make_response(jsonify({"Result": "Ok"}), 201)
+        scral_module.ogc_observation_registration(datastream_id, payload[START_TIME_KEY], payload)
+        return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
-def get_active_devices():
+def get_active_devices() -> Response:
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
@@ -110,9 +118,9 @@ def get_active_devices():
 
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
-def test_module():
+def test_module() -> str:
     """ Checking if SCRAL is running.
-    :return: A str containing some information about possible endpoints.
+        :return: A str containing some information about possible endpoints.
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 

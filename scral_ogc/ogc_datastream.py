@@ -6,8 +6,9 @@ class OGCDatastream:
         For more info: http://developers.sensorup.com/docs/#datastreams_post
     """
 
-    def __init__(self, name, description, ogc_property_id, ogc_sensor_id, ogc_thing_id,
-                 unit_of_measurement: json, x=0.0, y=0.0, observed_area_type="Point",
+    def __init__(self, name: str, description: str, ogc_property_id: int, ogc_sensor_id: int, ogc_thing_id: int,
+                 unit_of_measurement: json, x: float = 0.0, y: float = 0.0,
+                 observed_area_type="Point",
                  observation_type="http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement"):
         # the id is assigned by the OGC Server
         self._id = None
@@ -21,22 +22,22 @@ class OGCDatastream:
         self._ogc_sensor_id = ogc_sensor_id
         self._mqtt_topic = None
 
-    def set_id(self, datastream_id):
+    def set_id(self, datastream_id: int):
         self._id = datastream_id
 
-    def set_mqtt_topic(self, mqtt_topic):
+    def set_mqtt_topic(self, mqtt_topic: str):
         self._mqtt_topic = mqtt_topic
 
-    def get_id(self):
+    def get_id(self) -> int:
         return self._id
 
-    def get_mqtt_topic(self):
+    def get_mqtt_topic(self) -> str:
         return self._mqtt_topic
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self._name
 
-    def get_rest_payload(self):
+    def get_rest_payload(self) -> dict:
         return {
             "name": self._name, "description": self._description, "observationType": self._observation_type,
             "observedArea": self._observed_area, "unitOfMeasurement": self._unit_of_measurement,

@@ -14,20 +14,21 @@ import json
 import logging
 
 import arrow
-from flask import jsonify, make_response
+from flask import jsonify, make_response, Response
 
 from scral_ogc import OGCDatastream, OGCObservation
 from scral_ogc.constants import OGC_RESULT, OGC_RESULT_TIME
 
-from scral_module.constants import ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, INVALID_DATASTREAM, SUCCESS_RETURN_STRING
-import scral_module.util as util
-from scral_module.rest_module import SCRALRestModule
+from scral_core.constants import ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, INVALID_DATASTREAM, \
+                                 SUCCESS_RETURN_STRING, COORD
+import scral_core.util as util
+from scral_core.rest_module import SCRALRestModule
 
 
 class SCRALEnvOneM2M(SCRALRestModule):
     """ Resource manager for integration of Environmental Nodes through OneM2M platform. """
 
-    def ogc_datastream_registration(self, env_node_id, coordinates):
+    def ogc_datastream_registration(self, env_node_id: str, coordinates: COORD) -> Response:
         """ Given a Environmental Node ID and its coordinates, this method registers a new DATASTREAM in the OGC model.
 
         :param env_node_id: The Environmental node ID.
@@ -75,7 +76,7 @@ class SCRALEnvOneM2M(SCRALRestModule):
         self.update_file_catalog()
         return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 200)
 
-    def ogc_observation_registration(self, env_node_id, content, onem2m_payload):
+    def ogc_observation_registration(self, env_node_id: str, content: dict, onem2m_payload: dict) -> Response:
         """ Given an Environmental Node ID, this method registers an OBSERVATION in the OGC model.
 
         :param env_node_id: The Environmental node ID.

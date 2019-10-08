@@ -29,12 +29,13 @@ import logging
 import os
 import signal
 import sys
+from typing import Optional
 
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, Response
 
-import scral_module as scral
-from scral_module import util
-from scral_module.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, \
+import scral_core as scral
+from scral_core import util
+from scral_core.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, \
                                    ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, \
                                    ERROR_RETURN_STRING, WRONG_CONTENT_TYPE, INTERNAL_SERVER_ERROR, UNKNOWN_CONTENT_TYPE
 
@@ -42,7 +43,7 @@ from env_sensor_onem2m.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, URI_ENV
 from env_sensor_onem2m.env_onem2m_module import SCRALEnvOneM2M
 
 flask_instance = Flask(__name__)
-scral_module: SCRALEnvOneM2M = None
+scral_module: Optional[SCRALEnvOneM2M] = None
 
 DOC = DEFAULT_REST_CONFIG
 
@@ -57,7 +58,7 @@ def main():
 
 
 @flask_instance.route(URI_ENV_NODE, methods=["POST"])
-def new_onem2m_request():
+def new_onem2m_request() -> Response:
     """ This function is called when a OneM2M post request is received. """
     logging.debug(new_onem2m_request.__name__ + " method called from: "+request.remote_addr)
 
@@ -111,10 +112,8 @@ def new_onem2m_request():
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
-def get_active_devices():
-    """ This endpoint gives access to the resource catalog.
-    :return: A JSON containing thr resource catalog.
-    """
+def get_active_devices() -> Response:
+    """ This endpoint gives access to the resource catalog. """
     logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
     to_ret = jsonify(scral_module.get_resource_catalog())
@@ -122,9 +121,9 @@ def get_active_devices():
 
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
-def test_module():
+def test_module() -> str:
     """ Checking if SCRAL is running.
-    :return: A str containing some information about possible endpoints.
+        :return: A str containing some information about possible endpoints.
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 

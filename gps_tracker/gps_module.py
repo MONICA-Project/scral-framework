@@ -12,11 +12,12 @@
 #############################################################################
 import logging
 from abc import abstractmethod
+from typing import Optional, List
 
 from scral_ogc import OGCDatastream
 
-from scral_module import util
-from scral_module.scral_module import SCRALModule
+from scral_core import util
+from scral_core.scral_module import SCRALModule
 
 
 class SCRALGPS(SCRALModule):
@@ -29,7 +30,8 @@ class SCRALGPS(SCRALModule):
         """
         raise NotImplementedError("Implement runtime method in subclasses")
 
-    def ogc_datastream_registration(self, device_id, description, unit_of_measure=None, catalog_key=None):
+    def ogc_datastream_registration(self, device_id: str, description: str, unit_of_measure: Optional[str] = None,
+                                    catalog_key: Optional[str] = None) -> List[OGCDatastream]:
         """ This method registers new DATASTREAMs in the OGC model. """
 
         if catalog_key is None:
@@ -45,7 +47,7 @@ class SCRALGPS(SCRALModule):
         sensor_id = sensor.get_id()
         sensor_name = sensor.get_name()
 
-        datastreams = []
+        datastream_list = []
         for observed_property in self._ogc_config.get_observed_properties():
             property_id = observed_property.get_id()
             property_name = observed_property.get_name()
@@ -62,8 +64,8 @@ class SCRALGPS(SCRALModule):
 
             else:
                 ds.set_id(datastream_id)
-                datastreams.append(ds)
+                datastream_list.append(ds)
                 self._ogc_config.add_datastream(ds)
                 self._resource_catalog[catalog_key][property_name] = ds.get_id()
 
-        return datastreams
+        return datastream_list

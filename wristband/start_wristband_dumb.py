@@ -14,31 +14,34 @@
 
 """
 #############################################################################
+import json
 import os
 import logging
 import sys
 import signal
+from typing import Optional
 
 import arrow
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, Response
 
-import scral_module as scral
-from scral_module.constants import END_MESSAGE, ENABLE_FLASK, DEFAULT_REST_CONFIG, SUCCESS_RETURN_STRING, \
+from scral_core.constants import END_MESSAGE, ENABLE_FLASK, DEFAULT_REST_CONFIG, SUCCESS_RETURN_STRING, \
                                    ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, TIMESTAMP_KEY
-from scral_module import util
+import scral_core as scral
+from scral_core import util
 
 from wristband.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, \
                                 URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
-from wristband.wristband_module import SCRALWristband
 from wristband import wristband_util as wb_util
+from wristband.wristband_module import SCRALWristband
+
 
 flask_instance = Flask(__name__)
-module: SCRALWristband = None
+module: Optional[SCRALWristband] = None
 logger: bool = False
-p_name: str = None
+p_name: Optional[str] = None
 
-DOC = DEFAULT_REST_CONFIG
-COUNTER = 0
+DOC: dict = DEFAULT_REST_CONFIG
+COUNTER: int = 0
 
 
 def main():
@@ -52,31 +55,31 @@ def main():
 
 
 @flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST"])
-def new_wristband_request():
+def new_wristband_request() -> Response:
     print_time(new_wristband_request.__name__, request.json)
     return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 200)
 
 
 @flask_instance.route(URI_WRISTBAND_ASSOCIATION, methods=["PUT"])
-def new_wristband_association_request():
+def new_wristband_association_request() -> Response:
     print_time(new_wristband_association_request.__name__, request.json)
     return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 200)
 
 
 @flask_instance.route(URI_WRISTBAND_LOCALIZATION, methods=["PUT"])
-def new_wristband_localization():
+def new_wristband_localization() -> Response:
     print_time(new_wristband_localization.__name__, request.json)
     return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 200)
 
 
 @flask_instance.route(URI_WRISTBAND_BUTTON, methods=["PUT"])
-def new_wristband_button():
+def new_wristband_button() -> Response:
     print_time(new_wristband_button.__name__, request.json)
     return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 200)
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
-def get_active_devices():
+def get_active_devices() -> Response:
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
@@ -87,7 +90,7 @@ def get_active_devices():
 
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
-def test_module():
+def test_module() -> str:
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
@@ -96,7 +99,7 @@ def test_module():
                                            DOC[ENDPOINT_URL_KEY] + ":" + str(DOC[ENDPOINT_PORT_KEY]))
 
 
-def print_time(method_name, payload):
+def print_time(method_name: str, payload: json):
     global logger, p_name
     if not logger:
         # p_name = current_process().name

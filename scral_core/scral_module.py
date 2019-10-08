@@ -36,41 +36,47 @@ import os
 import random
 import sys
 from abc import abstractmethod
+from typing import Dict, Optional
 
 import arrow
 import paho.mqtt.client as mqtt
 
-from scral_module.constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, DEFAULT_UPDATE_INTERVAL, \
-    CATALOG_FOLDER, CATALOG_FILENAME, MQTT_CLIENT_PREFIX, \
-    ERROR_MISSING_CONNECTION_FILE, ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_WRONG_PILOT_NAME
-from scral_module.ogc_configuration import OGCConfiguration
-from scral_module import util
-from scral_module import mqtt_util
+from scral_core.constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, DEFAULT_UPDATE_INTERVAL, MQTT_CLIENT_PREFIX,     \
+    CONNECTION_FILE_KEY, CONNECTION_PATH_KEY, CONFIG_PATH_KEY, OGC_FILE_KEY, REST_KEY, OGC_SERVER_ADD_KEY, COUNTER_KEY,\
+    REGISTERED_DEVICES_KEY, LAST_UPDATE_KEY, ACTUAL_COUNTER_KEY, UPDATE_INTERVAL_KEY, ACTIVE_DEVICES_KEY, VERBOSE_KEY, \
+    ERROR_MISSING_CONNECTION_FILE, ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_WRONG_PILOT_NAME,         \
+    CATALOG_FOLDER, CATALOG_FILENAME
+
+from scral_core.ogc_configuration import OGCConfiguration
+from scral_core import util, mqtt_util
 
 verbose = False
 
 
 class SCRALModule(object):
     """ This class is the base entity of SCRAL framework.
-        When you want to develop a new SCRAL module, you have to extend this class (or one of the realted subclasses
-        e.g., SCRALRESTModule), extend (if necessary) the __init__ initializer and
-        to implement the runtime method (that actually does not have a default implementation).
+        When you want to develop a new SCRAL module, you have to extend this class (or one of the related subclasses
+        e.g., SCRALRESTModule), extend (if necessary) the __init__ initializer and you have to implement
+        the runtime method (that actually does not have a default implementation).
     """
 
     @staticmethod
-    def startup(args, ogc_server_username=None, ogc_server_password=None):
+    def startup(args: Dict[str, str],
+                ogc_server_username: Optional[str] = None, ogc_server_password: Optional[str] = None) \
+            -> OGCConfiguration:
         """ The startup method initializes an OGCConfiguration using some arguments.
             The OGCConfiguration have to be passed to the SCRALModule initializer.
 
         :param args: Some command line arguments, every module can extend this parameter, SCRALModule wants at least:
-                     {"verbose": bool, "connection_file": str, "ogc_file": str}
+                     { "verbose": bool, "connection_file": str, "ogc_file": str, "connection_file": str,
+                     "connection_path": str , "config_path": str }
         :param ogc_server_username: [OPT] The username of the OGC Server to use for OGC configuration.
         :param ogc_server_password: [OPT] The password related to the username.
         :return: An instance of OGCConfiguration.
         """
 
         global verbose  # overwrite verbose flag from command line
-        if args['verbose']:
+        if args[VERBOSE_KEY]:
             verbose = True
             logging_level = logging.DEBUG
         else:
@@ -79,22 +85,22 @@ class SCRALModule(object):
 
         util.init_logger(logging_level)  # logging initialization
 
-        if not args['connection_file']:  # has the connection_file been set?
+        if not args[CONNECTION_FILE_KEY]:  # has the connection_file been set?
             logging.critical("Connection file is missing!")
             exit(ERROR_MISSING_CONNECTION_FILE)
-        if not args['ogc_file']:  # has the ogc_file been set?
+        if not args[OGC_FILE_KEY]:  # has the ogc_file been set?
             logging.critical("OGC configuration file is missing!")
             exit(ERROR_MISSING_OGC_FILE)
 
-        logging.info("Connection file: " + args['connection_file'])
-        logging.debug("Connection file stored in: " + args["connection_path"])
-        logging.info("OGC file: " + args['ogc_file'])
-        logging.debug("OGC file stored in: " + args["config_path"])
+        logging.info("Connection file: " + args[CONNECTION_FILE_KEY])
+        logging.debug("Connection file stored in: " + args[CONNECTION_PATH_KEY])
+        logging.info("OGC file: " + args[OGC_FILE_KEY])
+        logging.debug("OGC file stored in: " + args[CONFIG_PATH_KEY])
 
         # Storing the OGC server addresses
-        filename_connection = args["connection_path"] + args['connection_file']
+        filename_connection = args[CONNECTION_PATH_KEY] + args[CONNECTION_FILE_KEY]
         connection_config_file = util.load_from_file(filename_connection)
-        ogc_server_address = connection_config_file["REST"]["ogc_server_address"]
+        ogc_server_address = connection_config_file[REST_KEY][OGC_SERVER_ADD_KEY]
 
         # Testing OGC server connectivity
         if not util.test_connectivity(ogc_server_address, ogc_server_username, ogc_server_password):
@@ -102,12 +108,13 @@ class SCRALModule(object):
             exit(ERROR_NO_SERVER_CONNECTION)
 
         # OGC model configuration and discovery
-        full_ogc_filename = args["config_path"] + args['ogc_file']
+        full_ogc_filename = args[CONFIG_PATH_KEY] + args[OGC_FILE_KEY]
         ogc_config = OGCConfiguration(full_ogc_filename, ogc_server_address)
         ogc_config.discovery(verbose)
         return ogc_config
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str, catalog_name=CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
+                 catalog_name: str = CATALOG_FILENAME):
         """ Initialize the SCRALModule:
             Preparing the catalog, instantiating the MQTT Client and stores all relevant connection information.
 
@@ -141,7 +148,11 @@ class SCRALModule(object):
         self._topic_prefix = pilot_mqtt_topic_prefix
         self._pub_broker_address = connection_config_file["mqtt"]["pub_broker"]
         self._pub_broker_port = connection_config_file["mqtt"]["pub_broker_port"]
-        self._pub_broker_keepalive = connection_config_file["mqtt"]["pub_broker_keepalive"]
+        try:
+            self._pub_broker_keepalive = connection_config_file["mqtt"]["pub_broker_keepalive"]
+        except KeyError:
+            logging.warning("No broker keepalive specified, will be used the default one: " + DEFAULT_KEEPALIVE)
+            self._pub_broker_keepalive = DEFAULT_KEEPALIVE
 
         if catalog_name != CATALOG_FILENAME:
             client_id = MQTT_CLIENT_PREFIX + "-" + str(catalog_name).replace(".json", "")
@@ -160,23 +171,23 @@ class SCRALModule(object):
         self._mqtt_publisher.loop_start()
 
         # 5 Preparing module analysis information
-        self._active_devices = {"actual_counter": 0, "last_update": arrow.utcnow()}
+        self._active_devices = {ACTUAL_COUNTER_KEY: 0, LAST_UPDATE_KEY: arrow.utcnow()}
         try:
-            self._active_devices["update_interval"] = connection_config_file["update_interval"]
+            self._active_devices[UPDATE_INTERVAL_KEY] = connection_config_file[UPDATE_INTERVAL_KEY]
             logging.info("Number of active devices will be refreshed (if an observation is received) every "
                          + str(self._active_devices["update_interval"]) + " seconds.")
         except KeyError:
             logging.warning("No update interval specified inside configuration file..." +
                             "Default value "+str(DEFAULT_UPDATE_INTERVAL)+" will be used!")
-            self._active_devices["update_interval"] = DEFAULT_UPDATE_INTERVAL
+            self._active_devices[UPDATE_INTERVAL_KEY] = DEFAULT_UPDATE_INTERVAL
 
-    def get_mqtt_connection_address(self):
+    def get_mqtt_connection_address(self) -> str:
         return self._pub_broker_address
 
-    def get_mqtt_connection_port(self):
+    def get_mqtt_connection_port(self) -> int:
         return self._pub_broker_port
 
-    def get_ogc_config(self):
+    def get_ogc_config(self) -> OGCConfiguration:
         return self._ogc_config
 
     def get_topic_prefix(self) -> str:
@@ -197,14 +208,16 @@ class SCRALModule(object):
         #        diff_sec = abs(diff.total_seconds())
         #        if abs(diff_sec) > 120:
         #            active_devices_count += 1
-
-        tmp_rc["registered_devices"] = len(tmp_rc)
+        tmp_rc[REGISTERED_DEVICES_KEY] = len(tmp_rc)
         # tmp_rc["active_devices"] = active_devices_count
 
         tmp_active_devices = copy.deepcopy(self._active_devices)
-        tmp_active_devices["last_update"] = str(tmp_active_devices["last_update"])
+        try:
+            tmp_active_devices[LAST_UPDATE_KEY] = str(tmp_active_devices[LAST_UPDATE_KEY])
+        except KeyError:
+            logging.error('"'+LAST_UPDATE_KEY+'" data structure is not available!')
         # x = json.dumps(tmp_active_devices, indent=2, sort_keys=True)
-        tmp_rc["active_devices"] = tmp_active_devices
+        tmp_rc[ACTIVE_DEVICES_KEY] = tmp_active_devices
 
         return tmp_rc
 
@@ -233,17 +246,17 @@ class SCRALModule(object):
 
         try:
             current_time = arrow.utcnow()
-            time_diff = (current_time - self._active_devices["last_update"]).total_seconds()
-            if time_diff < self._active_devices["update_interval"]:
-                self._active_devices["actual_counter"] += 1
+            time_diff = (current_time - self._active_devices[LAST_UPDATE_KEY]).total_seconds()
+            if time_diff < self._active_devices[UPDATE_INTERVAL_KEY]:
+                self._active_devices[ACTUAL_COUNTER_KEY] += 1
             else:
-                self._active_devices["counter"] = self._active_devices["actual_counter"]
-                self._active_devices["actual_counter"] = 1
-                self._active_devices["last_update"] = current_time
+                self._active_devices[COUNTER_KEY] = self._active_devices[ACTUAL_COUNTER_KEY]
+                self._active_devices[ACTUAL_COUNTER_KEY] = 1
+                self._active_devices[LAST_UPDATE_KEY] = current_time
         except KeyError:
             logging.error("KeyError: trying to update active_devices structure... But a field is missing!")
 
-    def delete_device(self, device_id: str, remove_only_from_catalog=False) -> (bool, bool):
+    def delete_device(self, device_id: str, remove_only_from_catalog: bool = False) -> (bool, bool):
         if device_id not in self._resource_catalog:
             logging.error("There is no device: " + device_id)
             return False, True
@@ -269,7 +282,7 @@ class SCRALModule(object):
 
         return deleted, False
 
-    def mqtt_publish(self, topic: str, payload, qos=DEFAULT_MQTT_QOS, to_print=True) -> bool:
+    def mqtt_publish(self, topic: str, payload, qos: int = DEFAULT_MQTT_QOS, to_print: bool = True) -> bool:
         """ Publish the payload given as parameter to the MQTT publisher
 
         :param topic: The MQTT topic on which the client will publish the message.
@@ -322,7 +335,7 @@ class SCRALModule(object):
         """
         raise NotImplementedError("Implement runtime method in subclasses")
 
-# def ogc_datastream_registration(self, ogc_devices_server_url, certificate_path=None):
+# def ogc_datastream_registration(self, ogc_devices_server_url: str, certificate_path: Optional[str] = None):
     #     """ It manages the registration of the data inside OGC server. """
     #     r = None
     #     try:

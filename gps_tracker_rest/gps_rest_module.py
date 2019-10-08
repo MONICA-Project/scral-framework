@@ -12,25 +12,30 @@
 #############################################################################
 import json
 import logging
+from typing import Union
+
 import arrow
 
 from scral_ogc import OGCObservation
-from scral_module.rest_module import SCRALRestModule
+from scral_core.rest_module import SCRALRestModule
 from gps_tracker.gps_module import SCRALGPS
 
-from gps_tracker_rest.constants import TAG_ID_KEY, TYPE_KEY, TIMESTAMP_KEY
+from gps_tracker_rest.constants import TAG_ID_KEY, TYPE_KEY, TIMESTAMP_KEY, GPS_UNIT_OF_MEASURE
 
 
 class SCRALGPSRest(SCRALRestModule, SCRALGPS):
 
-    def new_datastream(self, payload):
+    def new_datastream(self, payload: dict) -> bool:
         device_id = payload[TAG_ID_KEY]
         description = payload[TYPE_KEY]
-        datastream = self.ogc_datastream_registration(device_id, description, "position")
-        self.update_file_catalog()
-        return datastream
+        datastream_list = self.ogc_datastream_registration(device_id, description, GPS_UNIT_OF_MEASURE)
+        if not datastream_list or len(datastream_list) < 1:
+            return False
+        else:
+            self.update_file_catalog()
+            return True
 
-    def ogc_observation_registration(self, observed_property, payload):
+    def ogc_observation_registration(self, observed_property: str, payload: dict) -> Union[bool, None]:
         gps_tag_id = payload[TAG_ID_KEY]
         if gps_tag_id not in self._resource_catalog:
             return None

@@ -15,9 +15,9 @@ import logging
 import signal
 import sys
 
-import scral_module as scral
-from scral_module import util, mqtt_util
-from scral_module.constants import END_MESSAGE, DEFAULT_CONFIG, FILENAME_CONFIG
+import scral_core as scral
+from scral_core import util, mqtt_util
+from scral_core.constants import END_MESSAGE, DEFAULT_CONFIG, FILENAME_CONFIG
 
 
 def main():

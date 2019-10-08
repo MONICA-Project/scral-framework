@@ -12,18 +12,19 @@
 #############################################################################
 import json
 import logging
+from typing import Union
 
 import arrow
 
 from scral_ogc import OGCObservation
 from scral_ogc.ogc_datastream import OGCDatastream
-from scral_module import util
-from scral_module.rest_module import SCRALRestModule
+from scral_core import util
+from scral_core.rest_module import SCRALRestModule
 
 
 class SCRALSmartGlasses(SCRALRestModule):
 
-    def ogc_datastream_registration(self, glasses_id):
+    def ogc_datastream_registration(self, glasses_id: str) -> bool:
         if self._ogc_config is None:
             return False
 
@@ -63,7 +64,7 @@ class SCRALSmartGlasses(SCRALRestModule):
         self.update_file_catalog()
         return True
 
-    def ogc_observation_registration(self, obs_property, payload):
+    def ogc_observation_registration(self, obs_property: str, payload: dict) -> Union[None, bool]:
         glasses_id = payload["tagId"]
         if glasses_id not in self._resource_catalog:
             return None

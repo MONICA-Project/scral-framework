@@ -26,14 +26,15 @@ PHASE: INTEGRATION
 import os
 import sys
 import signal
+from typing import Optional
 
-import scral_module as scral
-from scral_module import util
-from scral_module.constants import END_MESSAGE, DEFAULT_REST_CONFIG
+import scral_core as scral
+from scral_core import util
+from scral_core.constants import END_MESSAGE, DEFAULT_REST_CONFIG
 
 from phonometer_module import SCRALPhonometer
 
-scral_module: SCRALPhonometer = None
+scral_module: Optional[SCRALPhonometer] = None
 DOC = DEFAULT_REST_CONFIG
 
 

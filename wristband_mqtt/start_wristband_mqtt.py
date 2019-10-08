@@ -18,23 +18,25 @@ import logging
 import os
 import sys
 import signal
+from typing import Optional
 
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, Response
 
-import scral_module as scral
+import scral_core as scral
 
-from scral_module.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, \
+from scral_core.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, \
                                    MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, \
-                                   SUCCESS_RETURN_STRING, ERROR_RETURN_STRING, WRONG_REQUEST, INTERNAL_SERVER_ERROR
-from scral_module import util, rest_util
+                                   SUCCESS_RETURN_STRING, ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR
+from scral_core import util, rest_util
+
 from wristband.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_REGISTRATION
 from wristband_mqtt.constants import TAG_ID_KEY, DEFAULT_SUBSCRIPTION_WB
 from wristband_mqtt.wristband_mqtt_module import SCRALMQTTWristband
 
 
 flask_instance = Flask(__name__)
-scral_module: SCRALMQTTWristband = None
-DOC = DEFAULT_REST_CONFIG
+scral_module: Optional[SCRALMQTTWristband] = None
+DOC: dict = DEFAULT_REST_CONFIG
 
 
 def main():
@@ -48,7 +50,7 @@ def main():
 
 
 @flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST", "DELETE"])
-def wristband_request():
+def wristband_request() -> Response:
     logging.debug(wristband_request.__name__ + " method called from: " + request.remote_addr)
 
     ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
@@ -76,7 +78,7 @@ def wristband_request():
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
-def get_active_devices():
+def get_active_devices() -> Response:
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
@@ -87,7 +89,7 @@ def get_active_devices():
 
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
-def test_module():
+def test_module() -> str:
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """

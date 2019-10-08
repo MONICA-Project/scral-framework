@@ -34,7 +34,7 @@ def automatic_reconnection(client, userdata, rc):
     client.reconnect()
 
 
-def get_publish_mqtt_topic(pilot_name):
+def get_publish_mqtt_topic(pilot_name: str):
     """ This function retrieves the appropriate MQTT topic according to the pilot name.
 
     :param pilot_name: the name of the desired pilot

@@ -35,9 +35,9 @@ import os
 import signal
 import sys
 
-from scral_module import util
-from scral_module import BANNER, VERSION
-from scral_module.constants import END_MESSAGE
+from scral_core import util
+from scral_core import BANNER, VERSION
+from scral_core.constants import END_MESSAGE
 
 from gps_tracker_poll.gps_poll_module import SCRALGPSPoll
 

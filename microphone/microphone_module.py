@@ -11,19 +11,27 @@
 #                                                                           #
 #############################################################################
 import logging
-
 import arrow
 import json
 
 from scral_ogc import OGCObservation
-from scral_module.scral_module import SCRALModule
+
+from scral_core.ogc_configuration import OGCConfiguration
+from scral_core.constants import CATALOG_FILENAME
+from scral_core.scral_module import SCRALModule
+
 from microphone.constants import NAME_KEY, SEQUENCES_KEY
 
 
 class SCRALMicrophone(SCRALModule):
     """ Resource manager for integration of Phonometers. """
 
-    def _start_thread_pool(self, microphone_thread, locking=False):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
+                 catalog_name: str = CATALOG_FILENAME):
+        super().__init__(ogc_config, connection_file, pilot, catalog_name)
+        self._active_devices = {}
+
+    def _start_thread_pool(self, microphone_thread, locking: bool = False):
         """ This method starts a thread for each active microphone (Sound Level Meter).
 
         :param microphone_thread: The microphone thread that you need.
@@ -52,12 +60,12 @@ class SCRALMicrophone(SCRALModule):
                     thread.join()
                 logging.error("All threads have been interrupted!")
 
-    def ogc_observation_registration(self, datastream_id, phenomenon_time, observation_result):
+    def ogc_observation_registration(self, datastream_id: int, phenomenon_time: str, observation_result):
         """ This method sends an OBSERVATION to the MQTT broker.
 
         :param datastream_id: The DATASTREAM ID to be used.
         :param phenomenon_time: The time on which the OBSERVATION was recorded.
-        :param observation_result: The time on which you are processing the OBSERVATION.
+        :param observation_result: The value of the OBSERVATION.
         :return: True if the message was send, False otherwise.
         """
         # Preparing MQTT topic

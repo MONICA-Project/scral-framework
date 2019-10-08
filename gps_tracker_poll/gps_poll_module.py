@@ -14,27 +14,30 @@ import json
 import logging
 from threading import Thread
 from time import sleep
+from typing import Dict
 
 import requests
 import paho.mqtt.client as mqtt
 import arrow
-
 from requests.exceptions import SSLError
 
-from scral_ogc import OGCObservation
-from scral_module.constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, OGC_ID_KEY, CATALOG_FILENAME
-from scral_module import mqtt_util
+from scral_ogc import OGCObservation, OGCDatastream
+
+from scral_core.ogc_configuration import OGCConfiguration
+from scral_core import mqtt_util
+from scral_core.constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, OGC_ID_KEY, CATALOG_FILENAME
 
 from gps_tracker.constants import LOCALIZATION
 from gps_tracker.gps_module import SCRALGPS
 from gps_tracker_poll.constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL, \
-    OGC_HAMBURG_FILTER, DEVICE_ID_KEY, THINGS_SUBSCRIBE_TOPIC, HAMBURG_UNIT_OF_MEASURE
+    OGC_HAMBURG_FILTER, DEVICE_ID_KEY, THINGS_SUBSCRIBE_TOPIC, HAMBURG_UNIT_OF_MEASURE, DYNAMIC_DISCOVERY_SLEEP
 
 
 class SCRALGPSPoll(SCRALGPS):
     """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
 
-    def __init__(self, ogc_config, connection_file, pilot, catalog_name=CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
+                 catalog_name: str = CATALOG_FILENAME):
         """ Initialize MQTT Brokers for listening and publishing
 
         :param connection_file: A file containing connection information.
@@ -55,13 +58,24 @@ class SCRALGPSPoll(SCRALGPS):
         self._mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
 
     # noinspection PyMethodOverriding
-    def runtime(self, dynamic_discovery=False):
+    def runtime(self, dynamic_discovery: bool = False):
         """ This method retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
             These DATASTREAMS are published on MONICA OGC server.
             This is a "blocking function".
 
-        :param dynamic_discovery:  A boolean value that enable the dynamic discovery of new dom sensors
+        :param dynamic_discovery:  A boolean value that enable the dynamic discovery of new devices.
         """
+        self.datastream_discovery()
+
+        if dynamic_discovery:
+            th = Thread(target=self.dynamic_discovery)
+            th.start()
+            self._mqtt_subscriber.loop_start()
+            th.join()
+        else:
+            self._mqtt_subscriber.loop_forever()
+
+    def datastream_discovery(self):
         http_request = None
         try:
             http_request = requests.get(url=OGC_HAMBURG_THING_URL + OGC_HAMBURG_FILTER)
@@ -72,22 +86,22 @@ class SCRALGPSPoll(SCRALGPS):
             logging.error(ex)
 
         if http_request is None or not http_request.ok:
-            raise ConnectionError("URL: "+OGC_HAMBURG_THING_URL+" - Connection status: "+str(http_request.status_code)
-                                  + "\nImpossible to establish a connection or resources not found.")
+            raise ConnectionError(
+                "URL: " + OGC_HAMBURG_THING_URL + " - Connection status: " + str(http_request.status_code)
+                + "\nImpossible to establish a connection or resources not found.")
         else:
             logging.info("Connection status: " + str(http_request.status_code))
 
         hamburg_devices = http_request.json()["value"]
-
         for hd in hamburg_devices:
             iot_id = str(hd[OGC_ID_KEY])
             device_id = hd["name"]
             device_description = hd["description"]
-
-#           if iot_id in self._resource_catalog:
-#               logging.info("Device: " + device_id + " already registered with id: " + iot_id)
-#           else:
-            datastreams = self.ogc_datastream_registration(device_id, device_description, HAMBURG_UNIT_OF_MEASURE, iot_id)
+            # if iot_id in self._resource_catalog:
+            #   logging.info("Device: " + device_id + " already registered with id: " + iot_id)
+            # else:
+            datastreams = self.ogc_datastream_registration(
+                device_id, device_description, HAMBURG_UNIT_OF_MEASURE,iot_id)
             if len(datastreams) > 0:
                 # Associating HAMBURG THING id to MONICA DATASTREAM id (plus HAMBURG device_id)
                 self._resource_catalog[iot_id][DEVICE_ID_KEY] = device_id
@@ -98,15 +112,7 @@ class SCRALGPSPoll(SCRALGPS):
         self.update_file_catalog()
         self.update_mqtt_subscription(self._ogc_config.get_datastreams())
 
-        if dynamic_discovery:
-            th = Thread(target=self.dynamic_discovery)
-            th.start()
-            self._mqtt_subscriber.loop_start()
-            th.join()
-        else:
-            self._mqtt_subscriber.loop_forever()
-
-    def update_mqtt_subscription(self, datastreams):
+    def update_mqtt_subscription(self, datastreams: Dict[str, OGCDatastream]):
         """ This method updates the lists of MQTT subscription topics.
 
         :param datastreams: A Dictionary of OGCDatastream
@@ -121,12 +127,10 @@ class SCRALGPSPoll(SCRALGPS):
         """ This method implements the dynamic discovery.
             This is a 'blocking function'.
         """
-        time_to_wait = 60*60*8  # hours
         while True:
-            sleep(time_to_wait)
+            sleep(DYNAMIC_DISCOVERY_SLEEP)
             logging.debug("Starting Dynamic Discovery!")
-            self.ogc_datastream_registration()
-            self.update_mqtt_subscription(self._ogc_config.get_datastreams())
+            self.datastream_discovery()
 
     def on_message_received(self, client, userdata, msg):
         logging.debug("\nOn topic: "+msg.topic + " - message received:\n" + str(msg.payload))

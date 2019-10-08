@@ -11,17 +11,17 @@
 #                                                                           #
 #############################################################################
 import os
+from typing import Dict
 
-from scral_module import util
-from scral_module.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, \
-                                   FILENAME_CONFIG, FILENAME_COMMAND_FILE
+from scral_core import util
+from scral_core.constants import OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, FILENAME_CONFIG, FILENAME_COMMAND_FILE
 
+from wristband.wristband_module import SCRALWristband
 from wristband.constants import URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, \
                                 URI_WRISTBAND_BUTTON, URI_ACTIVE_DEVICES
-from wristband.wristband_module import SCRALWristband
 
 
-def instance_wb_module(pilot_name: str, documentation):
+def instance_wb_module(pilot_name: str, documentation: Dict[str, any]):
     # Preparing all the necessary configuration paths
     abs_path = os.path.abspath(os.path.dirname(__file__))
     config_path = os.path.join(abs_path, FILENAME_CONFIG)

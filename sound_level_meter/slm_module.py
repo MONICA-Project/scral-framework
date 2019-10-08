@@ -13,30 +13,36 @@
 import time
 from threading import Thread, Lock
 from datetime import timedelta
+from typing import Optional, Dict, List
 
 import arrow
 import requests
 import json
 import logging
 
+from arrow import Arrow
+from flask import Flask, Response
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
-from scral_ogc import OGCDatastream
-from scral_module.constants import REST_HEADERS, CATALOG_FILENAME
-from scral_module import util
-from scral_module.rest_module import SCRALRestModule
+from ogc_configuration import OGCConfiguration
+from scral_ogc import OGCDatastream, OGCObservedProperty
+from scral_core.constants import REST_HEADERS, CATALOG_FILENAME, ENABLE_CHERRYPY, COORD
+from scral_core import util
+from scral_core.rest_module import SCRALRestModule
 
 from microphone.microphone_module import SCRALMicrophone
-from microphone.constants import NAME_KEY, SEQUENCES_KEY
+from microphone.constants import SEQUENCES_KEY
 
-from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, MIN5_IN_SECONDS, RETRY_INTERVAL, DEVICE_NAME_KEY
+from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, MIN5_IN_SECONDS, RETRY_INTERVAL, \
+    DEVICE_NAME_KEY, CLOUD_KEY, SITE_NAME_KEY, TENANT_ID_KEY, SITE_ID_KEY, AD_NAME_KEY, AD_COORD_KEY, AD_DESCRIPTION_KEY
 
 
 class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
     """ Resource manager for integration of the SLM-GW (by usage of B&K's IoT Sound Level Meters). """
 
-    def __init__(self, ogc_config, connection_file, pilot,
-                 url_login, credentials, catalog_name=CATALOG_FILENAME, token_prefix="", token_suffix=""):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
+                 url_login: str, credentials, catalog_name: str = CATALOG_FILENAME,
+                 token_prefix: Optional[str] = "", token_suffix: Optional[str] = ""):
         """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
 
         :param connection_file: A file containing connection information.
@@ -57,14 +63,14 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         self.update_cloud_token()
 
         connection_config_file = util.load_from_file(connection_file)
-        self._site_name = connection_config_file["cloud"]["SiteName"]
-        self._tenant_id = connection_config_file["cloud"]["TenantID"]
-        self._site_id = connection_config_file["cloud"]["SiteID"]
+        self._site_name = connection_config_file[CLOUD_KEY][SITE_NAME_KEY]
+        self._tenant_id = connection_config_file[CLOUD_KEY][TENANT_ID_KEY]
+        self._site_id = connection_config_file[CLOUD_KEY][SITE_ID_KEY]
 
-    def get_cloud_token(self):
+    def get_cloud_token(self) -> str:
         return self._cloud_token
 
-    def get_mutex(self):
+    def get_mutex(self) -> Lock:
         return self._publish_mutex
 
     def update_cloud_token(self):
@@ -73,7 +79,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
                                                          self._token_prefix, self._token_suffix)
 
     # noinspection PyMethodOverriding
-    def runtime(self, flask_instance, mode=1):
+    def runtime(self, flask_instance: Flask, mode: int = ENABLE_CHERRYPY):
         """
         This method discovers active SLMs from B&K cloud, registers them as OGC Datastreams into the MONICA
         cloud and finally retrieves sound measurements for each device by using parallel querying threads.
@@ -98,7 +104,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         # starting REST web server
         super().runtime(flask_instance, mode)
 
-    def ogc_datastream_registration(self, url):
+    def ogc_datastream_registration(self, url: str):
         """ This method receive a target URL as parameter and discovers active SLMs.
             A new OGC Datastream for each couple SLM-ObservedProperty is registered.
 
@@ -108,18 +114,18 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         url_locations = url + "/tenants/" + str(self._tenant_id) + "/sites/" + str(self._site_id) + "/locations"
 
         # Get the list of active locations registered to the site_id
-        r = None
+        resp = None
         try:
-            r = requests.get(url_locations, headers=self._cloud_token)
+            resp = requests.get(url_locations, headers=self._cloud_token)
         except Exception as ex:
             logging.error(ex)
 
-        if not r or not r.ok:
+        if not resp or not resp.ok:
             raise ConnectionError(
-                "Connection status: " + str(r.status_code) + "\nImpossible to establish a connection with " + url)
+                "Connection status: " + str(resp.status_code) + "\nImpossible to establish a connection with " + url)
 
         logging.info("\n\n--- Active device discovery ---\n")
-        locations_list = r.json()['value']
+        locations_list = resp.json()['value']
 
         if len(locations_list) <= 0:
             raise AttributeError("Impossible to retrieve active devices.")
@@ -132,12 +138,12 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
 
             url_loc = url_locations + "/" + str(location_id)
             try:
-                r = requests.get(url_loc, headers=self._cloud_token)
+                resp = requests.get(url_loc, headers=self._cloud_token)
             except Exception as ex:
                 logging.error(ex)
 
             # Get device id, name, description and coordinates information stored in location item
-            location_item = r.json()
+            location_item = resp.json()
             device_id = location_item["assignedDevices"][0]["deviceId"]
             # device_name = location_item["assignedDevices"][0]["name"]  # sometimes is apparently wrong
             device_name = location_item["name"]
@@ -151,9 +157,9 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
 
             # Build active devices catalog
             self._active_devices[device_id] = {}
-            self._active_devices[device_id]["coordinates"] = location_coordinates["coordinates"]
-            self._active_devices[device_id][NAME_KEY] = device_name
-            self._active_devices[device_id]["description"] = device_description
+            self._active_devices[device_id][AD_NAME_KEY] = device_name
+            self._active_devices[device_id][AD_DESCRIPTION_KEY] = device_description
+            self._active_devices[device_id][AD_COORD_KEY] = location_coordinates[AD_COORD_KEY]
 
             url_sequences = url + "/tenants/" + str(self._tenant_id) + "/sites/" + str(
                 self._site_id) + "/locations/" + str(location_id) + "/sequences"
@@ -184,7 +190,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         logging.info("\n\n--- End of OGC DATASTREAMs registration. "
                      + str(len(self._ogc_config.get_datastreams()))+" datastreams were registered. ---\n")
 
-    def new_datastream(self, device_id, ogc_obs_property):
+    def new_datastream(self, device_id: str, ogc_obs_property: OGCObservedProperty):
         """ This method have to be called when you want to add a new DATASTREAM.
 
         :param device_id: The ID of the device for which you want to create the DATASTREAMs.
@@ -210,7 +216,8 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
 
         return datastream_id
 
-    def _new_datastream(self, ogc_property, device_id, device_name, device_coordinates, device_description):
+    def _new_datastream(self, ogc_property: OGCObservedProperty, device_id: str, device_name: str,
+                        device_coordinates: COORD, device_description: str) -> int:
         """ This method creates a new DATASTREAM. It is a private method, externally you should call "new_datastream".
 
         :param ogc_property: The OBSERVED PROPERTY.
@@ -233,7 +240,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         property_name = ogc_property.get_name()
         property_definition = {"definition": ogc_property.get_definition()}
 
-        # for the future debuggare: maybe could be better to use device_id
+        # for the future debugger: maybe could be better to use device_id
         datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + device_name
         datastream = OGCDatastream(name=datastream_name, description=device_description,
                                    ogc_property_id=property_id, ogc_sensor_id=sensor_id,
@@ -255,18 +262,19 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         return datastream_id
 
     class SLMThread(Thread):
-        """ Each instance of thiss class manage a different microphone. """
+        """ Each instance of this class manage a different microphone. """
 
-        def __init__(self, thread_id, thread_name, device_id, url_sequences, slm_module):
+        def __init__(self, thread_id: int, thread_name: str, device_id: str, url_sequences: str,
+                     slm_module: "SCRALSoundLevelMeter", print_on_file: bool = False):
             super().__init__()
 
-            # thread_debug_name = "("+str(thread_id)+")"
             thread_debug_name = "("+thread_name+")"
-            # Init Thread logger
-            self._logger = util.init_mirrored_logger(thread_debug_name, logging.DEBUG)
-
-            # Enable log storage in file
-            # self._logger = util.init_mirrored_logger(thread_debug_name, logging.DEBUG, "mic_"+str(thread_id)+".log")
+            if not print_on_file:
+                # Init Thread logger
+                self._logger = util.init_mirrored_logger(thread_debug_name, logging.DEBUG)
+            else:
+                # Enable log storage in file
+                self._logger = util.init_mirrored_logger(thread_debug_name, logging.DEBUG, "mic_"+str(thread_id)+".log")
 
             self._thread_name = thread_name
             self._thread_id = thread_id
@@ -277,16 +285,16 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         def run(self):
             self._logger.info("Starting Thread: " + self._thread_name)
 
-            r = None
+            resp = None
             try:
-                r = requests.get(self._url_sequences, headers=self._slm_module.get_cloud_token())
+                resp = requests.get(self._url_sequences, headers=self._slm_module.get_cloud_token())
             except Exception as ex:
                 self._logger.error(ex)
-            if not r or not r.ok:
-                raise ConnectionError("Connection status: " + str(r.status_code) +
+            if not resp or not resp.ok:
+                raise ConnectionError("Connection status: " + str(resp.status_code) +
                                       "\nImpossible to establish a connection with " + self._url_sequences)
 
-            sequences_data = self._init_sequences(r)
+            sequences_data = self._init_sequences(resp)
             query_ts_end = util.from_utc_to_query(arrow.utcnow())
 
             # ### LAeq values averaged on 5 minutes ###
@@ -310,14 +318,14 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
                             continue  # not update data
 
                         url = seq["url_prefix"] + seq["time"]
-                        r = requests.get(url, headers=self._slm_module.get_cloud_token())
-                        if not r or not r.ok:
-                            if r.status_code == 401:
+                        resp = requests.get(url, headers=self._slm_module.get_cloud_token())
+                        if not resp or not resp.ok:
+                            if resp.status_code == 401:
                                 raise ValueError("Authentication token expired!")
                             else:
                                 raise Exception("Something wrong retrieving data!")
 
-                        payload = r.json()  # ['value']
+                        payload = resp.json()  # ['value']
 
                         if payload["value"] and len(payload["value"]) >= 1:  # is the payload not empty?
                             self._logger.info("Sequence: " + property_name + "\n" + json.dumps(payload))
@@ -363,7 +371,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
                     self._logger.info("Time elapsed: "+str(int(time_elapsed_annoyance))+"\n\n")
 
                 except ValueError as ve:
-                    if r.status_code == 401:
+                    if resp.status_code == 401:
                         self._logger.info("\nAuthentication Token expired!\n")
                         self._slm_module.update_cloud_token()
                     else:
@@ -379,17 +387,17 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
                     self._logger.info("Retrying after " + str(RETRY_INTERVAL) + " seconds.")
                     time.sleep(RETRY_INTERVAL)
 
-        def _init_sequences(self, r):
+        def _init_sequences(self, resp: Response) -> List[Dict[str, str]]:
             """ This method builds and initializes an array of data sequences using the result of an HTTP request.
 
-            :param r: The result of the http request.
+            :param resp: The result of the http request.
             :return: An array of sequences properly initialized.
             """
 
             time_token = build_time_token(arrow.utcnow(), UPDATE_INTERVAL)
 
             sequences_data = []
-            for sequence in r.json()['value']:
+            for sequence in resp.json()['value']:
                 self._logger.info(self._thread_name + " sequence:\n" + str(json.dumps(sequence)))
                 prefix = self._url_sequences + "/" + sequence["sequenceId"] + "/data"
 
@@ -421,7 +429,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
             return sequences_data
 
 
-def build_time_token(utc_ts_end, update_interval):
+def build_time_token(utc_ts_end: Arrow, update_interval: float) -> str:
     """ This function build a time_token according to HTTP request format.
 
     :param utc_ts_end: An arrow timestamp

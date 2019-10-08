@@ -28,27 +28,27 @@ import logging
 import os
 import signal
 import sys
+from typing import Optional
 
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, Response
 
-import scral_module as scral
-from scral_module import util, rest_util
-from scral_module.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, \
-                                   MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, CATALOG_NAME_KEY, PILOT_KEY, \
-                                   ERROR_RETURN_STRING, NO_DATASTREAM_ID
+import scral_core as scral
+from scral_core import util, rest_util
+from scral_core.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, \
+                                 MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, CATALOG_NAME_KEY, PILOT_KEY, \
+                                 ERROR_RETURN_STRING, NO_DATASTREAM_ID
 
 from blimp.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, BLIMP_ID_KEY, BLIMP_NAME_KEY
 from blimp.blimp_module import SCRALBlimp
 
 flask_instance = Flask(__name__)
-scral_module: SCRALBlimp = None
+scral_module: Optional[SCRALBlimp] = None
 BLIMP_NAME = "blimp"
 
 DOC = DEFAULT_REST_CONFIG
 
 
 def main():
-    # scral_module initialization
     module_description = "SCRAL Blimps integration instance"
     abs_path = os.path.abspath(os.path.dirname(__file__))
     global scral_module, DOC
@@ -71,12 +71,9 @@ def main():
 
 
 @flask_instance.route(URI_DEFAULT, methods=["POST"])
-def new_blimp_registration():
-    """ This function can register a new Blimp in the OGC server.
-
-    :return: An HTTP Response.
-    """
-    logging.debug(new_blimp_registration.__name__ + ", " + request.method + " method called from: " + request.remote_addr)
+def new_blimp_registration() -> Response:
+    """ This function can register a new Blimp in the OGC server. """
+    logging.debug(new_blimp_registration.__name__+", "+request.method+" method called from: "+request.remote_addr)
 
     ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
     if not ok:
@@ -87,7 +84,7 @@ def new_blimp_registration():
 
 
 @flask_instance.route(URI_DEFAULT, methods=["DELETE"])
-def remove_blimp():
+def remove_blimp() -> Response:
     """ This function delete all the DATASTREAM associated with a particular Blimp
         on the resource catalog and on the OGC server.
 
@@ -104,11 +101,8 @@ def remove_blimp():
 
 
 @flask_instance.route(URI_DEFAULT+"/Datastreams(<datastream_id>)/Observations", methods=["PUT"])
-def new_blimp_observation(datastream_id=None):
-    """ This function can register a new Blimp in the OGC server.
-
-    :return: An HTTP Response.
-    """
+def new_blimp_observation(datastream_id: Optional[int] = None) -> Response:
+    """ This function can register a new Blimp in the OGC server. """
     logging.debug(new_blimp_observation.__name__ + ", " + request.method + " method called from: " + request.remote_addr)
 
     ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
@@ -129,20 +123,18 @@ def new_blimp_observation(datastream_id=None):
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
-def get_active_devices():
-    """ This endpoint gives access to the resource catalog.
-    :return: A JSON containing thr resource catalog.
-    """
+def get_active_devices() -> Response:
+    """ This endpoint gives access to the resource catalog. """
     logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
-    to_ret = jsonify(scral_module.get_resource_catalog())
+    to_ret = jsonify(scral_module.get_active_devices())
     return make_response(to_ret, 200)
 
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
-def test_module():
+def test_module() -> str:
     """ Checking if SCRAL is running.
-    :return: A str containing some information about possible endpoints.
+        :return: A str containing some information about possible endpoints.
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 

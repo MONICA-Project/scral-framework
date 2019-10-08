@@ -27,15 +27,16 @@ import logging
 import os
 import sys
 import signal
+from typing import Optional
 
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, Response
 
-import scral_module as scral
-from scral_module.constants import END_MESSAGE, DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, SUCCESS_RETURN_STRING, \
+import scral_core as scral
+from scral_core.constants import END_MESSAGE, DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, SUCCESS_RETURN_STRING, \
                                    MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, \
-                                   ERROR_RETURN_STRING, WRONG_REQUEST, INTERNAL_SERVER_ERROR, DUPLICATE_REQUEST, \
+                                   ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, DUPLICATE_REQUEST, \
                                    DEVICE_NOT_REGISTERED
-from scral_module import util, rest_util
+from scral_core import util, rest_util
 
 
 from smart_glasses.constants import PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDENT_NAME, TAG_ID_KEY, TYPE_KEY, \
@@ -43,7 +44,7 @@ from smart_glasses.constants import PROPERTY_LOCALIZATION_NAME, PROPERTY_INCIDEN
 from smart_glasses.smart_glasses_module import SCRALSmartGlasses
 
 flask_instance = Flask(__name__)
-scral_module: SCRALSmartGlasses = None
+scral_module: Optional[SCRALSmartGlasses] = None
 DOC = DEFAULT_REST_CONFIG
 
 
@@ -57,7 +58,7 @@ def main():
 
 
 @flask_instance.route(URI_GLASSES_REGISTRATION, methods=["POST", "DELETE"])
-def glasses_request():
+def glasses_request() -> Response:
     """ This function can register new glasses in the OGC server.
     :return: An HTTP Response.
     """
@@ -89,7 +90,7 @@ def glasses_request():
 
 
 @flask_instance.route(URI_GLASSES_LOCALIZATION, methods=["PUT"])
-def new_glasses_localization():
+def new_glasses_localization() -> Response:
     """ This function can register new glasses location in the OGC server.
     :return: An HTTP Response.
     """
@@ -99,7 +100,7 @@ def new_glasses_localization():
 
 
 @flask_instance.route(URI_GLASSES_INCIDENT, methods=["PUT"])
-def new_glasses_incident():
+def new_glasses_incident() -> Response:
     """ This function can register new glasses incident in the OGC server.
     :return: An HTTP Response.
     """
@@ -109,33 +110,31 @@ def new_glasses_incident():
     return response
 
 
-def put_observation(observed_property, payload):
+def put_observation(observed_property: str, payload: dict) -> Response:
     """ This function is used to store a new OBSERVATION in the OGC Server.
 
     :param observed_property: The type of property
     :param payload: The payload of the observation
     :return: An HTTP request.
     """
-    if not payload:
-        return make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
+    ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
+    if not ok:
+        return status
 
-    if scral_module is None:
-        return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
+    glasses_id = payload[TAG_ID_KEY]
+    result = scral_module.ogc_observation_registration(observed_property, payload)
+    if result is True:
+        return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
+    elif result is None:
+        logging.error("Glasses: '" + str(glasses_id) + "' was not registered.")
+        return make_response(jsonify({ERROR_RETURN_STRING: DEVICE_NOT_REGISTERED}), 400)
     else:
-        glasses_id = payload[TAG_ID_KEY]
-        result = scral_module.ogc_observation_registration(observed_property, payload)
-        if result is True:
-            return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
-        elif result is None:
-            logging.error("Glasses: '" + str(glasses_id) + "' was not registered.")
-            return make_response(jsonify({ERROR_RETURN_STRING: DEVICE_NOT_REGISTERED}), 400)
-        else:
-            logging.error("Impossible to publish on MQTT server.")
-            return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
+        logging.error("Impossible to publish on MQTT server.")
+        return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
-def get_active_devices():
+def get_active_devices() -> Response:
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
@@ -146,9 +145,9 @@ def get_active_devices():
 
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
-def test_module():
+def test_module() -> str:
     """ Checking if SCRAL is running.
-    :return: A str containing some information about possible endpoints.
+        :return: A str containing some information about possible endpoints.
     """
     logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 

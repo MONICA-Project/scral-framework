@@ -18,6 +18,8 @@
 """
 
 # Local catalog of the active DATASTREAM ID for each OBSERVEDPROPERTY associated to the registered Device IDs
+from typing import Optional, Union, List, Tuple
+
 CATALOG_FILENAME = "resource_catalog.json"
 CATALOG_FOLDER = "catalogs/"
 
@@ -26,6 +28,7 @@ REST_HEADERS = {'Content-Type': 'application/json'}
 
 SUCCESS_RETURN_STRING = "Success"
 SUCCESS_DELETE = "Device deleted"
+TEST_PASSED = "Test passed"
 
 ERROR_RETURN_STRING = "Error"
 ERROR_DELETE = "Delete failed"
@@ -63,6 +66,9 @@ MQTT_SUB_BROKER_PORT_KEY = "sub_broker_port"
 MQTT_SUB_BROKER_KEEP_KEY = "sub_broker_keepalive"
 
 # Debug, graphic and similar
+START_DATASTREAMS_REGISTRATION = "\n\n--- Start OGC DATASTREAMs registration ---\n"
+END_DATASTREAMS_REGISTRATION = "--- End of OGC DATASTREAMs registration ---\n"
+START_OBSERVATION_REGISTRATION = "\n\n--- Start OGC OBSERVATIONs registration ---\n"
 CREDITS = "(c) 2019, LINKS Foundation\ndeveloped by Jacopo Foglietti & Luca Mannella.\n"
 END_MESSAGE = "\nThat's all folks! Thanks for choosing SCRAL!\n"+CREDITS
 
@@ -71,11 +77,6 @@ ERROR_MISSING_CONNECTION_FILE = 11
 ERROR_MISSING_OGC_FILE = 22
 ERROR_WRONG_PILOT_NAME = 33
 ERROR_NO_SERVER_CONNECTION = 44
-
-# Code keys constants
-OGC_ID_KEY = "@iot.id"
-OGC_DEVICE_NAME_KEY = "name"
-GOST_RESULT_KEY = "value"
 
 # CONFIGURATION FILES
 FILENAME_CONFIG = "config/"
@@ -90,16 +91,39 @@ ENABLE_CHERRYPY = 1
 ENABLE_WSGISERVER = 2
 
 # Arguments
+VERBOSE_KEY = "verbose"
 PILOT_KEY = "pilot"
 CONNECTION_PATH_KEY = "connection_path"
 CONNECTION_FILE_KEY = "connection_file"
 CATALOG_NAME_KEY = "catalog_name"
 CONFIG_PATH_KEY = "config_path"
+OGC_FILE_KEY = "ogc_file"
+REST_KEY = "REST"
+OGC_SERVER_ADD_KEY = "ogc_server_address"
+
+# Code keys constants
+OGC_ID_KEY = "@iot.id"
+OGC_DEVICE_NAME_KEY = "name"
+GOST_RESULT_KEY = "value"
+
+# Active Devices
+REGISTERED_DEVICES_KEY = "registered_devices"
+
+ACTIVE_DEVICES_KEY = "active_devices"
+ACTUAL_COUNTER_KEY = "actual_counter"
+COUNTER_KEY = "counter"
+LAST_UPDATE_KEY = "last_update"
+UPDATE_INTERVAL_KEY = "update_interval"
 
 # Documentation
 MODULE_NAME_KEY = "module_name"
 ENDPOINT_PORT_KEY = "endpoint_port"
 ENDPOINT_URL_KEY = "endpoint_url"
+
+# Duck Typing / Type Hinting
+COORD = Union[Tuple[float, float], List[float]]
+OPT_COORD = Optional[COORD]
+OPT_LIST = Optional[Union[tuple, list]]
 
 # default values
 DEFAULT_CONFIG = "local"
@@ -111,4 +135,7 @@ DEFAULT_REST_CONFIG = {
 }
 
 # Payload keys
+TAG_ID_KEY = "tagId"
 TIMESTAMP_KEY = "timestamp"
+LATITUDE_KEY = "latitude"
+LONGITUDE_KEY = "longitude"

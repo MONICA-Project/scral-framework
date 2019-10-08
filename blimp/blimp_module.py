@@ -14,13 +14,13 @@ import json
 import logging
 
 import arrow
-from flask import jsonify, make_response
+from flask import jsonify, make_response, Response
 
-from scral_module.rest_module import SCRALRestModule
-import scral_module.util as util
+from scral_core.rest_module import SCRALRestModule
+import scral_core.util as util
 from scral_ogc import OGCDatastream, OGCObservation
 
-from scral_module.constants import ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, WRONG_PAYLOAD_REQUEST, \
+from scral_core.constants import ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, WRONG_PAYLOAD_REQUEST, \
                                    DUPLICATE_REQUEST, INVALID_DATASTREAM, SUCCESS_RETURN_STRING
 from blimp.constants import BLIMP_ID_KEY
 
@@ -28,7 +28,7 @@ from blimp.constants import BLIMP_ID_KEY
 class SCRALBlimp(SCRALRestModule):
     """ Resource manager for integration of Blimps. """
 
-    def ogc_datastream_registration(self, payload):
+    def ogc_datastream_registration(self, payload: dict) -> Response:
         """ This method allow to register the DATASTREAMs related to a blimp in the GOST database. """
         ogc_config = self.get_ogc_config()
         if ogc_config is None:
@@ -86,7 +86,7 @@ class SCRALBlimp(SCRALRestModule):
         response_payload = jsonify(blimp_datastreams)
         return make_response(response_payload, 200)
 
-    def ogc_observation_registration(self, datastream_id, payload):
+    def ogc_observation_registration(self, datastream_id: int, payload: dict) -> Response:
         """ This method stores an OGC OBSERVATION inside the GOST database.
 
         :param datastream_id: The ID of the DATASTREAM related to the OBSERVATION.

@@ -27,3 +27,6 @@ URI_GPS_TAG_ALERT = URI_GPS_TAG_REGISTRATION + "/alert"
 TIMESTAMP_KEY = "timestamp"
 TAG_ID_KEY = "tagId"
 TYPE_KEY = "type"
+
+# Constants
+GPS_UNIT_OF_MEASURE = "position"

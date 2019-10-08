@@ -22,15 +22,15 @@ PHASE RUNTIME: INTEGRATION
 """
 
 #############################################################################
-from flask import Flask, make_response, jsonify
+from flask import Flask, make_response, jsonify, Response
 import cherrypy
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher
 
-import scral_module.util as util
-from scral_module.ogc_configuration import OGCConfiguration
-from scral_module.constants import CATALOG_FILENAME, ENABLE_FLASK, ENABLE_CHERRYPY, ENABLE_WSGISERVER,\
+import scral_core.util as util
+from scral_core.ogc_configuration import OGCConfiguration
+from scral_core.constants import CATALOG_FILENAME, ENABLE_FLASK, ENABLE_CHERRYPY, ENABLE_WSGISERVER,\
                                    SUCCESS_RETURN_STRING, SUCCESS_DELETE, ERROR_RETURN_STRING, ERROR_DELETE
-from scral_module.scral_module import SCRALModule
+from scral_core.scral_module import SCRALModule
 
 
 class SCRALRestModule(SCRALModule):
@@ -41,12 +41,14 @@ class SCRALRestModule(SCRALModule):
         Runtime method will start the web server and it is a blocking function.
     """
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str, catalog_name=CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
+                 catalog_name: str = CATALOG_FILENAME):
         """ Load OGC configuration model, initialize MQTT Broker for publishing Observations and prepare Flask.
 
         :param ogc_config: The reference of the OGC configuration.
         :param connection_file: A file containing connection information.
         :param pilot: The MQTT topic prefix on which information will be published.
+        :param catalog_name: The name of the resource catalog. If not specified a default one will be used.
         """
         super().__init__(ogc_config, connection_file, pilot, catalog_name)
 
@@ -56,7 +58,7 @@ class SCRALRestModule(SCRALModule):
         self._listening_port = int(connection_config_file["REST"]["listening_address"]["port"])
 
     # noinspection PyMethodOverriding
-    def runtime(self, flask_instance: Flask, mode=ENABLE_FLASK):
+    def runtime(self, flask_instance: Flask, mode: int = ENABLE_FLASK):
         """
             This method deploys a REST endpoint as using different technologies according to the "mode" value.
             This endpoint will listen for incoming REST requests on different route paths.
@@ -86,7 +88,7 @@ class SCRALRestModule(SCRALModule):
         else:
             raise RuntimeError("Invalid runtime mode was selected.")
 
-    def delete_device(self, device_id: str, remove_only_from_catalog=False):
+    def delete_device(self, device_id: str, remove_only_from_catalog: bool = False) -> Response:
         result, client_fault = super().delete_device(device_id, remove_only_from_catalog)
         if result:
             return make_response(jsonify({SUCCESS_RETURN_STRING: SUCCESS_DELETE}), 200)

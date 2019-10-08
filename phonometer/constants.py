@@ -35,3 +35,16 @@ RETRY_INTERVAL = 120
 # Keys
 LAEQ_KEY = "LAeq"
 SPECTRA_KEY = "CPBLZeq"
+METADATA_KEY = "metadata"
+STREAM_KEY = "stream"
+SMART_OBJECT_KEY = "smartobject"
+CODE_KEY = "code"
+DATASET_KEY = "dataset"
+DESCRIPTION_KEY = "description"
+COUNT_KEY = "count"
+TOTAL_COUNT_KEY = "totalCount"
+
+OBS_DATA_KEY = "d"
+OBS_DATA_RESULTS_KEY = "results"
+VALUE_TYPE_KEY = "valueType"
+RESPONSE_KEY = "response"

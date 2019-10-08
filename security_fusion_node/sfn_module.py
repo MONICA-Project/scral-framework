@@ -12,22 +12,25 @@
 #############################################################################
 import json
 import logging
+from typing import Union
 
 import arrow
-from flask import make_response, jsonify
+from flask import make_response, jsonify, Response
 
-from scral_ogc import OGCObservation
-from scral_ogc.ogc_datastream import OGCDatastream
-from scral_module.constants import TIMESTAMP_KEY, SUCCESS_RETURN_STRING, ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR
-from scral_module import util
-from scral_module.rest_module import SCRALRestModule
+from scral_ogc import OGCObservation, OGCObservedProperty, OGCDatastream
+
+from scral_core.constants import TIMESTAMP_KEY, OPT_COORD, \
+    SUCCESS_RETURN_STRING, ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR
+from scral_core import util
+from scral_core.rest_module import SCRALRestModule
+
 from security_fusion_node.constants import CAMERA_SENSOR_TYPE, CAMERA_POSITION_KEY, CDG_SENSOR_TYPE, CDG_PROPERTY
 
 
 class SCRALSecurityFusionNode(SCRALRestModule):
     """ Resource manager for integration of the Security Fusion Node. """
 
-    def ogc_datastream_registration(self, resource_id, sensor_type, payload):
+    def ogc_datastream_registration(self, resource_id: str, sensor_type: str, payload: dict) -> Response:
         """ This function registers new datastream in the OGC model.
 
         :param resource_id:
@@ -55,8 +58,8 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         self.update_file_catalog()
         return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
 
-    def _ogc_datastream_registration(self, resource_id, sensor_type, observed_property, payload,
-                                     coordinates=(0.0, 0.0)):
+    def _ogc_datastream_registration(self, resource_id: str, sensor_type: str, observed_property: OGCObservedProperty,
+                                     payload: dict, coordinates: OPT_COORD = (0.0, 0.0)) -> Union[bool, int]:
         # Collect OGC information needed to build DATASTREAMs payload
         thing = self._ogc_config.get_thing()
         thing_id = thing.get_id()
@@ -95,7 +98,7 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         self._resource_catalog[resource_id][property_name] = datastream_id
         return datastream_id
 
-    def ogc_observation_registration(self, resource_id, obs_property, payload):
+    def ogc_observation_registration(self, resource_id: str, obs_property: str, payload: dict) -> Union[None, bool]:
         if resource_id not in self._resource_catalog:
             return None
 

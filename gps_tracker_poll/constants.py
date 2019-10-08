@@ -33,3 +33,6 @@ HAMBURG_UNIT_OF_MEASURE = "position"
 
 # KEYS
 DEVICE_ID_KEY = "device_id"
+
+# Dynamic Discovery Sleep
+DYNAMIC_DISCOVERY_SLEEP = 60*60*8  # 8 hours

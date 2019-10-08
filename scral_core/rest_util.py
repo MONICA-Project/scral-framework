@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #############################################################################
 #      _____ __________  ___    __                                          #
 #     / ___// ____/ __ \/   |  / /                                          #
@@ -13,26 +11,25 @@
 #                                                                           #
 #############################################################################
 """
-    SCRAL Module
-    This module is the starting point for developing a SCRAL module.
-    In particular the class SCRALModule have to be extended and the runtime method have to be overwritten/overloaded.
+    SCRAL - rest_util
+    This file contains several REST utility functions that could be used in different modules.
 """
-
 import logging
-import sys
+from typing import Tuple
 
-VERSION = "v2.2"
-BANNER = """
-        _____ __________  ___    __                                         
-       / ___// ____/ __ \/   |  / /                                         
-       \__ \/ /   / /_/ / /| | / /                                          
-      ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer 
-     /____/\____/_/ |_/_/  |_/_____/   %s - enhanced by Python 3            
+from flask import make_response, jsonify, Request, Response
 
-     (c) 2019, LINKS Foundation
-     developed by Jacopo Foglietti & Luca Mannella
+from scral_core.scral_module import SCRALModule
+from scral_core.constants import SUCCESS_RETURN_STRING, TEST_PASSED, \
+                                 ERROR_RETURN_STRING, WRONG_REQUEST, INTERNAL_SERVER_ERROR
 
-"""
 
-if sys.flags.optimize == 0:
-    logging.debug("All debug checks are active, performances may be impaired")
+def tests_and_checks(module_name: str, module: SCRALModule, request: Request) -> Tuple[bool, Response]:
+    if not request.json:
+        return False, make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
+
+    if not module:
+        logging.critical(module_name + "module is not available!")
+        return False, make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
+
+    return True, make_response(jsonify({SUCCESS_RETURN_STRING: TEST_PASSED}), 200)

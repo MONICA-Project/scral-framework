@@ -21,21 +21,27 @@ from datetime import timedelta
 
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
-from scral_module import util
-from scral_module.constants import REST_HEADERS, CATALOG_FILENAME
-from scral_ogc import OGCDatastream
+from scral_ogc import OGCDatastream, OGCObservedProperty
+
+from scral_core.constants import REST_HEADERS, CATALOG_FILENAME, COORD, LATITUDE_KEY, LONGITUDE_KEY, \
+    START_DATASTREAMS_REGISTRATION, END_DATASTREAMS_REGISTRATION, START_OBSERVATION_REGISTRATION
+from scral_core import util
+from scral_core.ogc_configuration import OGCConfiguration
 
 from microphone.microphone_module import SCRALMicrophone
 from microphone.constants import SEQUENCES_KEY, NAME_KEY
 
 from phonometer.constants import URL_TENANT, ACTIVE_DEVICES, FILTER_SDN_1, URL_CLOUD, UPDATE_INTERVAL, LAEQ_KEY, \
-    SPECTRA_KEY, RETRY_INTERVAL, FREQ_INTERVALS, FILTER_SDN_2, FILTER_SDN_3
+    SPECTRA_KEY, RETRY_INTERVAL, FREQ_INTERVALS, FILTER_SDN_2, FILTER_SDN_3, METADATA_KEY, STREAM_KEY, SMART_OBJECT_KEY, \
+    CODE_KEY, DATASET_KEY, DESCRIPTION_KEY, TOTAL_COUNT_KEY, COUNT_KEY, OBS_DATA_KEY, OBS_DATA_RESULTS_KEY, \
+    VALUE_TYPE_KEY, RESPONSE_KEY
 
 
 class SCRALPhonometer(SCRALMicrophone):
     """ Resource manager for integration of Phonometers. """
 
-    def __init__(self, ogc_config, connection_file, pilot, catalog_name=CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
+                 catalog_name: str = CATALOG_FILENAME):
         """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
 
         :param connection_file: A file containing connection information.
@@ -56,14 +62,14 @@ class SCRALPhonometer(SCRALMicrophone):
         # Start thread pool for Observations
         self._start_thread_pool(SCRALPhonometer.PhonoThread, True)
 
-    def ogc_datastream_registration(self, url):
+    def ogc_datastream_registration(self, url: str):
         """ This method receives a target URL as parameter and discovers active Phonometers.
             A new OGC Datastream for each couple Phonometer-ObservedProperty is registered.
 
         :param url: Target server address.
         """
 
-        logging.info("\n\n--- Start OGC DATASTREAMs registration ---\n")
+        logging.info(START_DATASTREAMS_REGISTRATION)
         count = 0
         i = 1
         while True:
@@ -79,20 +85,20 @@ class SCRALPhonometer(SCRALMicrophone):
                     "Connection status: "+str(r.status_code)+"\nImpossible to establish a connection with "+query_url)
 
             payload = r.json()
-            phonometers = payload["metadata"]
+            phonometers = payload[METADATA_KEY]
 
             logging.debug("\n\nPhonometers retrieved (page "+str(i)+"):\n")
             for phono in phonometers:
-                logging.debug(phono["stream"]["smartobject"]["name"])
-                logging.debug(phono["stream"]["smartobject"]["code"]+"\n")
+                logging.debug(phono[STREAM_KEY][SMART_OBJECT_KEY][NAME_KEY])
+                logging.debug(phono[STREAM_KEY][SMART_OBJECT_KEY][CODE_KEY]+"\n")
 
             # OGC DATASTREAM Registration ONLY of active devices
             for phono in phonometers:
-                if phono["dataset"]["code"] in ACTIVE_DEVICES:
-                    device_id = phono["dataset"]["code"]
-                    device_name = phono["name"]
-                    device_coordinates = (phono["longitude"], phono["latitude"])
-                    device_description = phono["description"]
+                if phono[DATASET_KEY][CODE_KEY] in ACTIVE_DEVICES:
+                    device_id = phono[DATASET_KEY][CODE_KEY]
+                    device_name = phono[NAME_KEY]
+                    device_coordinates = (phono[LONGITUDE_KEY], phono[LATITUDE_KEY])
+                    device_description = phono[DESCRIPTION_KEY]
 
                     # Check whether device has been already registered
                     if device_id in self._resource_catalog:
@@ -109,16 +115,17 @@ class SCRALPhonometer(SCRALMicrophone):
                         self._active_devices[device_id][SEQUENCES_KEY] = url_sequence
                         self._active_devices[device_id][NAME_KEY] = device_name
 
-            total_count = payload["totalCount"]
-            count += payload["count"]
+            total_count = payload[TOTAL_COUNT_KEY]
+            count += payload[COUNT_KEY]
             i += 1
             if count >= total_count:
                 break
 
         # self.update_file_catalog()
-        logging.info("--- End of OGC DATASTREAMs registration ---\n")
+        logging.info(END_DATASTREAMS_REGISTRATION)
 
-    def _new_datastream(self, ogc_property, device_id, device_coordinates, device_description):
+    def _new_datastream(self, ogc_property: OGCObservedProperty, device_id: str,
+                        device_coordinates: COORD, device_description: str):
         """ This method creates a new DATASTREAM.
 
         :param ogc_property: The OBSERVED PROPERTY.
@@ -162,7 +169,8 @@ class SCRALPhonometer(SCRALMicrophone):
     class PhonoThread(Thread):
         """ Each instance of this class manage a different microphone. """
 
-        def __init__(self, thread_id, thread_name, device_id, url_sequence, phonometer_module):
+        def __init__(self, thread_id: str, thread_name: str, device_id: str, url_sequence: str,
+                     phonometer_module: "SCRALPhonometer"):
             super().__init__()
 
             # thread_debug_name = "("+str(thread_id)+")"
@@ -172,7 +180,8 @@ class SCRALPhonometer(SCRALMicrophone):
             self._logger = util.init_mirrored_logger(thread_debug_name, logging.DEBUG)
 
             # Enable log storage in file
-            # self._logger = util.init_mirrored_logger(thread_debug_name, logging.DEBUG, "mic_"+thread_debug_name+".log")
+            # self._logger = util.init_mirrored_logger(
+            #     thread_debug_name, logging.DEBUG, "mic_"+thread_debug_name+".log")
 
             self._thread_name = thread_name
             self._thread_id = thread_id
@@ -184,7 +193,7 @@ class SCRALPhonometer(SCRALMicrophone):
             self._logger.info("Starting Thread: " + self._thread_name)
 
             rc = self._phonometer_module.get_resource_catalog()
-            self._logger.info("\n\n--- Start OGC OBSERVATIONs registration ---\n")
+            self._logger.info(START_OBSERVATION_REGISTRATION)
             while True:
                 try:
                     now = arrow.utcnow()
@@ -198,7 +207,7 @@ class SCRALPhonometer(SCRALMicrophone):
                     if not r or not r.ok:
                         raise Exception("Something wrong retrieving data!")
 
-                    payload = r.json()["d"]["results"]
+                    payload = r.json()[OBS_DATA_KEY][OBS_DATA_RESULTS_KEY]
 
                     if payload and len(payload) >= 1:  # is the payload not empty?
                         data_laeq = []
@@ -222,14 +231,14 @@ class SCRALPhonometer(SCRALMicrophone):
                         # Registering LAEq value in GOST
                         datastream_id = rc[self._device_id][LAEQ_KEY]
                         phenomenon_time = query_ts_start
-                        observation_result = {"valueType": LAEQ_KEY, "response": data_laeq}
+                        observation_result = {VALUE_TYPE_KEY: LAEQ_KEY, RESPONSE_KEY: data_laeq}
                         self._phonometer_module.ogc_observation_registration(
                             datastream_id, phenomenon_time, observation_result)
 
                         # Registering spectra value in GOST
                         datastream_id = rc[self._device_id][SPECTRA_KEY]
                         phenomenon_time = query_ts_start
-                        observation_result = {"valueType": SPECTRA_KEY, "response": data_spectra}
+                        observation_result = {VALUE_TYPE_KEY: SPECTRA_KEY, RESPONSE_KEY: data_spectra}
                         self._phonometer_module.ogc_observation_registration(
                             datastream_id, phenomenon_time, observation_result)
                     else:

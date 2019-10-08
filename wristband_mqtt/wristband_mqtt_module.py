@@ -15,20 +15,23 @@ import logging
 
 import paho.mqtt.client as mqtt
 
-from scral_module import mqtt_util, util
-from scral_module.constants import CATALOG_FILENAME, \
-                                   MQTT_KEY, MQTT_SUB_BROKER_KEY, MQTT_SUB_BROKER_PORT_KEY, MQTT_SUB_BROKER_KEEP_KEY
+from scral_core.constants import CATALOG_FILENAME, \
+                                 MQTT_KEY, MQTT_SUB_BROKER_KEY, MQTT_SUB_BROKER_PORT_KEY, MQTT_SUB_BROKER_KEEP_KEY
+from scral_core import mqtt_util, util
+from scral_core.ogc_configuration import OGCConfiguration
 
 from wristband.constants import PROPERTY_LOCALIZATION_NAME, PROPERTY_BUTTON_NAME
-from wristband_mqtt.constants import CLIENT_ID, TAG_ID_KEY, BUTTON_SUBTOPIC, LOCALIZATION_SUBTOPIC
 from wristband.wristband_module import SCRALWristband
 
-MESSAGE_RECEIVED = 0
+from wristband_mqtt.constants import CLIENT_ID, TAG_ID_KEY, BUTTON_SUBTOPIC, LOCALIZATION_SUBTOPIC
+
+MESSAGE_RECEIVED: int = 0
 
 
 class SCRALMQTTWristband(SCRALWristband):
 
-    def __init__(self, ogc_config, connection_file, pilot, catalog_name=CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
+                 catalog_name: str = CATALOG_FILENAME):
         """ Initialize MQTT Brokers for listening and publishing
 
         :param connection_file: A file containing connection information.

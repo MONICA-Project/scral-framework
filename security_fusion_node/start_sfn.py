@@ -27,13 +27,14 @@ import logging
 import os
 import sys
 import signal
+from typing import Optional
 from urllib import request
 
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, Response
 
-import scral_module as scral
-from scral_module import util, rest_util
-from scral_module.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, SUCCESS_RETURN_STRING, \
+import scral_core as scral
+from scral_core import util, rest_util
+from scral_core.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, SUCCESS_RETURN_STRING, \
                                    ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, MODULE_NAME_KEY, TIMESTAMP_KEY, \
                                    ERROR_RETURN_STRING, WRONG_REQUEST, INTERNAL_SERVER_ERROR, DUPLICATE_REQUEST, \
                                    UNKNOWN_PROPERTY, WRONG_PAYLOAD_REQUEST
@@ -45,8 +46,7 @@ from security_fusion_node.constants import CAMERA_SENSOR_TYPE, CDG_SENSOR_TYPE, 
 from security_fusion_node.sfn_module import SCRALSecurityFusionNode
 
 flask_instance = Flask(__name__)
-scral_module: SCRALSecurityFusionNode = None
-
+scral_module: Optional[SCRALSecurityFusionNode] = None
 DOC = DEFAULT_REST_CONFIG
 
 
@@ -60,7 +60,7 @@ def main():
 
 
 @flask_instance.route(URI_CAMERA, methods=["POST", "PUT", "DELETE"])
-def camera_request():
+def camera_request() -> Response:
     """ This function can register new camera in the OGC server or store new OGC OBSERVATIONs.
 
     :return: An HTTP Response.
@@ -121,7 +121,7 @@ def camera_request():
 
 
 @flask_instance.route(URI_CDG, methods=["POST", "PUT", "DELETE"])
-def cdg_request():
+def cdg_request() -> Response:
     """ This function can register new Crowd Density Global in the OGC server or store new OGC OBSERVATIONs.
 
     :return: An HTTP Response.
@@ -137,7 +137,7 @@ def cdg_request():
         cdg_module_id = request.json[MODULE_ID_KEY]  # NB: module here is Crowd Density Global module
     except KeyError:
         logging.error("Missing " + MODULE_ID_KEY + ". Request aborted.")
-        response = make_response(jsonify({ERROR_RETURN_STRING: WRONG_PAYLOAD_REQUEST}), 400)
+        return make_response(jsonify({ERROR_RETURN_STRING: WRONG_PAYLOAD_REQUEST}), 400)
 
     if request.method == "POST":  # POST
         rc = scral_module.get_resource_catalog()
@@ -174,7 +174,7 @@ def cdg_request():
         return make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 405)
 
 
-def put_observation(resource_id, observed_property, payload):
+def put_observation(resource_id: str, observed_property: str, payload: dict) -> Response:
     """ This function stores an OBSERVATION on OGC server.
 
     :param resource_id: The id of the resource.
@@ -200,7 +200,7 @@ def put_observation(resource_id, observed_property, payload):
 
 
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
-def get_active_devices():
+def get_active_devices() -> Response:
     """ This endpoint gives access to the resource catalog.
     :return: A JSON containing thr resource catalog.
     """
@@ -211,7 +211,7 @@ def get_active_devices():
 
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])
-def test_module():
+def test_module() -> str:
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
