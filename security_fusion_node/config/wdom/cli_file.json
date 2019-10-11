@@ -1,0 +1,12 @@
+{
+  "module_name": "SCRAL Security Fusion Node",
+  "endpoint_port": 8325,
+  "endpoint_url": "monappdwp3.monica-cloud.eu",
+
+  "connection_file": "connection_config_internal.json",
+  "ogc_file": "ogc_config_sfn.conf",
+  "pilot": "WDOM",
+
+  "catalog_name": "wdom_sfn.json",
+  "verbose": true
+}

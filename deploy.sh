@@ -9,7 +9,8 @@ fi
 
 MODULE_NAME=$1
 DOCKER_FILE=$2
-
+SECONDS=0
+echo
 echo " ----- STEP 1: Building docker image ----- "
 docker build --no-cache=true --build-arg BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" -t "${MODULE_NAME}" -f "${DOCKER_FILE}" .
 RESULT=$?
@@ -42,4 +43,8 @@ if [[ ${RESULT} -ne 0 ]]; then
     read -n 1 -s -r -p "Press any key to continue..."
     exit 3
 fi
-read -n 1 -s -r -p "Process completed, press any key to continue..."
+
+duration=$SECONDS
+echo "Process completed: $(date)"
+echo "Docker image built and uploaded in $((${duration} / 60)) minutes and $((${duration} % 60)) seconds."
+read -n 1 -s -r -p "Press any key to continue..."

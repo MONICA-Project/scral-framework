@@ -36,7 +36,7 @@ from flask import Flask, request, jsonify, make_response, Response
 import scral_core as scral
 from scral_core import util
 from scral_core.constants import END_MESSAGE, ENABLE_CHERRYPY, DEFAULT_REST_CONFIG, \
-                                   ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, \
+                                   ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, MODULE_NAME_KEY, \
                                    ERROR_RETURN_STRING, WRONG_CONTENT_TYPE, INTERNAL_SERVER_ERROR, UNKNOWN_CONTENT_TYPE
 
 from env_sensor_onem2m.constants import URI_DEFAULT, URI_ACTIVE_DEVICES, URI_ENV_NODE, ONEM2M_CONTENT_TYPE
@@ -44,7 +44,6 @@ from env_sensor_onem2m.env_onem2m_module import SCRALEnvOneM2M
 
 flask_instance = Flask(__name__)
 scral_module: Optional[SCRALEnvOneM2M] = None
-
 DOC = DEFAULT_REST_CONFIG
 
 
@@ -129,11 +128,11 @@ def test_module() -> str:
 
     to_ret = "<h1>SCRAL is running!</h1>\n"
     link = DOC[ENDPOINT_URL_KEY] + ":" + str(DOC[ENDPOINT_PORT_KEY])
-    to_ret += "<h2>SCRALEnvOneM2M is listening on address: "+link+"</h2>"
-    to_ret += "<h3>To have access to all active devices and to the relative DATASTREAM id, send a GET requesto to: " \
-              + link + URI_ACTIVE_DEVICES + "</h3>"
+    to_ret += '<H2>"<em>'+DOC[MODULE_NAME_KEY]+'</em>" is listening on address: "'+link+'"</H2>'
+    to_ret += "<h3>To have access to all active devices and to the relative DATASTREAM id, send a GET request to:" \
+              '<ul><li><a href="http://'+link+URI_ACTIVE_DEVICES+'">'+link+URI_ACTIVE_DEVICES+'</a></li></ul></h3>'
     to_ret += "<h3>To send an OBSERVATION or to REGISTER a new device, send a POST request to: " \
-              + link + URI_ENV_NODE + "</h3>"
+              "<ul><li>" + link + URI_ENV_NODE + "</li></ul></h3>"
     return to_ret
 
 

@@ -10,7 +10,7 @@ EXPOSE 8000
 
 COPY scral_startup.py /monica_scral
 COPY scral_ogc /monica_scral/scral_ogc
-COPY scral_module /monica_scral/scral_module
+COPY scral_core /monica_scral/scral_core
 COPY security_fusion_node /monica_scral/security_fusion_node
 
 RUN mkdir /monica_scral/catalogs
@@ -26,7 +26,7 @@ RUN apk add --update bash
 # ENTRYPOINT python3 scral_startup.py -p local
 
 ### docker-compose deployment
-ENTRYPOINT python3 scral_startup.py -p deploy
+# ENTRYPOINT python3 scral_startup.py -p deploy
 
 ### docker deploy - INTERNAL Configurations
 ## PM
@@ -43,3 +43,5 @@ ENTRYPOINT python3 scral_startup.py -p deploy
 # ENTRYPOINT python3 scral_startup.py -p DOM
 ## LEEDS
 # ENTRYPOINT python3 scral_startup.py -p LEEDS
+## Winter DOM
+ENTRYPOINT python3 scral_startup.py -p WDOM

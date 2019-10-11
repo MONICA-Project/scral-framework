@@ -10,7 +10,7 @@ EXPOSE 8000
 
 COPY scral_startup.py /monica_scral
 COPY scral_ogc /monica_scral/scral_ogc
-COPY scral_module /monica_scral/scral_module
+COPY scral_core /monica_scral/scral_core
 COPY blimp /monica_scral/blimp
 
 RUN mkdir /monica_scral/catalogs

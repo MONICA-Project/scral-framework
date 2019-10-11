@@ -1,0 +1,11 @@
+{
+  "module_name": "SCRAL GPS Tracker Polling instance",
+  "endpoint_url": "monappdwp3.monica-cloud.eu",
+
+  "connection_file": "connection_config_internal.json",
+  "ogc_file": "ogc_config_gps.conf",
+
+  "pilot": "WDOM",
+  "catalog_name": "wdom_gps-poll.json",
+  "verbose": true
+}

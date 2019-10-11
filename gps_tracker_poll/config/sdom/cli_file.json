@@ -4,8 +4,8 @@
 
   "connection_file": "connection_config_internal.json",
   "ogc_file": "ogc_config_gps.conf",
-  "pilot": "DOM",
 
+  "pilot": "SDOM",
   "catalog_name": "dom_gps-poll.json",
   "verbose": true
 }

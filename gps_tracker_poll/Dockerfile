@@ -10,7 +10,7 @@ EXPOSE 8000
 
 COPY scral_startup.py /monica_scral
 COPY scral_ogc /monica_scral/scral_ogc
-COPY scral_module /monica_scral/scral_module
+COPY scral_core /monica_scral/scral_core
 COPY gps_tracker /monica_scral/gps_tracker
 COPY gps_tracker_poll /monica_scral/gps_tracker_poll
 
@@ -27,8 +27,10 @@ RUN apk add --no-cache bash
 # ENTRYPOINT python3 scral_startup.py -p local
 
 ### docker-compose deployment
-ENTRYPOINT python3 scral_startup.py -p deploy
+# ENTRYPOINT python3 scral_startup.py -p deploy
 
 ### docker deploy - INTERNAL Configurations
 ## DOM
 # ENTRYPOINT python3 scral_startup.py -p DOM
+## Winter DOM
+ENTRYPOINT python3 scral_startup.py -p WDOM

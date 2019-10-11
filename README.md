@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 ![Language: Python3](https://img.shields.io/badge/language-python3-blue.svg)
 
-![Logo](images/SCRAL-Logo-200x200.png)
+![Logo](images/SCRAL-Logo-reduced.png)
 
 
 ## Getting Started

@@ -5,8 +5,8 @@
 
   "connection_file": "connection_config_local.json",
   "ogc_file": "ogc_config_wristband.conf",
-  "pilot": "local",
 
+  "pilot": "local",
   "catalog_name": "testing_wb.json",
   "verbose": true
 }

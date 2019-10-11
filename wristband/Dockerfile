@@ -4,7 +4,7 @@ LABEL authors="Jacopo Foglietti, Luca Mannella"
 WORKDIR /monica_scral
 
 COPY scral_ogc /monica_scral/scral_ogc
-COPY scral_module /monica_scral/scral_module
+COPY scral_core /monica_scral/scral_core
 COPY wristband /monica_scral/wristband
 RUN mkdir /monica_scral/catalogs
 VOLUME /monica_scral/catalogs

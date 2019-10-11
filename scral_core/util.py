@@ -29,13 +29,12 @@ from typing import Union, Optional, Dict
 import requests
 from arrow.arrow import Arrow
 
-from ogc_configuration import OGCConfiguration
+from scral_core.ogc_configuration import OGCConfiguration
 from scral_core.scral_module import SCRALModule
-from scral_core.constants import DEFAULT_CONFIG, DEFAULT_REST_CONFIG, CREDITS, DEFAULT_LOG_FORMATTER, \
-                                 MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY, \
+from scral_core.constants import CREDITS, DEFAULT_CONFIG, DEFAULT_LOG_FORMATTER, DEFAULT_URL, DEFAULT_MODULE_NAME, \
+                                 MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY, OPT_LIST, \
                                  CONNECTION_PATH_KEY, CONNECTION_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
-                                 FILENAME_CONFIG, FILENAME_COMMAND_FILE, \
-                                 OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OPT_LIST
+                                 FILENAME_CONFIG, FILENAME_COMMAND_FILE, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD
 
 
 def init_logger(debug_level: Union[int, str]):
@@ -129,14 +128,19 @@ def initialize_variables(description: str, abs_path: str) -> (dict, Dict[str, st
     args[CONNECTION_PATH_KEY] = connection_path
 
     # Initialize documentation variable
+    doc = {}
     try:
-        doc = {
-            MODULE_NAME_KEY: args[MODULE_NAME_KEY],
-            ENDPOINT_PORT_KEY: args[ENDPOINT_PORT_KEY],
-            ENDPOINT_URL_KEY: args[ENDPOINT_URL_KEY]
-        }
+        doc[ENDPOINT_PORT_KEY] = args[ENDPOINT_PORT_KEY]
     except KeyError:
-        doc = DEFAULT_REST_CONFIG
+        doc[ENDPOINT_PORT_KEY] = None
+    try:
+        doc[ENDPOINT_URL_KEY] = args[ENDPOINT_URL_KEY]
+    except KeyError:
+        doc[ENDPOINT_URL_KEY] = DEFAULT_URL
+    try:
+        doc[MODULE_NAME_KEY] = args[MODULE_NAME_KEY]
+    except KeyError:
+        doc[MODULE_NAME_KEY] = DEFAULT_MODULE_NAME
 
     return args, doc
 
@@ -317,7 +321,7 @@ def to_html_documentation(module_name: str, link: str,
     :return: Some HTML code properly formatted.
     """
     to_ret = "<h1>SCRAL is running!</h1>\n"
-    to_ret += "<h2> "+module_name+" is listening on address \""+link+"\"</h2>"
+    to_ret += '<h2><em>'+module_name+'</em> is listening on address "'+link+'"</h2>'
 
     to_ret += "<h3>"
     if (posts is not None) and (len(posts) > 0):
@@ -338,7 +342,7 @@ def to_html_documentation(module_name: str, link: str,
     if (gets is not None) and (len(gets) > 0):
         to_ret += "To retrieve a particular resource, please send a GET request to: <ul>"
         for get_url in gets:
-            to_ret += "<li>" + link + get_url + "</li>"
+            to_ret += '<li> <a href="http://'+link+get_url+'">'+link+get_url+'</a> </li>'
         to_ret += "</ul>"
     to_ret += "</h3>"
 

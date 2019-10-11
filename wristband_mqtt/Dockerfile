@@ -10,7 +10,7 @@ EXPOSE 8000
 
 COPY scral_startup.py /monica_scral
 COPY scral_ogc /monica_scral/scral_ogc
-COPY scral_module /monica_scral/scral_module
+COPY scral_core /monica_scral/scral_core
 COPY wristband /monica_scral/wristband
 COPY wristband_mqtt /monica_scral/wristband_mqtt
 

@@ -10,7 +10,7 @@ EXPOSE 8000
 
 COPY scral_startup.py /monica_scral
 COPY scral_ogc /monica_scral/scral_ogc
-COPY scral_module /monica_scral/scral_module
+COPY scral_core /monica_scral/scral_core
 COPY env_sensor_onem2m /monica_scral/env_sensor_onem2m
 
 RUN mkdir /monica_scral/catalogs
@@ -26,10 +26,12 @@ RUN apk add --no-cache bash
 # ENTRYPOINT python3 scral_startup.py -p local
 
 ### docker-compose deployment
-ENTRYPOINT python3 scral_startup.py -p deploy
+# ENTRYPOINT python3 scral_startup.py -p deploy
 
 ### docker deploy - INTERNAL Configurations
 ## PORT Anniversary
 # ENTRYPOINT python3 scral_startup.py -p PORT
-## DOM
-# ENTRYPOINT python3 scral_startup.py -p DOM
+## Spring DOM
+# ENTRYPOINT python3 scral_startup.py -p SDOM
+## Winter DOM
+ENTRYPOINT python3 scral_startup.py -p WDOM
