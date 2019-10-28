@@ -44,4 +44,6 @@ RUN apk add --update bash
 ## LEEDS
 # ENTRYPOINT python3 scral_startup.py -p LEEDS
 ## Winter DOM
-ENTRYPOINT python3 scral_startup.py -p WDOM
+# ENTRYPOINT python3 scral_startup.py -p WDOM
+## FDL
+ENTRYPOINT python3 scral_startup.py -p FDL
