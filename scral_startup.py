@@ -19,7 +19,7 @@ import scral_core as scral
 from scral_core import util
 from scral_core.constants import END_MESSAGE
 
-from security_fusion_node import start_sfn as module
+from scral_module import start_module as module
 
 
 if __name__ == '__main__':

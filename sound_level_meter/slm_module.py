@@ -24,10 +24,11 @@ from arrow import Arrow
 from flask import Flask, Response
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
-from ogc_configuration import OGCConfiguration
 from scral_ogc import OGCDatastream, OGCObservedProperty
+
 from scral_core.constants import REST_HEADERS, CATALOG_FILENAME, ENABLE_CHERRYPY, COORD
 from scral_core import util
+from scral_core.ogc_configuration import OGCConfiguration
 from scral_core.rest_module import SCRALRestModule
 
 from microphone.microphone_module import SCRALMicrophone

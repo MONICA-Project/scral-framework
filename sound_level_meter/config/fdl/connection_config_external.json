@@ -2,10 +2,10 @@
   "mqtt": {
     "pub_broker": "monappdwp3.monica-cloud.eu",
     "pub_broker_port": 1883,
-    "broker_keepalive": 60
+    "pub_broker_keepalive": 60
   },
   "REST": {
-    "ogc_server_address": "http://monappdwp3.monica-cloud.eu:5050/gost_lumiere/v1.0",
+    "ogc_server_address": "http://monappdwp3.monica-cloud.eu:5050/gost_lumiere_2019/v1.0",
     "listening_address": {
       "address": "0.0.0.0",
       "port": "8000"
@@ -13,7 +13,7 @@
   },
   "cloud": {
     "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
-    "SiteName": "Fete des Lumieres 2018",
-    "SiteID": "ddf7b2bd-3d42-4e0f-9c76-9cc356abd644"
+    "SiteName": "Fete des Lumieres 2019",
+    "SiteID": "c3ada289-6562-4ed8-8618-c539d012a753"
   }
 }

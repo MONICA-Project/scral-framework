@@ -26,7 +26,7 @@ The pilot is characterized by a 2 digits value.
 - SDOM modules            use ports xx30.
 - KFF modules             use ports xx35.
 - TIVOLI modules          use ports xx40.
-- LUMIERE modules         use ports xx45.
+- FDL modules             use ports xx45.
 - RIF modules             use ports xx50.
 - WoodsTower modules      use ports xx55.
 - PORT modules            use ports xx60.

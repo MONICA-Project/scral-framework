@@ -42,7 +42,7 @@ from scral_core.constants import DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, END_MESSA
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
 from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, \
-    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT, \
+    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT,URI_RESOURCE_CATALOG,  \
     DEVICE_ID_KEY, DEVICE_NAME_KEY, DESCRIPTION_KEY, DEFINITION_KEY, TYPE_KEY, START_TIME_KEY
 
 flask_instance = Flask(__name__)
@@ -115,6 +115,15 @@ def get_active_devices() -> Response:
         new_rc[key] = item
 
     return make_response(jsonify(new_rc), 200)
+
+
+@flask_instance.route(URI_RESOURCE_CATALOG, methods=["GET"])
+def get_resource_catalog() -> Response:
+    """ This endpoint gives access to the resource catalog.
+    :return: A JSON containing thr resource catalog.
+    """
+    logging.debug(get_resource_catalog.__name__ + " method called from: "+request.remote_addr)
+    return make_response(jsonify(scral_module.get_resource_catalog()), 200)
 
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])

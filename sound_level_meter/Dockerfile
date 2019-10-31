@@ -28,7 +28,7 @@ RUN apk add --update bash
 # ENTRYPOINT python3 scral_startup.py -p local
 
 ### docker-compose deployment
-ENTRYPOINT python3 scral_startup.py -p deploy
+# ENTRYPOINT python3 scral_startup.py -p deploy
 
 ### docker deploy - INTERNAL Configurations
 ## WT
@@ -43,3 +43,5 @@ ENTRYPOINT python3 scral_startup.py -p deploy
 # ENTRYPOINT python3 scral_startup.py -p RIF
 ## Nuits Sonores
 # ENTRYPOINT python3 scral_startup.py -p NS
+## FDL
+ENTRYPOINT python3 scral_startup.py -p FDL

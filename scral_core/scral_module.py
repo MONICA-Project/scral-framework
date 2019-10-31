@@ -151,7 +151,7 @@ class SCRALModule(object):
         try:
             self._pub_broker_keepalive = connection_config_file["mqtt"]["pub_broker_keepalive"]
         except KeyError:
-            logging.warning("No broker keepalive specified, will be used the default one: " + DEFAULT_KEEPALIVE)
+            logging.warning("No broker keepalive specified, will be used the default one: "+str(DEFAULT_KEEPALIVE)+" s")
             self._pub_broker_keepalive = DEFAULT_KEEPALIVE
 
         if catalog_name != CATALOG_FILENAME:

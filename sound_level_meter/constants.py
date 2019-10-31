@@ -18,6 +18,7 @@
 # URI
 URI_DEFAULT = "/scral/v1.0/slm-gw"
 URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"
+URI_RESOURCE_CATALOG = URI_DEFAULT + "/resource-catalog"
 URI_SOUND_EVENT = URI_DEFAULT + "/sound-event"
 
 # CLOUD URLS and IDs
