@@ -19,10 +19,15 @@
 
   "_comment": "Remember to change the \"cloud\" field with the desired pilot.",
 
-  "_cloud_LUMIERE": {
-    "SiteName": "Fete des Lumieres 2018",
+  "_cloud_ROSKILDE": {
     "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
-    "SiteID": "ddf7b2bd-3d42-4e0f-9c76-9cc356abd644"
+    "SiteName": "Roskilde19",
+    "SiteID": "5c5343b8-0e19-43d1-a51e-2e628f5733f2"
+  },
+  "_cloud_LUMIERE": {
+    "TenantID": "f159a3d1-cde1-405e-bc46-754609125585",
+    "SiteName": "Fete des Lumieres 2019",
+    "SiteID": "c3ada289-6562-4ed8-8618-c539d012a753"
   },
   "_cloud_MOVIDA": {
     "SiteName": "Movida",
