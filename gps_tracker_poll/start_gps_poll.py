@@ -45,6 +45,7 @@ from gps_tracker_poll.gps_poll_module import SCRALGPSPoll
 def main():
     module_description = "SCRAL GPS Tracker Polling instance"
     abs_path = os.path.abspath(os.path.dirname(__file__))
+    scral_module: SCRALGPSPoll
     scral_module, args, doc = util.initialize_module(module_description, abs_path, SCRALGPSPoll)
     scral_module.runtime()
 

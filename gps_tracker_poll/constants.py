@@ -16,7 +16,6 @@
 """
 import random
 
-BROKER_HAMBURG_ADDRESS = "test.geoportal-hamburg.de"  # testing address: "broker.mqttdashboard.com"
 BROKER_HAMBURG_CLIENT_ID = "MONICA_GPS_"+str(random.randint(0, 1000000))
 
 # HAMBURG OGC SERVER

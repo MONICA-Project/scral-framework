@@ -177,8 +177,8 @@ class SCRALModule(object):
             logging.info("Number of active devices will be refreshed (if an observation is received) every "
                          + str(self._active_devices["update_interval"]) + " seconds.")
         except KeyError:
-            logging.warning("No update interval specified inside configuration file..." +
-                            "Default value "+str(DEFAULT_UPDATE_INTERVAL)+" will be used!")
+            logging.warning("No update interval specified inside configuration file... " +
+                            "Default value will be used: "+str(DEFAULT_UPDATE_INTERVAL)+"s")
             self._active_devices[UPDATE_INTERVAL_KEY] = DEFAULT_UPDATE_INTERVAL
 
     def get_mqtt_connection_address(self) -> str:

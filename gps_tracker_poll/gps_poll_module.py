@@ -24,12 +24,13 @@ from requests.exceptions import SSLError
 from scral_ogc import OGCObservation, OGCDatastream
 
 from scral_core.ogc_configuration import OGCConfiguration
-from scral_core import mqtt_util
-from scral_core.constants import BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, OGC_ID_KEY, CATALOG_FILENAME
+from scral_core import util, mqtt_util
+from scral_core.constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, OGC_ID_KEY, CATALOG_FILENAME, \
+                                 MQTT_KEY, MQTT_SUB_BROKER_KEY, MQTT_SUB_BROKER_PORT_KEY, MQTT_SUB_BROKER_KEEP_KEY
 
 from gps_tracker.constants import LOCALIZATION
 from gps_tracker.gps_module import SCRALGPS
-from gps_tracker_poll.constants import BROKER_HAMBURG_ADDRESS, BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL, \
+from gps_tracker_poll.constants import BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THING_URL, \
     OGC_HAMBURG_FILTER, DEVICE_ID_KEY, THINGS_SUBSCRIBE_TOPIC, HAMBURG_UNIT_OF_MEASURE, DYNAMIC_DISCOVERY_SLEEP
 
 
@@ -53,12 +54,23 @@ class SCRALGPSPoll(SCRALGPS):
         self._mqtt_subscriber.on_disconnect = mqtt_util.automatic_reconnection
         self._mqtt_subscriber.on_message = self.on_message_received
 
-        logging.info("Try to connect to broker: %s:%s for listening" % (BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT))
+        # Creating subscribing broker
+        connection_config_file = util.load_from_file(connection_file)
+        self._sub_broker_address = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEY]
+        self._sub_broker_port = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_PORT_KEY]
+        logging.info("Connecting to broker: %s:%s for listening" % (self._sub_broker_address,  self._sub_broker_port))
         logging.debug("Client id is: '" + BROKER_HAMBURG_CLIENT_ID + "'")
-        self._mqtt_subscriber.connect(BROKER_HAMBURG_ADDRESS, BROKER_DEFAULT_PORT, DEFAULT_KEEPALIVE)
+        try:
+            self._sub_broker_keepalive = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEEP_KEY]
+        except KeyError:
+            logging.warning(
+                "No subscribing broker keepalive specified, will be used the default one: "+str(DEFAULT_KEEPALIVE)+" s")
+            self._sub_broker_keepalive = DEFAULT_KEEPALIVE
+
+        self._mqtt_subscriber.connect(self._sub_broker_address,  self._sub_broker_port, self._sub_broker_keepalive)
 
     # noinspection PyMethodOverriding
-    def runtime(self, dynamic_discovery: bool = False):
+    def runtime(self, dynamic_discovery: bool = True):
         """ This method retrieves the THINGS from the Hamburg OGC server and convert them to MONICA OGC DATASTREAMS.
             These DATASTREAMS are published on MONICA OGC server.
             This is a "blocking function".

@@ -2,7 +2,11 @@
   "mqtt": {
     "pub_broker": "mosquitto",
     "pub_broker_port": 1883,
-    "pub_broker_keepalive": 60
+    "pub_broker_keepalive": 60,
+
+    "sub_broker": "iot.hamburg.de",
+    "sub_broker_port": 1883,
+    "sub_broker_keepalive": 60
   },
   "REST": {
     "ogc_server_address": "http://gost_wdom:8090/v1.0"
