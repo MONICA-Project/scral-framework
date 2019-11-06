@@ -42,7 +42,7 @@ from scral_core.constants import DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, END_MESSA
 
 from sound_level_meter.slm_module import SCRALSoundLevelMeter
 from sound_level_meter.constants import URL_SLM_LOGIN, CREDENTIALS, SLM_LOGIN_PREFIX, \
-    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT,URI_RESOURCE_CATALOG,  \
+    URI_DEFAULT, URI_ACTIVE_DEVICES, URI_SOUND_EVENT, URI_RESOURCE_CATALOG,  \
     DEVICE_ID_KEY, DEVICE_NAME_KEY, DESCRIPTION_KEY, DEFINITION_KEY, TYPE_KEY, START_TIME_KEY
 
 flask_instance = Flask(__name__)
@@ -78,18 +78,19 @@ def new_sound_event() -> Response:
         return status
 
     payload = request.json
-    property_name = payload[TYPE_KEY]
+    lower_payload = {k.lower(): v for k, v in request.json.items()}  # this payload has all the keys in lower case
+    property_name = lower_payload[TYPE_KEY.lower()]  # accessing to lower_payload fields require to lower constants too
     try:
-        property_description = payload[DESCRIPTION_KEY]
+        property_description = lower_payload[DESCRIPTION_KEY.lower()]
     except KeyError:
         property_description = property_name + " description"
     try:
-        property_definition = payload[DEFINITION_KEY]
+        property_definition = lower_payload[DEFINITION_KEY.lower()]
     except KeyError:
         property_definition = property_name + " definition"
 
     obs_prop = OGCObservedProperty(property_name, property_description, property_definition)
-    device_id = payload[DEVICE_ID_KEY]
+    device_id = lower_payload[DEVICE_ID_KEY.lower()]
 
     datastream_id = scral_module.new_datastream(device_id, obs_prop)
     if datastream_id is False:
@@ -97,7 +98,7 @@ def new_sound_event() -> Response:
     elif datastream_id is None:
         return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
     else:
-        scral_module.ogc_observation_registration(datastream_id, payload[START_TIME_KEY], payload)
+        scral_module.ogc_observation_registration(datastream_id, lower_payload[START_TIME_KEY.lower()], payload)
         return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
 
 
@@ -108,13 +109,15 @@ def get_active_devices() -> Response:
     """
     logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
 
-    rc_copy = copy.deepcopy(scral_module.get_resource_catalog())
-    new_rc = {}
-    for item in rc_copy.values():
-        key = item.pop(DEVICE_NAME_KEY)
-        new_rc[key] = item
+    rc_to_ret = {}
+    rc_copy = copy.deepcopy(scral_module.get_active_devices())
+    for key, item in rc_copy.items():
+        if isinstance(item, dict):
+            if DEVICE_NAME_KEY in item.keys():
+                key = item.pop(DEVICE_NAME_KEY)
+        rc_to_ret[key] = item
 
-    return make_response(jsonify(new_rc), 200)
+    return make_response(jsonify(rc_to_ret), 200)
 
 
 @flask_instance.route(URI_RESOURCE_CATALOG, methods=["GET"])

@@ -50,8 +50,8 @@ AD_DESCRIPTION_KEY = "description"
 AD_COORD_KEY = "coordinates"
 
 # PAYLOAD KEYS
-DEVICE_ID_KEY = "deviceId"
 DEVICE_NAME_KEY = "device_name"
+DEVICE_ID_KEY = "deviceId"
 TYPE_KEY = "type"
 DESCRIPTION_KEY = "description"
 DEFINITION_KEY = "definition"

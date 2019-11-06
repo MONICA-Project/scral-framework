@@ -253,8 +253,9 @@ class SCRALModule(object):
                 self._active_devices[COUNTER_KEY] = self._active_devices[ACTUAL_COUNTER_KEY]
                 self._active_devices[ACTUAL_COUNTER_KEY] = 1
                 self._active_devices[LAST_UPDATE_KEY] = current_time
-        except KeyError:
-            logging.error("KeyError: trying to update active_devices structure... But a field is missing!")
+        except KeyError as ke:
+            logging.error("Trying to update active_devices structure... But a field is missing!")
+            logging.error(repr(ke))
 
     def delete_device(self, device_id: str, remove_only_from_catalog: bool = False) -> (bool, bool):
         if device_id not in self._resource_catalog:

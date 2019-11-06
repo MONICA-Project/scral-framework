@@ -50,7 +50,6 @@ class SCRALPhonometer(SCRALMicrophone):
         super().__init__(ogc_config, connection_file, pilot, catalog_name)
 
         self._publish_mutex = Lock()
-        self._active_devices = {}
 
     def runtime(self):
         """ This method discovers active Phonometers from SDN cloud, registers them as OGC Datastreams into the MONICA
@@ -105,15 +104,15 @@ class SCRALPhonometer(SCRALMicrophone):
                         logging.debug("Device: " + device_name + " already registered with id: " + device_id)
                     else:
                         self._resource_catalog[device_id] = {}
-                        self._active_devices[device_id] = {}
+                        self._active_microphones[device_id] = {}
                         # Iterate over ObservedProperties
                         for ogc_property in self._ogc_config.get_observed_properties():
                             self._new_datastream(
                                 ogc_property, device_id, device_coordinates, device_description)
 
                         url_sequence = URL_CLOUD + '/' + device_id + '/' + FILTER_SDN_1
-                        self._active_devices[device_id][SEQUENCES_KEY] = url_sequence
-                        self._active_devices[device_id][NAME_KEY] = device_name
+                        self._active_microphones[device_id][SEQUENCES_KEY] = url_sequence
+                        self._active_microphones[device_id][NAME_KEY] = device_name
 
             total_count = payload[TOTAL_COUNT_KEY]
             count += payload[COUNT_KEY]

@@ -29,7 +29,7 @@ class SCRALMicrophone(SCRALModule):
     def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
                  catalog_name: str = CATALOG_FILENAME):
         super().__init__(ogc_config, connection_file, pilot, catalog_name)
-        self._active_devices = {}
+        self._active_microphones = {}
 
     def _start_thread_pool(self, microphone_thread, locking: bool = False):
         """ This method starts a thread for each active microphone (Sound Level Meter).
@@ -41,7 +41,7 @@ class SCRALMicrophone(SCRALModule):
         thread_pool = []
         thread_id = 1
 
-        for device_id, values in self._active_devices.items():
+        for device_id, values in self._active_microphones.items():
             t_name = values[NAME_KEY]
             sequences = values[SEQUENCES_KEY]
 

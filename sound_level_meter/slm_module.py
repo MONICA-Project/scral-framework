@@ -52,7 +52,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         super().__init__(ogc_config, connection_file, pilot, catalog_name)
 
         self._publish_mutex = Lock()
-        self._active_devices = {}
+        self._observation_cnt_mutex = Lock()
 
         self._sequences = []
 
@@ -71,8 +71,11 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
     def get_cloud_token(self) -> str:
         return self._cloud_token
 
-    def get_mutex(self) -> Lock:
+    def get_publish_mutex(self) -> Lock:
         return self._publish_mutex
+
+    def get_observation_cnt_mutex(self) -> Lock:
+        return self._observation_cnt_mutex
 
     def update_cloud_token(self):
         """ Updates the cloud access token by using available credentials """
@@ -156,23 +159,23 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
                 logging.error("Location coordinates of device " + device_name + " are not defined.")
                 location_coordinates = {"coordinates": [0.0, 0.0]}
 
-            # Build active devices catalog
-            self._active_devices[device_id] = {}
-            self._active_devices[device_id][AD_NAME_KEY] = device_name
-            self._active_devices[device_id][AD_DESCRIPTION_KEY] = device_description
-            self._active_devices[device_id][AD_COORD_KEY] = location_coordinates[AD_COORD_KEY]
+            # Build active SLM catalog
+            self._active_microphones[device_id] = {}
+            self._active_microphones[device_id][AD_NAME_KEY] = device_name
+            self._active_microphones[device_id][AD_DESCRIPTION_KEY] = device_description
+            self._active_microphones[device_id][AD_COORD_KEY] = location_coordinates[AD_COORD_KEY]
 
             url_sequences = url + "/tenants/" + str(self._tenant_id) + "/sites/" + str(
                 self._site_id) + "/locations/" + str(location_id) + "/sequences"
-            self._active_devices[device_id][SEQUENCES_KEY] = url_sequences
+            self._active_microphones[device_id][SEQUENCES_KEY] = url_sequences
         logging.info("\n\n--- End of active device discovery. "
-                     "There are "+str(len(self._active_devices))+" active devices. ---\n")
+                     "There are " + str(len(self._active_microphones)) + " active SLM. ---\n")
 
         # Start OGC Datastreams registration
         logging.info("\n\n--- Start OGC DATASTREAMs registration ---\n")
 
         # Iterate over active devices
-        for device_id, values in self._active_devices.items():
+        for device_id, values in self._active_microphones.items():
             device_name = values["name"]
             device_coordinates = values["coordinates"]
             device_description = values["description"]
@@ -198,7 +201,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         :param ogc_obs_property: The OBSERVED PROPERTY for which you want to create the DATASTREAMs.
         :return: The datastream_id of the new generated DATASTREAM.
         """
-        if device_id not in self._active_devices:
+        if device_id not in self._active_microphones:
             logging.error("Device " + device_id + " is not active.")
             return False
 
@@ -208,9 +211,9 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         try:
             datastream_id = self._resource_catalog[device_id][ogc_obs_property.get_name()]
         except KeyError:
-            device_coordinates = self._active_devices[device_id]["coordinates"]
-            device_name = self._active_devices[device_id]["name"]
-            device_description = self._active_devices[device_id]["description"]
+            device_coordinates = self._active_microphones[device_id]["coordinates"]
+            device_name = self._active_microphones[device_id]["name"]
+            device_description = self._active_microphones[device_id]["description"]
 
             datastream_id = self._new_datastream(
                 ogc_obs_property, device_id, device_name, device_coordinates, device_description)
@@ -282,6 +285,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
             self._device_id = device_id
             self._url_sequences = url_sequences
             self._slm_module = slm_module
+            self._counter_mutex = slm_module.get_observation_cnt_mutex()
 
         def run(self):
             self._logger.info("Starting Thread: " + self._thread_name)
@@ -307,7 +311,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
             time_elapsed_annoyance = 60
 
             rc = self._slm_module.get_resource_catalog()
-            self._logger.info("\n\n--- Start OGC OBSERVATIONs registration ---\n")
+            self._logger.info("\n\n--- Start OGC OBSERVATIONS registration ---\n")
             while True:
                 try:
                     for seq in sequences_data:
@@ -334,8 +338,14 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
                             datastream_id = rc[self._device_id][property_name]
                             observation_result = {"valueType": property_name, "response": payload}
                             phenomenon_time = payload["value"][0]["startTime"]
-                            self._slm_module.ogc_observation_registration(
+                            ok = self._slm_module.ogc_observation_registration(
                                 datastream_id, phenomenon_time, observation_result)
+                            if ok:
+                                self._counter_mutex.acquire()
+                                try:
+                                    self._slm_module._update_active_devices_counter()
+                                finally:
+                                    self._counter_mutex.release()
                         else:
                             self._logger.error("Property: '"+property_name+"' has NULL payload!")
                             self._logger.info("Timestamp: " + seq["time"])
