@@ -31,10 +31,12 @@ from arrow.arrow import Arrow
 
 from scral_core.ogc_configuration import OGCConfiguration
 from scral_core.scral_module import SCRALModule
-from scral_core.constants import CREDITS, DEFAULT_CONFIG, DEFAULT_LOG_FORMATTER, DEFAULT_URL, DEFAULT_MODULE_NAME, \
-                                 MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY, OPT_LIST, \
+from scral_core.constants import DEFAULT_REST_PORT, DEFAULT_CONFIG, DEFAULT_URL, DEFAULT_MODULE_NAME, \
+                                 MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY,  \
                                  CONNECTION_PATH_KEY, CONNECTION_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
-                                 FILENAME_CONFIG, FILENAME_COMMAND_FILE, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD
+                                 FILENAME_CONFIG, FILENAME_COMMAND_FILE, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, \
+                                 CREDITS, OPT_LIST, DEFAULT_LOG_FORMATTER
+
 
 
 def init_logger(debug_level: Union[int, str]):
@@ -113,6 +115,31 @@ def parse_command_line(description: str) -> argparse.Namespace:
     return args
 
 
+def init_doc(args: dict) -> dict:
+    """ Initialize documentation variable
+    :param args: A dictionary containing relevant documentation fields
+    :return:
+    """
+    doc = {}
+    try:
+        doc[ENDPOINT_PORT_KEY] = args[ENDPOINT_PORT_KEY]
+    except KeyError:
+        logging.warning("No port for documentation specified, default one will be used: "+DEFAULT_REST_PORT)
+        doc[ENDPOINT_PORT_KEY] = DEFAULT_REST_PORT
+    try:
+        doc[ENDPOINT_URL_KEY] = args[ENDPOINT_URL_KEY]
+    except KeyError:
+        logging.warning("No URL for documentation specified, default one will be used: " + DEFAULT_URL)
+        doc[ENDPOINT_URL_KEY] = DEFAULT_URL
+    try:
+        doc[MODULE_NAME_KEY] = args[MODULE_NAME_KEY]
+    except KeyError:
+        logging.warning("No module name for documentation specified, default one will be used: " + DEFAULT_MODULE_NAME)
+        doc[MODULE_NAME_KEY] = DEFAULT_MODULE_NAME
+
+    return doc
+
+
 def initialize_variables(description: str, abs_path: str) -> (dict, Dict[str, str]):
     cmd_line = parse_small_command_line(description)
     pilot_config_folder = cmd_line.pilot.lower() + "/"
@@ -128,19 +155,7 @@ def initialize_variables(description: str, abs_path: str) -> (dict, Dict[str, st
     args[CONNECTION_PATH_KEY] = connection_path
 
     # Initialize documentation variable
-    doc = {}
-    try:
-        doc[ENDPOINT_PORT_KEY] = args[ENDPOINT_PORT_KEY]
-    except KeyError:
-        doc[ENDPOINT_PORT_KEY] = None
-    try:
-        doc[ENDPOINT_URL_KEY] = args[ENDPOINT_URL_KEY]
-    except KeyError:
-        doc[ENDPOINT_URL_KEY] = DEFAULT_URL
-    try:
-        doc[MODULE_NAME_KEY] = args[MODULE_NAME_KEY]
-    except KeyError:
-        doc[MODULE_NAME_KEY] = DEFAULT_MODULE_NAME
+    doc = init_doc(args)
 
     return args, doc
 
@@ -194,62 +209,6 @@ def write_to_file(filename: str, data):
     with open(filename, 'w+') as outfile:
         json.dump(data, outfile)
         outfile.write('\n')
-
-
-def test_connectivity(server_address: str,
-                      server_username: Optional[str] = None, server_password: Optional[str] = None):
-    """ This function checks if a REST connection is correctly configured.
-
-    :param server_address: The address of the OGC server.
-    :param server_username: The username necessary to be authenticated on the server.
-    :param server_password: The password related to the given username.
-    :return: True if it is possible to establish a connection, False otherwise.
-    """
-
-    try:
-        if server_username is None and server_password is None:
-            r = requests.get(url=server_address)
-        else:
-            r = requests.get(url=server_address, auth=(server_username, server_password))
-        if r.ok:
-            logging.info("Network connectivity: VERIFIED. Server "+server_address+" is reachable!")
-            return True
-        else:
-            logging.error("Something wrong during connection!")
-            return False
-
-    except Exception as e:
-        logging.debug(e)
-        return False
-
-
-def get_server_access_token(url: str, credentials, headers,
-                            token_prefix: Optional[str] = "", token_suffix: Optional[str] = ""):
-    """ This function get authorized token from a target server.
-
-    :param: url: The URL of the target server.
-    :param: credentials: available access credentials.
-    :param: headers: REST query headers.
-    :return: A dictionary with limited-time-available access credentials.
-    """
-
-    auth = None
-    try:
-        auth = requests.post(url=url, data=json.dumps(credentials), headers=headers)
-    except Exception as ex:
-        logging.error(ex)
-
-    if auth:
-        # enable authorization
-        cloud_token = dict()
-        cloud_token["Accept"] = "application/json"
-        access_token = auth.json()['accessToken']
-        cloud_token['Authorization'] = token_prefix + str(access_token) + token_suffix
-    else:
-        raise ValueError("Credentials " + credentials + " have been denied by the server.")
-
-    logging.info("Access token successfully authorized!")
-    return cloud_token
 
 
 def signal_handler(signal, frame):

@@ -48,7 +48,7 @@ from scral_core.constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, DEFAULT_UP
     CATALOG_FOLDER, CATALOG_FILENAME
 
 from scral_core.ogc_configuration import OGCConfiguration
-from scral_core import util, mqtt_util
+from scral_core import util, mqtt_util, rest_util
 
 verbose = False
 
@@ -103,7 +103,7 @@ class SCRALModule(object):
         ogc_server_address = connection_config_file[REST_KEY][OGC_SERVER_ADD_KEY]
 
         # Testing OGC server connectivity
-        if not util.test_connectivity(ogc_server_address, ogc_server_username, ogc_server_password):
+        if not rest_util.test_connectivity(ogc_server_address, ogc_server_username, ogc_server_password):
             logging.critical("Network connectivity to " + ogc_server_address + " not available!")
             exit(ERROR_NO_SERVER_CONNECTION)
 

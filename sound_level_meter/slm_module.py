@@ -27,7 +27,7 @@ from urllib3.exceptions import NewConnectionError, MaxRetryError
 from scral_ogc import OGCDatastream, OGCObservedProperty
 
 from scral_core.constants import REST_HEADERS, CATALOG_FILENAME, ENABLE_CHERRYPY, COORD
-from scral_core import util
+from scral_core import util, rest_util
 from scral_core.ogc_configuration import OGCConfiguration
 from scral_core.rest_module import SCRALRestModule
 
@@ -79,7 +79,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
 
     def update_cloud_token(self):
         """ Updates the cloud access token by using available credentials """
-        self._cloud_token = util.get_server_access_token(self._url_login, self._credential, REST_HEADERS,
+        self._cloud_token = rest_util.get_server_access_token(self._url_login, self._credential, REST_HEADERS,
                                                          self._token_prefix, self._token_suffix)
 
     # noinspection PyMethodOverriding
