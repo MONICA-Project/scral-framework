@@ -14,18 +14,18 @@
     SCRAL - rest_util
     This file contains several REST utility functions that could be used in different modules.
 """
+import json
 import logging
 from typing import Tuple, Optional
 
 import requests
 from flask import make_response, jsonify, Request, Response
 
-from scral_core.scral_module import SCRALModule
 from scral_core.constants import SUCCESS_RETURN_STRING, TEST_PASSED, \
                                  ERROR_RETURN_STRING, WRONG_REQUEST, INTERNAL_SERVER_ERROR
 
 
-def tests_and_checks(module_name: str, module: SCRALModule, request: Request) -> Tuple[bool, Response]:
+def tests_and_checks(module_name: str, module: "SCRALModule", request: Request) -> Tuple[bool, Response]:
     if not request.json:
         return False, make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
 

@@ -205,7 +205,7 @@ class OGCConfiguration:
                 virtual_datastream.set_id(vds_id)
                 self._virtual_datastreams[vds_id] = virtual_datastream
 
-        logging.info("--- End of OGC discovery---\n")
+        logging.info("--- End of OGC discovery ---\n")
 
     @staticmethod
     def entity_discovery(ogc_entity, url_entity: str, url_filter: str, verbose: bool = False) -> int:

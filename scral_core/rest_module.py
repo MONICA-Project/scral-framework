@@ -22,14 +22,19 @@ PHASE RUNTIME: INTEGRATION
 """
 
 #############################################################################
+import os
+import logging
+
 from flask import Flask, make_response, jsonify, Response
 import cherrypy
 from cheroot.wsgi import Server as WSGIServer, PathInfoDispatcher
 
 import scral_core.util as util
 from scral_core.ogc_configuration import OGCConfiguration
-from scral_core.constants import CATALOG_FILENAME, ENABLE_FLASK, ENABLE_CHERRYPY, ENABLE_WSGISERVER,\
-                                   SUCCESS_RETURN_STRING, SUCCESS_DELETE, ERROR_RETURN_STRING, ERROR_DELETE
+from scral_core.constants import CATALOG_FILENAME, D_CONFIG_KEY, ENABLE_FLASK, ENABLE_CHERRYPY, ENABLE_WSGISERVER, \
+    SUCCESS_RETURN_STRING, SUCCESS_DELETE, ERROR_RETURN_STRING, ERROR_DELETE, ERROR_MISSING_ENV_VARIABLE, REST_KEY, \
+    LISTENING_ADD_KEY, PORT_KEY, ADDRESS_KEY, D_CUSTOM_MODE, ERROR_MISSING_CONNECTION_FILE, LISTENING_PORT_KEY, \
+    DEFAULT_LISTENING_ADD, DEFAULT_LISTENING_PORT
 from scral_core.scral_module import SCRALModule
 
 
@@ -52,10 +57,32 @@ class SCRALRestModule(SCRALModule):
         """
         super().__init__(ogc_config, connection_file, pilot, catalog_name)
 
-        # Creating endpoint for listening to REST requests
-        connection_config_file = util.load_from_file(connection_file)
-        self._listening_address = connection_config_file["REST"]["listening_address"]["address"]
-        self._listening_port = int(connection_config_file["REST"]["listening_address"]["port"])
+        if not connection_file:
+            if D_CONFIG_KEY in os.environ.keys():
+                if os.environ[D_CONFIG_KEY] == D_CUSTOM_MODE:
+                    try:
+                        self._listening_address = os.environ[LISTENING_ADD_KEY.upper()]
+                    except KeyError:
+                        logging.warning(LISTENING_ADD_KEY.upper() + " not set, default listening address: "
+                                        + DEFAULT_LISTENING_ADD)
+                        self._listening_address = DEFAULT_LISTENING_ADD
+                    try:
+                        self._listening_port = int(os.environ[LISTENING_PORT_KEY.upper()])
+                    except KeyError:
+                        logging.warning(LISTENING_PORT_KEY.upper() + " not set, default listening port: "
+                                        + str(DEFAULT_LISTENING_PORT))
+                        self._listening_port = DEFAULT_LISTENING_PORT
+                else:
+                    logging.critical("No connection file for pilot: " + str(pilot))
+                    exit(ERROR_MISSING_CONNECTION_FILE)
+            else:
+                logging.critical("Missing connection file or environmental variable!")
+                exit(ERROR_MISSING_ENV_VARIABLE)
+        else:
+            # Retrieving endpoint information for listening to REST requests
+            connection_config_file = util.load_from_file(connection_file)
+            self._listening_address = connection_config_file[REST_KEY][LISTENING_ADD_KEY][ADDRESS_KEY]
+            self._listening_port = int(connection_config_file[REST_KEY][LISTENING_ADD_KEY][PORT_KEY])
 
     # noinspection PyMethodOverriding
     def runtime(self, flask_instance: Flask, mode: int = ENABLE_FLASK):
@@ -66,7 +93,7 @@ class SCRALRestModule(SCRALModule):
 
         if mode == ENABLE_FLASK:
             # simply run Flask
-            flask_instance.run(host="0.0.0.0", port=8000, threaded=True)
+            flask_instance.run(host=self._listening_address, port=self._listening_port, threaded=True)
         elif mode == ENABLE_CHERRYPY:
             # Run Flask wrapped by Cherrypy
             cherrypy.tree.graft(flask_instance, "/")

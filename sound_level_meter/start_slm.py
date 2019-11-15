@@ -55,7 +55,8 @@ def main():
 
     module_description = "Sound Level Meter integration instance"
     abs_path = os.path.abspath(os.path.dirname(__file__))
-    args, DOC = util.initialize_variables(module_description, abs_path)
+    cmd_line = util.parse_small_command_line(module_description)
+    args, DOC = util.init_variables(cmd_line.pilot.lower(), abs_path)
 
     ogc_config, filename_connection, catalog_name = util.scral_ogc_startup(SCRALSoundLevelMeter, args)
     scral_module = SCRALSoundLevelMeter(ogc_config, filename_connection, args[PILOT_KEY],

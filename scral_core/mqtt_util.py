@@ -18,6 +18,7 @@
 import time
 import logging
 
+from scral_core.constants import DEFAULT_GOST_PREFIX
 from paho.mqtt.client import MQTT_ERR_SUCCESS
 
 
@@ -43,7 +44,7 @@ def get_publish_mqtt_topic(pilot_name: str):
     pilot_name = pilot_name.upper()
 
     if pilot_name == 'LOCAL':
-        mqtt_topic = "GOST/"
+        mqtt_topic = DEFAULT_GOST_PREFIX
     elif pilot_name == 'MOVIDA':
         mqtt_topic = "GOST_MOVIDA/"
     elif pilot_name == 'SDOM':

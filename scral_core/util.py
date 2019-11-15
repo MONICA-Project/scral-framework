@@ -26,17 +26,16 @@ import sys
 from configparser import ConfigParser
 from typing import Union, Optional, Dict
 
-import requests
 from arrow.arrow import Arrow
 
 from scral_core.ogc_configuration import OGCConfiguration
 from scral_core.scral_module import SCRALModule
-from scral_core.constants import DEFAULT_REST_PORT, DEFAULT_CONFIG, DEFAULT_URL, DEFAULT_MODULE_NAME, \
-                                 MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY,  \
-                                 CONNECTION_PATH_KEY, CONNECTION_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
-                                 FILENAME_CONFIG, FILENAME_COMMAND_FILE, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, \
-                                 CREDITS, OPT_LIST, DEFAULT_LOG_FORMATTER
-
+from scral_core.constants import CREDITS, DEFAULT_CONFIG, DEFAULT_LOG_FORMATTER, DEFAULT_URL, DEFAULT_MODULE_NAME, \
+    MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY, OPT_LIST, \
+    CONNECTION_PATH_KEY, CONNECTION_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
+    FILENAME_CONFIG, FILENAME_COMMAND_FILE, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, \
+    D_CONFIG_KEY, D_CUSTOM_MODE, DEFAULT_REST_PORT, VERBOSE_KEY, OGC_FILE_KEY, ERROR_MISSING_ENV_VARIABLE, D_OGC_USER, \
+    D_OGC_PWD
 
 
 def init_logger(debug_level: Union[int, str]):
@@ -124,7 +123,7 @@ def init_doc(args: dict) -> dict:
     try:
         doc[ENDPOINT_PORT_KEY] = args[ENDPOINT_PORT_KEY]
     except KeyError:
-        logging.warning("No port for documentation specified, default one will be used: "+DEFAULT_REST_PORT)
+        logging.warning("No port for documentation specified, default one will be used: "+str(DEFAULT_REST_PORT))
         doc[ENDPOINT_PORT_KEY] = DEFAULT_REST_PORT
     try:
         doc[ENDPOINT_URL_KEY] = args[ENDPOINT_URL_KEY]
@@ -140,9 +139,8 @@ def init_doc(args: dict) -> dict:
     return doc
 
 
-def initialize_variables(description: str, abs_path: str) -> (dict, Dict[str, str]):
-    cmd_line = parse_small_command_line(description)
-    pilot_config_folder = cmd_line.pilot.lower() + "/"
+def init_variables(pilot_name: str, abs_path: str) -> (dict, Dict[str, str]):
+    pilot_config_folder = pilot_name+"/"
 
     # Preparing all the necessary configuration paths
     config_path = os.path.join(abs_path, FILENAME_CONFIG)
@@ -160,10 +158,57 @@ def initialize_variables(description: str, abs_path: str) -> (dict, Dict[str, st
     return args, doc
 
 
-def scral_ogc_startup(scral_module_class: SCRALModule.__class__, args: dict) -> (OGCConfiguration, str, str):
-    ogc_config = scral_module_class.startup(args, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD)
+def init_variables_docker(abs_path: str) -> (dict, Dict[str, str]):
+    # Initialize documentation variable
+    doc = {}
+    try:
+        doc[ENDPOINT_PORT_KEY] = os.environ[ENDPOINT_PORT_KEY.upper()]
+    except KeyError:
+        pass
+    try:
+        doc[ENDPOINT_URL_KEY] = os.environ[ENDPOINT_URL_KEY.upper()]
+    except KeyError:
+        pass
+    try:
+        doc[MODULE_NAME_KEY] = os.environ[MODULE_NAME_KEY.upper()]
+    except KeyError:
+        pass
+    doc = init_doc(doc)
 
-    # Module initialization and runtime phase
+    # Taking and setting application parameters
+    args: dict = {}
+
+    try:
+        verbose = os.environ[VERBOSE_KEY.upper()]
+    except KeyError:
+        verbose = 0
+
+    if not verbose:
+        args[VERBOSE_KEY] = False
+    else:
+        args[VERBOSE_KEY] = True
+
+    config_path = os.path.join(abs_path, FILENAME_CONFIG)
+    args[CONFIG_PATH_KEY] = config_path
+
+    if OGC_FILE_KEY.upper() not in os.environ.keys():
+        logging.critical(OGC_FILE_KEY.upper() + " is missing!")
+        exit(ERROR_MISSING_ENV_VARIABLE)
+    else:
+        args[OGC_FILE_KEY] = os.environ[OGC_FILE_KEY.upper()]
+
+    return args, doc
+
+
+def scral_ogc_startup(scral_module_class: SCRALModule.__class__, args: dict) -> (OGCConfiguration, str, str):
+    try:
+        username = args[D_OGC_USER]
+        password = args[D_OGC_PWD]
+    except KeyError:
+        username = OGC_SERVER_USERNAME
+        password = OGC_SERVER_PASSWORD
+    ogc_config = scral_module_class.startup(args, username, password)
+
     filename_connection = os.path.join(args[CONNECTION_PATH_KEY] + args[CONNECTION_FILE_KEY])
     try:
         catalog_name = args[CATALOG_NAME_KEY]
@@ -176,10 +221,34 @@ def scral_ogc_startup(scral_module_class: SCRALModule.__class__, args: dict) -> 
 
 def initialize_module(description: str, abs_path: str, scral_module_class: SCRALModule.__class__)\
         -> (SCRALModule, dict, Dict[str, str]):
-    args, doc = initialize_variables(description, abs_path)
-    ogc_config, filename_connection, catalog_name = scral_ogc_startup(scral_module_class, args)
 
-    module = scral_module_class(ogc_config, filename_connection, args[PILOT_KEY], catalog_name)
+    try:
+        username = os.environ[D_OGC_USER]
+        password = os.environ[D_OGC_PWD]
+    except KeyError:
+        username = OGC_SERVER_USERNAME
+        password = OGC_SERVER_PASSWORD
+
+    if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE.lower():
+        args, doc = init_variables_docker(abs_path)
+        ogc_config = scral_module_class.startup(args, username, password)
+        pilot_name = os.environ[D_CONFIG_KEY]
+        catalog_name = str(SCRALModule.__name__) + "_resource-catalog.json"
+        module = scral_module_class(ogc_config, None, pilot_name, catalog_name)
+
+    else:
+        if D_CONFIG_KEY in os.environ.keys():
+            pilot_name = os.environ[D_CONFIG_KEY].lower()
+        else:
+            cmd_line = parse_small_command_line(description)
+            pilot_name = cmd_line.pilot.lower()
+
+        args, doc = init_variables(pilot_name, abs_path)
+        args[D_OGC_USER] = username
+        args[D_OGC_PWD] = password
+        ogc_config, filename_connection, catalog_name = scral_ogc_startup(scral_module_class, args)
+        module = scral_module_class(ogc_config, filename_connection, args[PILOT_KEY], catalog_name)
+
     return module, args, doc
 
 
