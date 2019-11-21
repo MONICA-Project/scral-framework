@@ -20,9 +20,10 @@ VOLUME /monica_scral/catalogs
 RUN pip3 install --no-cache-dir -r sound_level_meter/requirements.txt
 RUN pip3 install -e sound_level_meter
 
-# Enabling bash
+# Enabling bash + bash utilities
 RUN apk add --update bash
-
+RUN apk add nano
+RUN apk add jq
 
 ### local testing:
 # ENTRYPOINT python3 scral_startup.py -p local
@@ -35,7 +36,7 @@ RUN apk add --update bash
 # ENTRYPOINT python3 scral_startup.py -p WT
 ## KFF
 # ENTRYPOINT python3 scral_startup.py -p KFF
-##  MOVIDA
+## MOVIDA
 # ENTRYPOINT python3 scral_startup.py -p MOVIDA
 ## TIVOLI
 # ENTRYPOINT python3 scral_startup.py -p TIVOLI
@@ -43,5 +44,7 @@ RUN apk add --update bash
 # ENTRYPOINT python3 scral_startup.py -p RIF
 ## Nuits Sonores
 # ENTRYPOINT python3 scral_startup.py -p NS
+## ROSKILDE
+# ENTRYPOINT python3 scral_startup.py -p ROSKILDE
 ## FDL
 ENTRYPOINT python3 scral_startup.py -p FDL

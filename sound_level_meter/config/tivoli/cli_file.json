@@ -3,7 +3,7 @@
   "endpoint_port": 8540,
   "endpoint_url": "monappdwp3.monica-cloud.eu",
 
-  "connection_file": "connection_config_local.json",
+  "connection_file": "connection_config_internal.json",
   "ogc_file": "ogc_config_slm.conf",
   "pilot": "TIVOLI",
 
