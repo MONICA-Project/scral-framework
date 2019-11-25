@@ -16,15 +16,21 @@ COPY gps_tracker_poll /monica_scral/gps_tracker_poll
 
 RUN mkdir /monica_scral/catalogs
 VOLUME /monica_scral/catalogs
+ENV OGC_FILE "ogc_config_gps.conf"
 
 RUN pip3 install --no-cache-dir -r gps_tracker_poll/requirements.txt
 RUN pip3 install -e gps_tracker_poll
 
-# Enabling bash
+# Enabling bash and utilities
 RUN apk add --no-cache bash
+RUN apk add nano
+RUN apk add jq
 
 ### docker deploy local testing
 # ENTRYPOINT python3 scral_startup.py -p local
+
+# New docker-compose
+ENTRYPOINT python3 scral_startup.py
 
 ### docker-compose deployment
 # ENTRYPOINT python3 scral_startup.py -p deploy
@@ -33,4 +39,4 @@ RUN apk add --no-cache bash
 ## DOM
 # ENTRYPOINT python3 scral_startup.py -p DOM
 ## Winter DOM
-ENTRYPOINT python3 scral_startup.py -p WDOM
+# ENTRYPOINT python3 scral_startup.py -p WDOM

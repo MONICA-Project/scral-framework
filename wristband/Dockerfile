@@ -1,4 +1,6 @@
 FROM python:3.6-slim
+ARG BUILD_DATE
+LABEL build-date=$BUILD_DATE
 LABEL authors="Jacopo Foglietti, Luca Mannella"
 
 WORKDIR /monica_scral

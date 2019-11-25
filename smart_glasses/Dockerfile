@@ -15,15 +15,21 @@ COPY smart_glasses /monica_scral/smart_glasses
 
 RUN mkdir /monica_scral/catalogs
 VOLUME /monica_scral/catalogs
+ENV OGC_FILE "ogc_config_glasses.conf"
 
 RUN pip3 install --no-cache-dir -r smart_glasses/requirements.txt
 RUN pip3 install -e smart_glasses
 
-# Enabling bash
+# Enabling bash and utilities
 RUN apk add --update bash
+RUN apk add nano
+RUN apk add jq
 
 ### local testing:
 # ENTRYPOINT python3 scral_startup.py -p local
+
+# New docker-compose
+ENTRYPOINT python3 scral_startup.py
 
 ### docker-compose deployment
 # ENTRYPOINT python3 scral_startup.py -p deploy
@@ -36,4 +42,4 @@ RUN apk add --update bash
 ## TIVOLI
 # ENTRYPOINT python3 scral_startup.py -p TIVOLI
 ## FdL
-ENTRYPOINT python3 scral_startup.py -p FDL
+# ENTRYPOINT python3 scral_startup.py -p FDL

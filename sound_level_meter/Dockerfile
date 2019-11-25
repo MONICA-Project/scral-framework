@@ -16,17 +16,21 @@ COPY sound_level_meter /monica_scral/sound_level_meter
 
 RUN mkdir /monica_scral/catalogs
 VOLUME /monica_scral/catalogs
+ENV OGC_FILE "ogc_config_slm.conf"
 
 RUN pip3 install --no-cache-dir -r sound_level_meter/requirements.txt
 RUN pip3 install -e sound_level_meter
 
-# Enabling bash + bash utilities
+# Enabling bash and utilities
 RUN apk add --update bash
 RUN apk add nano
 RUN apk add jq
 
 ### local testing:
 # ENTRYPOINT python3 scral_startup.py -p local
+
+# New docker-compose
+ENTRYPOINT python3 scral_startup.py
 
 ### docker-compose deployment
 # ENTRYPOINT python3 scral_startup.py -p deploy
@@ -47,4 +51,4 @@ RUN apk add jq
 ## ROSKILDE
 # ENTRYPOINT python3 scral_startup.py -p ROSKILDE
 ## FDL
-ENTRYPOINT python3 scral_startup.py -p FDL
+# ENTRYPOINT python3 scral_startup.py -p FDL

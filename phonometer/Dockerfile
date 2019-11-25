@@ -16,18 +16,24 @@ COPY phonometer /monica_scral/phonometer
 
 RUN mkdir /monica_scral/catalogs
 VOLUME /monica_scral/catalogs
+ENV OGC_FILE "ogc_config_phonometer.conf"
 
 RUN pip3 install --no-cache-dir -r phonometer/requirements.txt
 RUN pip3 install -e phonometer
 
-# Enabling bash
+# Enabling bash and utilities
 RUN apk add --update bash
+RUN apk add nano
+RUN apk add jq
 
 ### local testing:
 # ENTRYPOINT python3 scral_startup.py -p local
 
+# New docker-compose
+ENTRYPOINT python3 scral_startup.py
+
 ### docker-compose deployment
-ENTRYPOINT python3 scral_startup.py -p deploy
+# ENTRYPOINT python3 scral_startup.py -p deploy
 
 ### docker deploy - INTERNAL Configurations
 ## MOVIDA

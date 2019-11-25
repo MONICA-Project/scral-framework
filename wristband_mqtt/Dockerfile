@@ -16,19 +16,25 @@ COPY wristband_mqtt /monica_scral/wristband_mqtt
 
 RUN mkdir /monica_scral/catalogs
 VOLUME /monica_scral/catalogs
+ENV OGC_FILE "ogc_config_wristband.conf"
 
 RUN pip3 install --no-cache-dir -r wristband_mqtt/requirements.txt
 RUN pip3 install -e wristband_mqtt
 
-# Enabling bash
+# Enabling bash and utilities
 RUN apk add --update bash
+RUN apk add nano
+RUN apk add jq
 
 
 ### local testing:
 # ENTRYPOINT python3 scral_startup.py -p local
 
+# New docker-compose
+ENTRYPOINT python3 scral_startup.py
+
 ### docker-compose deployment
-ENTRYPOINT python3 scral_startup.py -p deploy
+# ENTRYPOINT python3 scral_startup.py -p deploy
 
 ### docker deploy - INTERNAL Configurations
 ## LST
