@@ -222,34 +222,45 @@ def scral_ogc_startup(scral_module_class: SCRALModule.__class__, args: dict) -> 
 def initialize_module(description: str, abs_path: str, scral_module_class: SCRALModule.__class__)\
         -> (SCRALModule, dict, Dict[str, str]):
 
+    if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE.lower():
+        ogc_config, args, doc, pilot_name, catalog_name = startup_module_custom(scral_module_class, abs_path)
+        module = scral_module_class(ogc_config, None, pilot_name, catalog_name)
+    else:
+        if D_CONFIG_KEY in os.environ.keys():
+            pilot_name = os.environ[D_CONFIG_KEY].lower()
+            logging.info("Configuration environment variable recognized\nCONFIG: " + pilot_name)
+        else:
+            cmd_line = parse_small_command_line(description)
+            pilot_name = cmd_line.pilot.lower()
+
+        args, doc = init_variables(pilot_name, abs_path)
+        try:
+            args[D_OGC_USER] = os.environ[D_OGC_USER]
+            args[D_OGC_PWD] = os.environ[D_OGC_PWD]
+        except KeyError:
+            args[D_OGC_USER] = OGC_SERVER_USERNAME
+            args[D_OGC_PWD] = OGC_SERVER_PASSWORD
+
+        ogc_config, filename_connection, catalog_name = scral_ogc_startup(scral_module_class, args)
+        module = scral_module_class(ogc_config, filename_connection, args[PILOT_KEY], catalog_name)
+
+    return module, args, doc
+
+
+def startup_module_custom(scral_module_class: SCRALModule.__class__, abs_path: str):
+    args, doc = init_variables_docker(abs_path)
     try:
         username = os.environ[D_OGC_USER]
         password = os.environ[D_OGC_PWD]
     except KeyError:
         username = OGC_SERVER_USERNAME
         password = OGC_SERVER_PASSWORD
+    ogc_config = scral_module_class.startup(args, username, password)
 
-    if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE.lower():
-        args, doc = init_variables_docker(abs_path)
-        ogc_config = scral_module_class.startup(args, username, password)
-        pilot_name = os.environ[D_CONFIG_KEY]
-        catalog_name = str(SCRALModule.__name__) + "_resource-catalog.json"
-        module = scral_module_class(ogc_config, None, pilot_name, catalog_name)
-
-    else:
-        if D_CONFIG_KEY in os.environ.keys():
-            pilot_name = os.environ[D_CONFIG_KEY].lower()
-        else:
-            cmd_line = parse_small_command_line(description)
-            pilot_name = cmd_line.pilot.lower()
-
-        args, doc = init_variables(pilot_name, abs_path)
-        args[D_OGC_USER] = username
-        args[D_OGC_PWD] = password
-        ogc_config, filename_connection, catalog_name = scral_ogc_startup(scral_module_class, args)
-        module = scral_module_class(ogc_config, filename_connection, args[PILOT_KEY], catalog_name)
-
-    return module, args, doc
+    pilot_name = os.environ[D_CONFIG_KEY]
+    logging.info("CONFIG: " + D_CUSTOM_MODE + "\n Environment variables will be used.")
+    catalog_name = str(SCRALModule.__name__) + "_resource-catalog.json"
+    return ogc_config, args, doc, pilot_name, catalog_name
 
 
 def load_from_file(filename: str) -> dict:
@@ -337,7 +348,8 @@ def from_utc_to_query(utc_timestamp: Arrow, remove_milliseconds: bool = True, ht
 
 def to_html_documentation(module_name: str, link: str,
                           posts: OPT_LIST = None, puts: OPT_LIST = None,
-                          gets: OPT_LIST = None, deletes: OPT_LIST = None) -> str:
+                          gets: OPT_LIST = None, deletes: OPT_LIST = None,
+                          additional_endpoint: bool = True) -> str:
     """ This function create a piece of HTML containing the list of the desired endpoints.
 
     :param module_name: The name of the SCRAL module, it will be visualized in the generated HTML.
@@ -346,10 +358,16 @@ def to_html_documentation(module_name: str, link: str,
     :param puts: All the available PUT endpoints, if not available you can also provide an empty tuple/list.
     :param gets: All the available GET endpoints, if not available you can also provide an empty tuple/list.
     :param deletes: All the available DELETE endpoints, if not available you can also provide an empty tuple/list.
+    :param additional_endpoint: if set to true an additional endpoint is printed out.
     :return: Some HTML code properly formatted.
     """
     to_ret = "<h1>SCRAL is running!</h1>\n"
     to_ret += '<h2><em>'+module_name+'</em> is listening on address "'+link+'"</h2>'
+    if additional_endpoint:
+        to_ret += "<p>If you don't have a VPN connection, you can have access through the MONICA portal. <br>" \
+                  "It is necessary to have a configured Keycloak account and to replace in each URL <br>" \
+                  "this part: \""+link+"\"<br> " \
+                  "with this part: \"https://portal.monica-cloud.eu/scral_container_name\"</p>"
 
     to_ret += "<h3>"
     if (posts is not None) and (len(posts) > 0):

@@ -1,54 +1,28 @@
-version: '2'
+version: '3.5'
 services:
-    node-red:
-        image: nodered/node-red-docker:slim-v8
-        volumes:
-            - nodered:/data
-        ports:
-            - "1880:1880"
-    mosquitto:
-        image: toke/mosquitto
-        volumes:
-            - mosquitto_data:/mqtt/data
-            - mosquitto_conf:/mqtt/config:ro
-        ports:
-            - "1883:1883"
-            - "9001:9001"
-    gost-db:
-        image: geodan/gost-db:0.5
-        volumes:
-            - postgis:/var/lib/postgresql/data
-        environment:
-            POSTGRES_DB: gost
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
-    gost:
-        image: geodan/gost:0.5
-        depends_on:
-            - mosquitto
-            - gost-db
-        environment:
-            gost_db_host: gost-db
-            gost_mqtt_host: mosquitto
-    dashboard:
-        image: geodan/gost-dashboard:0.5
-        ports:
-          - "8080:8080"
-        depends_on:
-            - gost
-    scral-blimp:
-        image: scral/quickstart:blimp
+    scral:
+        image: "monicaproject/scral:blimp"
+        container_name: "SCRAL-BLIMP"
         ports:
             - "8000:8000"
-        depends_on:
-            - mosquitto
-            - dashboard
-    mqtt-listener:
-        image: scral/quickstart:mqtt_subscriber
-        depends_on:
-            - mosquitto
-volumes:
-    postgis: {}
-    nodered: {}
-    mosquitto_data: {}
-    mosquitto_conf: {}
+        environment:
+            CONFIG: "custom"
+
+            # MODULE_NAME: "SCRAL"
+            # ENDPOINT_URL: "localhost"
+            # ENDPOINT_PORT: 8000
+
+            PUB_BROKER_URI: mosquitto
+            PUB_BROKER_PORT: 1883
+            # PUB_BROKER_KEEPALIVE: 60
+
+            OGC_SERVER_ADDRESS: http://GOST_DASHBOARD:8080/v1.0
+            # OGC_SERVER_USER: "scral"
+            # OGC_SERVER_PASS: "A5_xYY#HqNiao_12#b"
+            # GOST_MQTT_PREFIX: GOST/
+
+            # LISTENING_ADDRESS: "0.0.0.0"
+            # LISTENING_PORT: 8000
+
+            # UPDATE_INTERVAL: 60
+            # VERBOSE: 1

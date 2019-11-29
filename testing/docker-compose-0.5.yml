@@ -12,10 +12,10 @@ services:
             - mosquitto_data:/mqtt/data
             - mosquitto_conf:/mqtt/config:ro
         ports:
-            - "1883:1883"
+            - "1884:1883"
             - "9001:9001"
     gost-db:
-        image: geodan/gost-db
+        image: geodan/gost-db:0.5
         volumes:
             - postgis:/var/lib/postgresql/data
         environment:
@@ -23,25 +23,21 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
     gost:
-        image: geodan/gost
-        volumes:
-            - gost_conf:/gostserver/config
+        image: geodan/gost:0.5
         depends_on:
             - mosquitto
             - gost-db
         environment:
-            GOST_DB_HOST: gost-db
-            GOST_MQTT_HOST: mosquitto
+            gost_db_host: gost-db
+            gost_mqtt_host: mosquitto
     dashboard:
-        container_name: GOST_DASHBOARD
-        image: geodan/gost-dashboard
+        image: geodan/gost-dashboard:0.5
         ports:
-            - "8080:8080"
+          - "8080:8080"
         depends_on:
             - gost
 volumes:
     postgis: {}
     nodered: {}
-    gost_conf: {}
     mosquitto_data: {}
     mosquitto_conf: {}

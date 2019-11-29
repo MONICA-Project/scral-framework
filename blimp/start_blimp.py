@@ -60,11 +60,11 @@ def main():
         BLIMP_NAME = args[BLIMP_NAME_KEY]
     except KeyError:
         logging.warning("No "+BLIMP_NAME_KEY+" specified. Default name was used '"+BLIMP_NAME+"'")
-    try:
-        catalog_name = args[CATALOG_NAME_KEY]
-    except KeyError:
-        catalog_name = args[PILOT_KEY] + "_Blimp.json"
-        logging.warning("No "+CATALOG_NAME_KEY+" specified. Default name was used '"+catalog_name+"'")
+    # try:
+    #     catalog_name = args[CATALOG_NAME_KEY]
+    # except KeyError:
+    #     catalog_name = args[PILOT_KEY] + "_Blimp.json"
+    #     logging.warning("No "+CATALOG_NAME_KEY+" specified. Default name was used '"+catalog_name+"'")
 
     # runtime
     scral_module.runtime(flask_instance, ENABLE_CHERRYPY)

@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 This part will contain project for future releases.
 
-## [2.4] - 2019-11-14
+## [2.4] - 2019-xx-xx
 This update introduces the possibility to configure a SCRAL module through Environmental Variable (and so through docker-compose file also).
 Now, SCRAL has an official logo!
 

@@ -1,4 +1,4 @@
-version: '3.5'
+version: '2'
 services:
     node-red:
         image: nodered/node-red-docker:slim-v8
@@ -12,10 +12,10 @@ services:
             - mosquitto_data:/mqtt/data
             - mosquitto_conf:/mqtt/config:ro
         ports:
-            - "1884:1883"
+            - "1883:1883"
             - "9001:9001"
     gost-db:
-        image: geodan/gost-db:0.5
+        image: geodan/gost-db
         volumes:
             - postgis:/var/lib/postgresql/data
         environment:
@@ -23,17 +23,19 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
     gost:
-        image: geodan/gost:0.5
+        image: geodan/gost
+        volumes:
+            - gost_conf:/gostserver/config
         depends_on:
             - mosquitto
             - gost-db
         environment:
-            gost_db_host: gost-db
-            gost_mqtt_host: mosquitto
+            GOST_DB_HOST: gost-db
+            GOST_MQTT_HOST: mosquitto
     dashboard:
-        image: geodan/gost-dashboard:0.5
+        image: geodan/gost-dashboard
         ports:
-          - "8080:8080"
+            - "8080:8080"
         depends_on:
             - gost
     scral:
@@ -61,13 +63,14 @@ services:
             # LISTENING_PORT: 8000
             VERBOSE: 1
             # UPDATE_INTERVAL: 60
-#   mqtt-listener:
-#       image: scral/quickstart:mqtt_subscriber
-#       depends_on:
-#           - mosquitto
+   mqtt-listener:
+      image: scral/quickstart:mqtt_subscriber
+      depends_on:
+          - mosquitto
 
 volumes:
     postgis: {}
     nodered: {}
+    gost_conf: {}
     mosquitto_data: {}
     mosquitto_conf: {}

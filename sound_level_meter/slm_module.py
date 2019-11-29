@@ -80,7 +80,7 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
     def update_cloud_token(self):
         """ Updates the cloud access token by using available credentials """
         self._cloud_token = rest_util.get_server_access_token(self._url_login, self._credential, REST_HEADERS,
-                                                         self._token_prefix, self._token_suffix)
+                                                              self._token_prefix, self._token_suffix)
 
     # noinspection PyMethodOverriding
     def runtime(self, flask_instance: Flask, mode: int = ENABLE_CHERRYPY):
