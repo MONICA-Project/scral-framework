@@ -213,7 +213,7 @@ def scral_ogc_startup(scral_module_class: SCRALModule.__class__, args: dict) -> 
     try:
         catalog_name = args[CATALOG_NAME_KEY]
     except KeyError:
-        catalog_name = args[PILOT_KEY] + "_resource-catalog.json"
+        catalog_name = args[PILOT_KEY] + "_" + str(scral_module_class.__name__) + "_resource-catalog.json"
         logging.warning("No " + CATALOG_NAME_KEY + " specified. Default name was used '" + catalog_name + "'")
 
     return ogc_config, filename_connection, catalog_name
@@ -222,13 +222,17 @@ def scral_ogc_startup(scral_module_class: SCRALModule.__class__, args: dict) -> 
 def initialize_module(description: str, abs_path: str, scral_module_class: SCRALModule.__class__)\
         -> (SCRALModule, dict, Dict[str, str]):
 
+    # if CONFIG is set to "custom":
     if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE.lower():
         ogc_config, args, doc, pilot_name, catalog_name = startup_module_custom(scral_module_class, abs_path)
         module = scral_module_class(ogc_config, None, pilot_name, catalog_name)
+    # if CONFIG not set up to "custom":
     else:
+        # if CONFIG is set to a "pilot_name":
         if D_CONFIG_KEY in os.environ.keys():
             pilot_name = os.environ[D_CONFIG_KEY].lower()
             logging.info("Configuration environment variable recognized\nCONFIG: " + pilot_name)
+        # if CONFIG not set up:
         else:
             cmd_line = parse_small_command_line(description)
             pilot_name = cmd_line.pilot.lower()

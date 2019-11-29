@@ -1,0 +1,12 @@
+{
+  "module_name": "SCRAL Noise App",
+  "endpoint_port": 8000,
+  "endpoint_url": "localhost",
+
+  "connection_file": "connection_config_local.json",
+  "ogc_file": "ogc_config_noise_app.conf",
+  "pilot": "local",
+
+  "catalog_name": "local_noise-app.json",
+  "verbose": true
+}

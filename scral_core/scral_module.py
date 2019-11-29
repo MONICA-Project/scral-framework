@@ -83,8 +83,8 @@ class SCRALModule(object):
             verbose = True
             logging_level = logging.DEBUG
         else:
-            logging_level = logging.INFO
             verbose = False
+            logging_level = logging.INFO
 
         # 1) logging initialization
         util.init_logger(logging_level)

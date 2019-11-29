@@ -54,12 +54,10 @@ class SCRALGPSPoll(SCRALGPS):
         self._mqtt_subscriber.on_disconnect = mqtt_util.automatic_reconnection
         self._mqtt_subscriber.on_message = self.on_message_received
 
-        # Creating subscribing broker
+        # Loading broker info
         connection_config_file = util.load_from_file(connection_file)
         self._sub_broker_address = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEY]
         self._sub_broker_port = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_PORT_KEY]
-        logging.info("Connecting to broker: %s:%s for listening" % (self._sub_broker_address,  self._sub_broker_port))
-        logging.debug("Client id is: '" + BROKER_HAMBURG_CLIENT_ID + "'")
         try:
             self._sub_broker_keepalive = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEEP_KEY]
         except KeyError:
@@ -67,6 +65,9 @@ class SCRALGPSPoll(SCRALGPS):
                 "No subscribing broker keepalive specified, will be used the default one: "+str(DEFAULT_KEEPALIVE)+" s")
             self._sub_broker_keepalive = DEFAULT_KEEPALIVE
 
+        # broker connection test
+        logging.info("Connecting to broker: %s:%s for listening" % (self._sub_broker_address, self._sub_broker_port))
+        logging.debug("Client id is: '" + BROKER_HAMBURG_CLIENT_ID + "'")
         self._mqtt_subscriber.connect(self._sub_broker_address,  self._sub_broker_port, self._sub_broker_keepalive)
 
     # noinspection PyMethodOverriding
