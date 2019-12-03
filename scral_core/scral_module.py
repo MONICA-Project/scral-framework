@@ -36,7 +36,7 @@ import os
 import random
 import sys
 from abc import abstractmethod
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import arrow
 import paho.mqtt.client as mqtt
@@ -51,6 +51,7 @@ from scral_core.constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, DEFAULT_UP
 
 from scral_core.ogc_configuration import OGCConfiguration
 from scral_core import util, mqtt_util, rest_util
+from scral_ogc import OGCDatastream, OGCObservation
 
 verbose = False
 
@@ -83,8 +84,8 @@ class SCRALModule(object):
             verbose = True
             logging_level = logging.DEBUG
         else:
-            logging_level = logging.INFO
             verbose = False
+            logging_level = logging.INFO
 
         # 1) logging initialization
         util.init_logger(logging_level)
@@ -398,6 +399,84 @@ class SCRALModule(object):
             It manages the runtime operation of the module.
         """
         raise NotImplementedError("Implement runtime method in subclasses")
+
+    def ogc_simple_datastream_registration(self, device_id: str, description: Optional[str] = None,
+                                           x: Optional[float] = 0.0, y: Optional[float] = 0.0,
+                                           uom: Optional[dict] = None) -> Union[OGCDatastream, bool]:
+        """ This method could be used only in SCRAL modules with only 1 THING, 1 SENSOR and 1 OBSERVEDPROPERTY (OGC).
+
+        :param device_id: The id of the device to register (will be part of the datastream name.
+        :param description: A description to assign to the DATASTREAM.
+        :param x: longitude coordinate.
+        :param y: latitude coordinate.
+        :param uom: Unit of Measurement.
+        :return: The DATASTREAM id.
+        """
+        if self._ogc_config is None:
+            return False
+        if device_id in self._resource_catalog:
+            return True
+        else:
+            self._resource_catalog[device_id] = {}
+
+        # Supposing to have just 1 OGC THING
+        thing = self._ogc_config.get_thing()
+        # Supposing to have just 1 OGC SENSOR
+        sensor = self._ogc_config.get_sensors()[0]
+        # Supposing to have just 1 OGC OBSERVED PROPERTY
+        op = self._ogc_config.get_observed_properties()[0]
+        op_name = op.get_name()
+
+        datastream_name = thing.get_name()+"/"+sensor.get_name()+"/"+op_name+"/"+device_id
+        if not description:
+            description = "Datastream for " + op.get_description()
+        if not uom:
+            uom = {"definition": op.get_definition()}
+
+        ds = OGCDatastream(name=datastream_name, description=description, x=x, y=y, unit_of_measurement=uom,
+                           ogc_thing_id=thing.get_id(), ogc_sensor_id=sensor.get_id(), ogc_property_id=op.get_id())
+        datastream_id = self._ogc_config.entity_discovery(
+            ds, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
+        ds.set_id(datastream_id)
+        self._ogc_config.add_datastream(ds)
+
+        self._resource_catalog[device_id][op_name] = datastream_id
+        topic = self._topic_prefix + "Datastreams"
+        mqtt_payload = {"device_id": device_id,
+                        "observed_property": op_name,
+                        "datastream_id": datastream_id}
+        self.mqtt_publish(topic, json.dumps(mqtt_payload), to_print=True)
+        self.update_file_catalog()
+
+        return ds
+
+    def _ogc_observation_registration(self, device_id: str, observed_property: str, payload: dict,
+                                     phenomenon_time: Optional[str] = arrow.utcnow(),
+                                     force_registration: Optional[bool] = False) -> Union[bool, None]:
+
+        if device_id not in self._resource_catalog:
+            if force_registration:
+                ok = self.ogc_simple_datastream_registration(device_id)
+                if not ok:
+                    logging.error('Forced registration of device: "' + device_id + "' failed!")
+                    return None
+
+        observation_time = str(arrow.utcnow())
+
+        logging.debug('Device:"' + device_id + '", Property:"' + observed_property + '", PhenomenonTime: "' +
+                      phenomenon_time + ', Payload:\n' + json.dumps(payload))
+
+        datastream_id = self._resource_catalog[device_id][observed_property]
+        topic = self._topic_prefix + "Datastreams(" + str(datastream_id) + ")/Observations"
+
+        # Create OGC Observation and publish
+        ogc_observation = OGCObservation(datastream_id, phenomenon_time, payload, observation_time)
+        observation_payload = json.dumps(ogc_observation.get_rest_payload())
+
+        mqtt_result = self.mqtt_publish(topic=topic, payload=observation_payload, to_print=False)
+        self._update_active_devices_counter()
+        return mqtt_result
+
 
 # def ogc_datastream_registration(self, ogc_devices_server_url: str, certificate_path: Optional[str] = None):
     #     """ It manages the registration of the data inside OGC server. """
