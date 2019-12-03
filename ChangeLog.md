@@ -15,7 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 This part will contain project for future releases.
 
-## [2.4] - 2019-xx-xx
+## [2.5] - 2019-12-03
+This update introduces a new integration module: the noise-application manager.
+This module is considered as an external platform, so it should be deployed on ports 88xx.
+
+### Added
+- noise_app manager module
+
+
+## [2.4] - 2019-11-29
 This update introduces the possibility to configure a SCRAL module through Environmental Variable (and so through docker-compose file also).
 Now, SCRAL has an official logo!
 
@@ -29,7 +37,8 @@ Now, SCRAL has an official logo!
     - print the time elapsed to build and push the docker image;
     
 ### Changed
-- Subscribing MQTT broker of "gps_tracker_poll" module is no more hard-coded, it is now settable through "connection_file". 
+- Subscribing MQTT broker of "gps_tracker_poll" module is no more hard-coded, it is now settable through "connection_file".
+- docker-compose.yml and docker-compose-scral.yml use now the last GOST version. The original docker-compose.yml is moved in "testing" folder and renamed "docker-compose-0.5.yml". 
 
 ### Fixed
 - Fixed an issue of name shadowing of "active_devices" in SLM module; 
