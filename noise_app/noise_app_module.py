@@ -15,24 +15,24 @@ import logging
 import os
 import time
 import zipfile
+from json import JSONDecodeError
 from threading import Thread
 
-import Properties as Properties
+from jproperties import Properties
 import arrow
 import requests
-import rest_util
 from flask import Flask
 
 
-from ogc_configuration import OGCConfiguration
+from scral_core.ogc_configuration import OGCConfiguration
 
 from scral_core.constants import ENABLE_FLASK, CATALOG_FILENAME, D_CONFIG_KEY, D_CUSTOM_MODE, \
-    ERROR_MISSING_ENV_VARIABLE, ERROR_MISSING_CONNECTION_FILE, ADDRESS_KEY, SEMICOLON
+    ERROR_MISSING_ENV_VARIABLE, ERROR_MISSING_CONNECTION_FILE, ADDRESS_KEY, SEMICOLON, PHENOMENON_TIME_KEY
 from scral_core.rest_module import SCRALRestModule
-from scral_core import util
+from scral_core import util, rest_util
 
 from noise_app.constants import NOISE_PARTY_ID_KEY, GEO_SERVER_KEY, REST_NOISE_PREFIX_REQUEST, \
-    REST_NOISE_PARTY, TIME_TO_SLEEP, DATA_KEY, METADATA_KEY, ID_KEY
+    REST_NOISE_PARTY, TIME_TO_SLEEP, DATA_KEY, METADATA_KEY, ID_KEY, REST_NOISE_DATE_FILTER
 
 
 class SCRALNoiseApp(SCRALRestModule):
@@ -77,13 +77,28 @@ class SCRALNoiseApp(SCRALRestModule):
     def noise_capture_manager(self):
         noise_party_url = self._geo_server_address + REST_NOISE_PREFIX_REQUEST \
                           + REST_NOISE_PARTY + str(self._noise_party_id) + SEMICOLON
+        datafilter_url = noise_party_url + REST_NOISE_DATE_FILTER
 
+        # timestamp = "2019-10-12T13:10:22"
         while self._run:
             timestamp = str(arrow.utcnow()).split(".")[0]
-            url = noise_party_url + timestamp
+            url = datafilter_url + timestamp
 
             response = requests.get(url)
-            tracks = response.json()
+            if not response or not response.ok:
+                logging.error("Wrong response: Wrong request or geoserver down. Request time: "+timestamp)
+                time.sleep(TIME_TO_SLEEP)
+                continue
+
+            try:
+                tracks = response.json()
+            except JSONDecodeError:
+                logging.warning("Wrong response: check your request. Request time: "+timestamp)
+                time.sleep(TIME_TO_SLEEP)
+                continue
+
+            if len(tracks) < 1:
+                logging.warning("Empty response: no new tracks available at: "+timestamp)
 
             for track_dict in tracks:
                 # retrieving metadata
@@ -95,16 +110,17 @@ class SCRALNoiseApp(SCRALRestModule):
                 # Registering the device (if necessary)
                 uuid = metadata[ID_KEY]
                 if uuid not in self._resource_catalog:
-                    logging.info("Registration of device: '" + str(uuid))
-                    ok = self.ogc_datastream_registration(uuid, metadata)
+                    logging.info('Registration of device: "' + str(uuid) + '"')
+                    ok = self.ogc_simple_datastream_registration(uuid)
                     if not ok:
                         logging.error("Impossible to create a DATASTREAM for device: " + uuid)
                         continue
 
                 # Sending the OGC OBSERVATION through MQTT
-                result = self.ogc_observation_registration(metadata)
+                source_fields = {PHENOMENON_TIME_KEY: "record_utc"}
+                result = self.ogc_observation_registration(uuid, metadata)
                 if not result:
-                    logging.error("Impossible to publish on MQTT broker.")
+                    logging.error("Impossible to publish the observation on MQTT broker.")
 
             time.sleep(TIME_TO_SLEEP)
 
@@ -114,7 +130,7 @@ class SCRALNoiseApp(SCRALRestModule):
         geo_zip = requests.get(geo_link)
         z = zipfile.ZipFile(io.BytesIO(geo_zip.content))
 
-        logging.info("Files contained in zip archive: " + z.namelist())
+        logging.info("Files contained in zip archive: " + str(z.namelist()))
         meta_bytes = z.read(METADATA_KEY)
         # geojson_bytes = z.read(TRACK_KEY)
         p = Properties()
@@ -126,8 +142,15 @@ class SCRALNoiseApp(SCRALRestModule):
 
         return metadata
 
-    def ogc_datastream_registration(self, wristband_id: str, payload: dict) -> bool:
-        pass
+    def ogc_observation_registration(self, device_id, payload: dict) -> bool:
 
-    def ogc_observation_registration(self, obs_property: str, payload: dict) -> bool:
-        pass
+        if "record_utc" in payload.keys():
+            timestamp = int(payload.pop("record_utc", False))  # Retrieving and removing the phenomenon time
+            a = arrow.get(timestamp/1000)
+            phenomenon_time = str(a)
+        else:
+            phenomenon_time = str(arrow.utcnow())
+
+        obs_property_name = self.get_ogc_config().get_observed_properties()[0].get_name()
+        result = super()._ogc_observation_registration(device_id, obs_property_name, payload, phenomenon_time)
+        return result

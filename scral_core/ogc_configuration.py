@@ -209,7 +209,7 @@ class OGCConfiguration:
 
     @staticmethod
     def entity_discovery(ogc_entity, url_entity: str, url_filter: str, verbose: bool = False) -> int:
-        """ This method retrieves the @iot.id associated to an OGC resource automaticcaly assigned by the server.
+        """ This method retrieves the @iot.id associated to an OGC resource automatically assigned by the server.
             If the entity was not already registered, it will be uploaded on the OGC Server and the @iot.id is returned.
 
         :param ogc_entity: An object from scral_ogc package containing the data of the OGC entity.

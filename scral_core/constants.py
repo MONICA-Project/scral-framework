@@ -151,6 +151,9 @@ TIMESTAMP_KEY = "timestamp"
 LATITUDE_KEY = "latitude"
 LONGITUDE_KEY = "longitude"
 
+# OGC PAYLOAD KEYS
+PHENOMENON_TIME_KEY = "phenomenonTime"
+
 # Docker Compose constants
 D_CONFIG_KEY = "CONFIG"
 D_PUB_BROKER_URI_KEY = "PUB_BROKER_URI"
