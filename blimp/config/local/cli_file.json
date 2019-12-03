@@ -1,5 +1,5 @@
 {
-  "module_name": "SCRAL Sound Level Meter",
+  "module_name": "SCRAL Blimp",
   "endpoint_port": 8000,
   "endpoint_url": "localhost",
 

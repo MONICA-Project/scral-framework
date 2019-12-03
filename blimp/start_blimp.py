@@ -52,7 +52,7 @@ def main():
     module_description = "SCRAL Blimps integration instance"
     abs_path = os.path.abspath(os.path.dirname(__file__))
     global scral_module, DOC
-    scral_module, args, doc = util.initialize_module(module_description, abs_path, SCRALBlimp)
+    scral_module, args, DOC = util.initialize_module(module_description, abs_path, SCRALBlimp)
 
     # Taking additional parameters
     global BLIMP_NAME

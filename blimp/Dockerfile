@@ -39,3 +39,5 @@ ENTRYPOINT python3 scral_startup.py
 # ENTRYPOINT python3 scral_startup.py -p WT
 ## KFF
 # ENTRYPOINT python3 scral_startup.py -p KFF
+## MOVIDA
+# ENTRYPOINT python3 scral_startup.py -p MOVIDA
