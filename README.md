@@ -3,29 +3,20 @@
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 ![Language: Python3](https://img.shields.io/badge/language-python3-blue.svg)
 
-![Logo](images/SCRAL-Logo-reduced.png)
+![Logo](images/SCRAL-Logo-V1.1.png)
+
+<!-- Short description of the project -->
+
+The Smart City Resource Adaptation Layer (*SCRAL*) is a framework used in MONICA european project to manage several
+different kinds of IoT devices.
 
 
 ## Getting Started
-*SCRAL* is a tool for [...]
+<!-- Instruction to make the project up and running. -->
 
-### Install
-SCRAL requires Python 3 or greater (it was tested on Python 3.7 so it is suggested to install at least that version).
-
-#### Clone the repository
-```
-git clone https://git.pertforge.ismb.it/monica/scral-python-3
-```
-
-#### Libraries
-Here insert possible necessary libraries.
-
-#### Python packages
-To install the required python3 packages:
-```
-pip3 install -r requirements.txt
-```
-
+SCRAL could be started as a Python 3 application but we suggest you to start using it downloading one of the *quickstart*
+Docker containers that you can find on this [Docker Hub repository](https://hub.docker.com/r/monicaproject/scral).
+SCRAL was tested mainly with Python 3.6 so it is suggested to install at least that version.
 
 ### How to use SCRAL
 ```
@@ -75,26 +66,54 @@ ex 3
 ./scral.py -h
 ```
 
+## Deployment
+<!-- Deployment/Installation instructions. If this is software library, change this section to "Usage" and give usage examples -->
 
-## Other information
-Insert here more relevant information.
+To deploy a new SCRAL image, modify to your needs one of the dockerfile already contained in each module folder.
 
+### Docker
+To start using SCRAL is strongly suggest to take a Docker image *as is* and to configure properly the environmental variables.
+An update list of the configurable variable is available in the [Docker hub repository](https://hub.docker.com/r/monicaproject/scral).
 
-## Next steps
-SCRAL is still under active development. Several extensions will be available soon.
+### Prerequisite
+SCRAL requires:
+ - Python packages:
+    - [Eclipse Paho](https://pypi.org/project/paho-mqtt/)
+    - [Flask](http://flask.palletsprojects.com)
+    - [CherryPy](https://cherrypy.org/)
+    - [arrow](https://pypi.org/project/arrow/)
+    - [requests](https://pypi.org/project/requests/)
+    - [configparser](https://pypi.org/project/configparser/)
+ - Docker (to be containerized or to be used "as is")
 
-* nuova cosa 1
-* nuova cosa 2
-* nuova cosa 3
+#### Libraries
+Here insert possible necessary libraries.
 
+#### Python packages
+To install the required python3 packages:
+```
+pip3 install -r requirements.txt
+```
 
-## Contacts
-Feel free to contact [Jacopo Foglietti](http://ismb.it/jacopo.foglietti/) or [Luca Mannella](http://ismb.it/luca.mannella)
-for any ideas, improvements, and questions.
+### Test
+SCRAL does not have at the moment a test suite.
+Feel free to contribute if you want! :)
+
+### Build
+SCRAL is mainly written in Python 3 (that is an interpreted language) and so it could just be started without building anything.
 
 
 ## Licensing
-**Copyright © 2019 [Jacopo Foglietti](http://ismb.it/jacopo.foglietti/)
+**Copyright © 2017-2020 [Jacopo Foglietti](http://ismb.it/jacopo.foglietti/)
 and [Luca Mannella](http://ismb.it/luca.mannella) for [LINKS Foundation](http://linksfoundation.com/).**
 
 *SCRAL* is licensed under the 2-Clause BSD License ([BSD-2-Clause](https://opensource.org/licenses/BSD-2-Clause)).
+
+## Contributing
+Contributions are welcome. 
+
+Please fork, make your changes, and submit a pull request. For major changes, please open an issue first and discuss it with the other authors.
+
+## Affiliation
+![MONICA](https://github.com/MONICA-Project/template/raw/master/monica.png)  
+This work is supported by the European Commission through the [MONICA H2020 PROJECT](https://www.monica-project.eu) under grant agreement No 732350.
