@@ -24,8 +24,6 @@ import requests
 from flask import Flask
 
 
-from scral_core.ogc_configuration import OGCConfiguration
-
 from scral_core.constants import ENABLE_FLASK, CATALOG_FILENAME, D_CONFIG_KEY, D_CUSTOM_MODE, \
     ERROR_MISSING_ENV_VARIABLE, ERROR_MISSING_CONNECTION_FILE, ADDRESS_KEY, SEMICOLON, PHENOMENON_TIME_KEY
 from scral_core.rest_module import SCRALRestModule
@@ -37,7 +35,7 @@ from noise_app.constants import NOISE_PARTY_ID_KEY, GEO_SERVER_KEY, REST_NOISE_P
 
 class SCRALNoiseApp(SCRALRestModule):
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
+    def __init__(self, ogc_config: "OGCConfiguration", connection_file: str, pilot: str,
                  catalog_name: str = CATALOG_FILENAME):
 
         super().__init__(ogc_config, connection_file, pilot, catalog_name)
@@ -79,9 +77,12 @@ class SCRALNoiseApp(SCRALRestModule):
                           + REST_NOISE_PARTY + str(self._noise_party_id) + SEMICOLON
         datafilter_url = noise_party_url + REST_NOISE_DATE_FILTER
 
-        # timestamp = "2019-10-12T13:10:22"
+        # ts = "2019-12-04T11:02:58"
+        # most_recent_ts = arrow.get(ts)
+        most_recent_ts = arrow.utcnow()
         while self._run:
-            timestamp = str(arrow.utcnow()).split(".")[0]
+            ts_without_timezone = str(most_recent_ts).split("+")[0]
+            timestamp = str(ts_without_timezone).split(".")[0]
             url = datafilter_url + timestamp
 
             response = requests.get(url)
@@ -101,6 +102,10 @@ class SCRALNoiseApp(SCRALRestModule):
                 logging.warning("Empty response: no new tracks available at: "+timestamp)
 
             for track_dict in tracks:
+                current_ts = arrow.get(track_dict["record_utc"])
+                if current_ts > most_recent_ts:
+                    most_recent_ts = current_ts
+
                 # retrieving metadata
                 metadata = self.get_noise_capture_metadata(track_dict)
                 if not metadata:
