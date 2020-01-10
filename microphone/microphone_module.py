@@ -18,12 +18,12 @@ from scral_ogc import OGCObservation
 
 from scral_core.ogc_configuration import OGCConfiguration
 from scral_core.constants import CATALOG_FILENAME
-from scral_core.scral_module import SCRALModule
+from scral_core.rest_module import SCRALRestModule
 
 from microphone.constants import NAME_KEY, SEQUENCES_KEY
 
 
-class SCRALMicrophone(SCRALModule):
+class SCRALMicrophone(SCRALRestModule):
     """ Resource manager for integration of Phonometers. """
 
     def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
@@ -84,6 +84,3 @@ class SCRALMicrophone(SCRALModule):
             self._publish_mutex.release()
 
         return to_ret
-
-    def runtime(self):
-        raise NotImplementedError

@@ -29,7 +29,6 @@ from scral_ogc import OGCDatastream, OGCObservedProperty
 from scral_core.constants import REST_HEADERS, CATALOG_FILENAME, ENABLE_CHERRYPY, COORD
 from scral_core import util, rest_util
 from scral_core.ogc_configuration import OGCConfiguration
-from scral_core.rest_module import SCRALRestModule
 
 from microphone.microphone_module import SCRALMicrophone
 from microphone.constants import SEQUENCES_KEY
@@ -38,7 +37,7 @@ from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, MIN5_IN_
     DEVICE_NAME_KEY, CLOUD_KEY, SITE_NAME_KEY, TENANT_ID_KEY, SITE_ID_KEY, AD_NAME_KEY, AD_COORD_KEY, AD_DESCRIPTION_KEY
 
 
-class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
+class SCRALSoundLevelMeter(SCRALMicrophone):
     """ Resource manager for integration of the SLM-GW (by usage of B&K's IoT Sound Level Meters). """
 
     def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
@@ -82,7 +81,6 @@ class SCRALSoundLevelMeter(SCRALRestModule, SCRALMicrophone):
         self._cloud_token = rest_util.get_server_access_token(self._url_login, self._credential, REST_HEADERS,
                                                               self._token_prefix, self._token_suffix)
 
-    # noinspection PyMethodOverriding
     def runtime(self, flask_instance: Flask, mode: int = ENABLE_CHERRYPY):
         """
         This method discovers active SLMs from B&K cloud, registers them as OGC Datastreams into the MONICA

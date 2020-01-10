@@ -18,6 +18,7 @@ RUN mkdir /monica_scral/catalogs
 VOLUME /monica_scral/catalogs
 ENV OGC_FILE "ogc_config_phonometer.conf"
 
+RUN pip3 install --no-cache-dir -r scral_core/requirements.txt
 RUN pip3 install --no-cache-dir -r phonometer/requirements.txt
 RUN pip3 install -e phonometer
 

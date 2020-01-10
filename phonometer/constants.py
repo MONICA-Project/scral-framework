@@ -15,10 +15,15 @@
     This file contains useful constants for this module.
 """
 
+# URI
 URL_CLOUD = "https://api.smartdatanet.it/api"
 URL_TENANT = "https://api.smartdatanet.it/metadataapi/api/v02/search?tenant=cittato_rumore"
 
-ACTIVE_DEVICES = ["ds_S_07_1933"] # "ds_S_01_1928", "ds_S_02_1926", "ds_S_03_1927", "ds_S_05_1932", "ds_S_06_1931"]
+# Exposed URI
+URI_DEFAULT = "/scral/v1.0/sdn-gw"
+URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"
+
+ACTIVE_DEVICES = ["ds_S_01_1928", "ds_S_02_1926", "ds_S_03_1927", "ds_S_05_1932", "ds_S_06_1931", "ds_S_07_1933"]
 
 FREQ_INTERVALS = ["16", "20", "25", "31_5", "40", "50", "63", "80", "100", "125", "160", "200",
                   "250", "315", "400", "500", "630", "800", "1000", "1250", "1600", "2000", "2500",

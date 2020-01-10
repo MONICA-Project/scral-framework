@@ -19,12 +19,13 @@ from threading import Thread, Lock
 import requests
 from datetime import timedelta
 
+from flask import Flask
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 
 from scral_ogc import OGCDatastream, OGCObservedProperty
 
 from scral_core.constants import REST_HEADERS, CATALOG_FILENAME, COORD, LATITUDE_KEY, LONGITUDE_KEY, \
-    START_DATASTREAMS_REGISTRATION, END_DATASTREAMS_REGISTRATION, START_OBSERVATION_REGISTRATION
+    START_DATASTREAMS_REGISTRATION, END_DATASTREAMS_REGISTRATION, START_OBSERVATION_REGISTRATION, ENABLE_CHERRYPY
 from scral_core import util
 from scral_core.ogc_configuration import OGCConfiguration
 
@@ -51,15 +52,21 @@ class SCRALPhonometer(SCRALMicrophone):
 
         self._publish_mutex = Lock()
 
-    def runtime(self):
+    def runtime(self, flask_instance: Flask, mode: int = ENABLE_CHERRYPY):
         """ This method discovers active Phonometers from SDN cloud, registers them as OGC Datastreams into the MONICA
             cloud and finally retrieves sound measurements for each device by using parallel querying threads.
+
+            Furthermore, this method deploys a REST endpoint to retrieve module status information.
         """
+
         # Start Phonometer discovery and Datastream registration
         self.ogc_datastream_registration(URL_TENANT)
 
         # Start thread pool for Observations
-        self._start_thread_pool(SCRALPhonometer.PhonoThread, True)
+        self._start_thread_pool(SCRALPhonometer.PhonoThread)
+
+        # starting REST web server
+        super().runtime(flask_instance, mode)
 
     def ogc_datastream_registration(self, url: str):
         """ This method receives a target URL as parameter and discovers active Phonometers.
