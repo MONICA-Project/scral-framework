@@ -224,6 +224,7 @@ def initialize_module(description: str, abs_path: str, scral_module_class: SCRAL
 
     # if CONFIG is set to "custom":
     if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE.lower():
+        logging.debug("Custom mode")
         ogc_config, args, doc, pilot_name, catalog_name = startup_module_custom(scral_module_class, abs_path)
         module = scral_module_class(ogc_config, None, pilot_name, catalog_name)
     # if CONFIG not set up to "custom":
@@ -234,6 +235,7 @@ def initialize_module(description: str, abs_path: str, scral_module_class: SCRAL
             logging.info("Configuration environment variable recognized\nCONFIG: " + pilot_name)
         # if CONFIG not set up:
         else:
+            logging.debug("Command line + config file mode")
             cmd_line = parse_small_command_line(description)
             pilot_name = cmd_line.pilot.lower()
 
