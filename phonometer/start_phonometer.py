@@ -58,7 +58,7 @@ def get_active_devices() -> Response:
     :return: A JSON containing thr resource catalog.
     """
     logging.debug(get_active_devices.__name__ + " method called from: "+request.remote_addr)
-    return make_response(jsonify(scral_module.get_resource_catalog()), 200)
+    return make_response(jsonify(scral_module.get_active_devices()), 200)
 
 
 @flask_instance.route(URI_DEFAULT, methods=["GET"])

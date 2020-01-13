@@ -272,10 +272,11 @@ class SCRALModule(object):
         #        diff_sec = abs(diff.total_seconds())
         #        if abs(diff_sec) > 120:
         #            active_devices_count += 1
-        tmp_rc[REGISTERED_DEVICES_KEY] = len(tmp_rc)
+        registered_devices = len(tmp_rc)
         # tmp_rc["active_devices"] = active_devices_count
 
         tmp_active_devices = copy.deepcopy(self._active_devices)
+        tmp_active_devices[REGISTERED_DEVICES_KEY] = registered_devices
         try:
             tmp_active_devices[LAST_UPDATE_KEY] = str(tmp_active_devices[LAST_UPDATE_KEY])
         except KeyError:

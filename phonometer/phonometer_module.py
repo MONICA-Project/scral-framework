@@ -203,6 +203,7 @@ class SCRALPhonometer(SCRALMicrophone):
             while True:
                 try:
                     now = arrow.utcnow()
+                    # change parameters of "from_utc_to_query" is milliseconds are required
                     query_ts_start = util.from_utc_to_query(now - timedelta(seconds=UPDATE_INTERVAL), True, False)
                     query_ts_end = util.from_utc_to_query(now, True, False)
 
@@ -236,15 +237,27 @@ class SCRALPhonometer(SCRALMicrophone):
 
                         # Registering LAEq value in GOST
                         datastream_id = rc[self._device_id][LAEQ_KEY]
-                        phenomenon_time = query_ts_start
-                        observation_result = {VALUE_TYPE_KEY: LAEQ_KEY, RESPONSE_KEY: data_laeq}
+                        phenomenon_time = query_ts_start[:-1]+".000Z"
+                        response = {"value": [{
+                            "values": data_laeq,
+                            "startTime": phenomenon_time,
+                            "endTime": query_ts_end[:-1]+".000Z"
+                        }]}
+
+                        observation_result = {VALUE_TYPE_KEY: LAEQ_KEY, RESPONSE_KEY: response}
                         self._phonometer_module.ogc_observation_registration(
                             datastream_id, phenomenon_time, observation_result)
 
-                        # Registering spectra value in GOST
+                        # Registering spectra value in GOST (CBPLZeq)
                         datastream_id = rc[self._device_id][SPECTRA_KEY]
-                        phenomenon_time = query_ts_start
-                        observation_result = {VALUE_TYPE_KEY: SPECTRA_KEY, RESPONSE_KEY: data_spectra}
+                        phenomenon_time = query_ts_start[:-1]+".000Z"
+                        response = {"value": [{
+                            "values": data_spectra,
+                            "startTime": phenomenon_time,
+                            "endTime": query_ts_end[:-1]+".000Z"
+                        }]}
+
+                        observation_result = {VALUE_TYPE_KEY: SPECTRA_KEY, RESPONSE_KEY: response}
                         self._phonometer_module.ogc_observation_registration(
                             datastream_id, phenomenon_time, observation_result)
                     else:
