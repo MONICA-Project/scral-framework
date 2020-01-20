@@ -16,7 +16,7 @@ from typing import List, Dict, Union
 
 import requests
 
-from scral_ogc import OGCThing, OGCLocation, OGCSensor, OGCObservedProperty, OGCDatastream, OGCObservation
+from scral_ogc import OGCThing, OGCLocation, OGCSensor, OGCObservedProperty, OGCDatastream
 from scral_core import util
 from scral_core.constants import REST_HEADERS, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, OGC_ID_KEY
 
@@ -208,6 +208,25 @@ class OGCConfiguration:
         logging.info("--- End of OGC discovery ---\n")
 
     @staticmethod
+    def entity_registration(ogc_entity, url_entity: str):
+        """ This method register an OGC entity on the OGC server.
+
+        :param ogc_entity: An object from scral_ogc package containing the data of the OGC entity.
+        :param url_entity: The URL of the request.
+        :return: Returns the @iot.id of the entity if it is correctly registered,
+                 if something goes wrong during registration, an exception will be thrown.
+        """
+        payload = ogc_entity.get_rest_payload()
+        r = requests.post(url=url_entity, data=json.dumps(payload),
+                          headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
+        json_string = r.json()
+        if OGC_ID_KEY not in json_string:
+            raise ValueError("The Entity ID is not defined for: '" + ogc_entity.get_name() + "'\n" +
+                             "Please check the REST request!")
+        else:
+            return json_string[OGC_ID_KEY]
+
+    @staticmethod
     def entity_discovery(ogc_entity, url_entity: str, url_filter: str, verbose: bool = False) -> int:
         """ This method retrieves the @iot.id associated to an OGC resource automatically assigned by the server.
             If the entity was not already registered, it will be uploaded on the OGC Server and the @iot.id is returned.
@@ -226,19 +245,13 @@ class OGCConfiguration:
         discovery_result = r.json()['value']
 
         if not discovery_result or len(discovery_result) == 0:  # if response is empty
+            # This is a new OGC Entity.
             logging.info(ogc_entity_name + " not yet registered, registration is starting now!")
-            payload = ogc_entity.get_rest_payload()
-            r = requests.post(url=url_entity, data=json.dumps(payload),
-                              headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
-            json_string = r.json()
-            if OGC_ID_KEY not in json_string:
-                raise ValueError("The Entity ID is not defined for: '" + ogc_entity_name + "'\n" +
-                                 "Please check the REST request!")
-
-            return json_string[OGC_ID_KEY]
-
+            ogc_id = OGCConfiguration.entity_registration(ogc_entity, url_entity)
+            return ogc_id
         else:
             if len(discovery_result) > 1:
+                # Something wrong in our model: no duplicate entity!
                 logging.critical("Verify OGC-naming! Duplicate found for entity: <"+ogc_entity_name+">.")
                 logging.debug("Current Filter: '" + url_filter + "'")
                 if verbose:
@@ -247,7 +260,56 @@ class OGCConfiguration:
                 raise ValueError("Multiple results for same Entity name: " + ogc_entity_name + "!")
 
             else:
+                # OGC entity already exists, returning its OGC id.
                 return discovery_result[0][OGC_ID_KEY]
+
+    @staticmethod
+    def entity_override(ogc_entity, url_entity: str, url_filter: str = "") -> int:
+        """ This method register or overrides an OGC resource in the OGC server and returns its @iot.id.
+
+        :param ogc_entity: An object from scral_ogc package containing the data of the OGC entity.
+        :param url_entity: The URL of the request.
+        :param url_filter: The filter to apply.
+        :return: Returns the @iot.id of the entity if it is correctly registered,
+                 if something goes wrong during registration, an exception will be thrown.
+        """
+        ogc_entity_name = ogc_entity.get_name()
+        url_discovery = url_entity + url_filter + "'" + ogc_entity_name + "'"
+
+        r = requests.get(url=url_discovery, headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
+        discovery_result = r.json()['value']
+
+        if not discovery_result or len(discovery_result) == 0:  # if response is empty
+            # This is a new OGC Entity.
+            logging.info(ogc_entity_name + " not yet registered, registration is starting now!")
+            ogc_id = OGCConfiguration.entity_registration(ogc_entity, url_entity)
+            return ogc_id
+
+        elif len(discovery_result) > 1:
+            # Something wrong in our model: no duplicate entity!
+            logging.critical("Verify OGC-naming! Duplicate found for entity: <" + ogc_entity_name + ">.")
+            logging.debug("Current Filter: '" + url_filter + "'")
+
+            for res in discovery_result:
+                logging.debug(str(res))
+            raise ValueError("Multiple results for same Entity name: " + ogc_entity_name + "!")
+
+        else:
+            # Patching the previous entity with new data.
+            ogc_id = discovery_result[0][OGC_ID_KEY]
+            ogc_entity.set_id(ogc_id)
+            payload = ogc_entity.get_rest_payload()
+            url_patch = url_entity + "(" + str(ogc_id) + ")"
+            r = requests.patch(url=url_patch, data=json.dumps(payload),
+                               headers=REST_HEADERS, auth=(OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD))
+            json_string = r.json()
+            if OGC_ID_KEY not in json_string:
+                raise ValueError("The Entity ID is not defined for: '" + ogc_entity.get_name() + "'\n" +
+                                 "Please check the REST request!")
+            elif json_string[OGC_ID_KEY] != ogc_id:
+                raise ValueError('A new entity is created for: "' + ogc_entity.get_name() + '"')
+            else:
+                return json_string[OGC_ID_KEY]
 
     def delete_datastream(self, datastream_id: int) -> bool:
         url = self.URL_DATASTREAMS + "("+str(datastream_id)+")"
