@@ -44,3 +44,10 @@ class OGCDatastream:
             "Thing": {"@iot.id": self._ogc_thing_id}, "ObservedProperty": {"@iot.id": self._ogc_property_id},
             "Sensor": {"@iot.id": self._ogc_sensor_id},
         }
+
+    def __str__(self):
+        to_return = self.get_rest_payload()
+        if self._id:
+            to_return["@iot.id"] = self._id
+
+        return str(to_return)

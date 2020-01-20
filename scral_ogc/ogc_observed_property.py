@@ -31,6 +31,13 @@ class OGCObservedProperty:
             "definition": self._definition
         }
 
+    def __str__(self):
+        to_return = self.get_rest_payload()
+        if self._id:
+            to_return["@iot.id"] = self._id
+
+        return str(to_return)
+
     def __eq__(self, other: "OGCObservedProperty") -> bool:
         if self.get_id() == other.get_id():
             if self.get_name() == other.get_name():

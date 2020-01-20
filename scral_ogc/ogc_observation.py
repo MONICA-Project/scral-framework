@@ -25,3 +25,10 @@ class OGCObservation:
                 "@iot.id": self._ogc_datastream_id
             }
         }
+
+    def __str__(self):
+        to_return = self.get_rest_payload()
+        if self._id:
+            to_return["@iot.id"] = self._id
+
+        return str(to_return)
