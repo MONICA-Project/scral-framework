@@ -28,8 +28,6 @@ from typing import Union, Optional, Dict
 
 from arrow.arrow import Arrow
 
-from scral_core.ogc_configuration import OGCConfiguration
-from scral_core.scral_module import SCRALModule
 from scral_core.constants import CREDITS, DEFAULT_CONFIG, DEFAULT_LOG_FORMATTER, DEFAULT_URL, DEFAULT_MODULE_NAME, \
     MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY, OPT_LIST, \
     CONNECTION_PATH_KEY, CONNECTION_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
@@ -200,7 +198,7 @@ def init_variables_docker(abs_path: str) -> (dict, Dict[str, str]):
     return args, doc
 
 
-def scral_ogc_startup(scral_module_class: SCRALModule.__class__, args: dict) -> (OGCConfiguration, str, str):
+def scral_ogc_startup(scral_module_class: "SCRALModule".__class__, args: dict) -> ("OGCConfiguration", str, str):
     try:
         username = args[D_OGC_USER]
         password = args[D_OGC_PWD]
@@ -219,8 +217,8 @@ def scral_ogc_startup(scral_module_class: SCRALModule.__class__, args: dict) -> 
     return ogc_config, filename_connection, catalog_name
 
 
-def initialize_module(description: str, abs_path: str, scral_module_class: SCRALModule.__class__)\
-        -> (SCRALModule, dict, Dict[str, str]):
+def initialize_module(description: str, abs_path: str, scral_module_class: "SCRALModule".__class__)\
+        -> ("SCRALModule", dict, Dict[str, str]):
 
     # if CONFIG is set to "custom":
     if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE.lower():
@@ -253,7 +251,7 @@ def initialize_module(description: str, abs_path: str, scral_module_class: SCRAL
     return module, args, doc
 
 
-def startup_module_custom(scral_module_class: SCRALModule.__class__, abs_path: str):
+def startup_module_custom(scral_module_class: "SCRALModule".__class__, abs_path: str):
     args, doc = init_variables_docker(abs_path)
     try:
         username = os.environ[D_OGC_USER]

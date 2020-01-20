@@ -58,8 +58,16 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         self.update_file_catalog()
         return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
 
+    def ogc_datastream_patch(self, resource_id: str, sensor_type: str, payload: dict) -> Response:
+        """ This function update DATASTREAMs values stored in the OGC model (e.g. unitOfMeasurement value).
+
+            CURRENTLY UNSUPPORTED: Impossible to execute a "deep patch" on GOST db.
+        """
+        raise NotImplementedError
+
     def _ogc_datastream_registration(self, resource_id: str, sensor_type: str, observed_property: OGCObservedProperty,
-                                     payload: dict, coordinates: OPT_COORD = (0.0, 0.0)) -> Union[bool, int]:
+                                     payload: dict, coordinates: OPT_COORD = (0.0, 0.0), override=False) \
+            -> Union[bool, int]:
         # Collect OGC information needed to build DATASTREAMs payload
         thing = self._ogc_config.get_thing()
         thing_id = thing.get_id()
@@ -86,16 +94,22 @@ class SCRALSecurityFusionNode(SCRALRestModule):
         datastream = OGCDatastream(name=datastream_name, description="Datastream for " + property_description,
                                    ogc_property_id=property_id, ogc_sensor_id=sensor_id, ogc_thing_id=thing_id,
                                    x=coordinates[0], y=coordinates[1], unit_of_measurement=payload)
-        datastream_id = self._ogc_config.entity_discovery(
-            datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
+        if override:  # datastream already exists, it will be updated.
+            """ Right now the usage of this functionality is discouraged. GOST does not support deep patch. """
+            datastream_id = self._ogc_config.entity_override(
+                datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
+        else:
+            # new datastream
+            datastream_id = self._ogc_config.entity_discovery(
+                datastream, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
 
         if not datastream_id:
             return False
+        else:
+            datastream.set_id(datastream_id)
+            self._ogc_config.add_datastream(datastream)
+            self._resource_catalog[resource_id][property_name] = datastream_id
 
-        datastream.set_id(datastream_id)
-        self._ogc_config.add_datastream(datastream)
-
-        self._resource_catalog[resource_id][property_name] = datastream_id
         return datastream_id
 
     def ogc_observation_registration(self, resource_id: str, obs_property: str, payload: dict) -> Union[None, bool]:

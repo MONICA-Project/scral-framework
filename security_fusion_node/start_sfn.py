@@ -76,12 +76,12 @@ def camera_request() -> Response:
         rc = scral_module.get_resource_catalog()
 
         if camera_id not in rc:
-            logging.info("Camera: '" + str(camera_id) + "' registration.")
+            logging.info('Camera: "' + str(camera_id) + '" registration.')
             response = scral_module.ogc_datastream_registration(camera_id, CAMERA_SENSOR_TYPE, request.json)
-            return response
         else:
             logging.error("Camera already registered!")
-            return make_response(jsonify({ERROR_RETURN_STRING: DUPLICATE_REQUEST}), 422)
+            response = make_response(jsonify({ERROR_RETURN_STRING: DUPLICATE_REQUEST}), 422)
+        return response
 
     elif request.method == "PUT":  # PUT
         camera_id = str(request.json[CAMERA_IDS_KEY][0])
@@ -113,7 +113,6 @@ def camera_request() -> Response:
         except KeyError:
             logging.error("Missing "+CAMERA_ID_KEY+". Delete aborted.")
             response = make_response(jsonify({ERROR_RETURN_STRING: WRONG_PAYLOAD_REQUEST}), 400)
-
         return response
     else:
         logging.critical("Unauthorized method!")
@@ -144,10 +143,10 @@ def cdg_request() -> Response:
         if cdg_module_id not in rc:
             logging.info("CDG: '" + str(cdg_module_id) + "' registration.")
             response = scral_module.ogc_datastream_registration(cdg_module_id, CDG_SENSOR_TYPE, request.json)
-            return response
         else:
             logging.error("CDG module already registered!")
-            return make_response(jsonify({ERROR_RETURN_STRING: DUPLICATE_REQUEST}), 422)
+            response = make_response(jsonify({ERROR_RETURN_STRING: DUPLICATE_REQUEST}), 422)
+        return response
 
     elif request.method == "PUT":  # PUT
         logging.info("New OBSERVATION from CDG: '" + str(cdg_module_id))
