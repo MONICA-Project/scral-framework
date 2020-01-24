@@ -2,5 +2,5 @@ paho-mqtt
 arrow==0.14.2
 requests
 configparser
-Flask==1.0.2
+flask
 cherrypy
