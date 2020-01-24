@@ -43,3 +43,12 @@ pare che qualche registrazione possa fallire se nel frattempo il catalogo viene 
 - Storage resource catalog (tramite docker volume) (?)
 - Dockerizza soluzione nginx + uwsgi + wristband
 - Integrazione sensori ambientali su blimp (ref: Sebastian from HAW, Emanuele from DIGISKY)
+
+
+
+### Cose nuove ###
+- Possiamo avere un unico file di configurazione?
+- Changelog update!
+- Possiamo togliere lo SCRAL startup? Serve solo per il dockerfile?
+- Cambiare il banner in giro
+- Mettere il GOST MQTT Prefix tra le variabili del file di configurazione
