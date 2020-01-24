@@ -39,7 +39,7 @@ services:
         depends_on:
             - gost
     scral:
-        image: scral/quickstart:${SCRAL_MODULE}
+        image: monicaproject/scral:${SCRAL_MODULE}
         container_name: "SCRAL-${SCRAL_MODULE}"
         ports:
             - "8000:8000"
@@ -58,12 +58,12 @@ services:
             # OGC_SERVER_ADDRESS: http://localhost:8080/v1.0
             OGC_SERVER_ADDRESS: http://dashboard:8080/v1.0
             # OGC_SERVER_USER: "scral"
-            # OGC_SERVER_PASS: "A5_xYY#HqNiao_12#b"
+            # OGC_SERVER_PASS: "password"
             # LISTENING_ADDRESS: "0.0.0.0"
             # LISTENING_PORT: 8000
             VERBOSE: 1
             # UPDATE_INTERVAL: 60
-   mqtt-listener:
+    mqtt-listener:
       image: scral/quickstart:mqtt_subscriber
       depends_on:
           - mosquitto
