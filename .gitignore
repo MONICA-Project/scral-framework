@@ -1,6 +1,8 @@
 ### SCRAL GitIgnore specifications
 catalogs/
 
+# JetBrain IDE
+./idea
 
 ### GitHub GitIgnore template ###
 # Byte-compiled / optimized / DLL files
