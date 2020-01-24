@@ -1,35 +1,32 @@
-FROM python:3.6-slim
+# Note: launch "docker build" from parent folder
+
+FROM python:3.6-alpine
 ARG BUILD_DATE
 LABEL build-date=$BUILD_DATE
 LABEL authors="Jacopo Foglietti, Luca Mannella"
 
 WORKDIR /monica_scral
+EXPOSE 8000
 
+COPY scral_startup.py /monica_scral
 COPY scral_ogc /monica_scral/scral_ogc
 COPY scral_core /monica_scral/scral_core
 COPY wristband /monica_scral/wristband
+
 RUN mkdir /monica_scral/catalogs
 VOLUME /monica_scral/catalogs
+ENV OGC_FILE "ogc_config_wristband.conf"
 
-RUN apt-get clean \
-   && apt-get -y update
-
-RUN apt-get -y install \
-	nginx python3-dev build-essential supervisor
-
-RUN pip3 install --no-cache-dir -r wristband/requirements.txt
+RUN pip3 install --no-cache-dir -r wristband/requirements_debug.txt
 RUN pip3 install -e wristband
 
-RUN rm /etc/nginx/sites-enabled/default
-RUN rm -r /root/.cache
+# Enabling bash and utilities
+RUN apk add --update bash
+RUN apk add nano
+RUN apk add jq
 
-COPY wristband/nginx.conf /etc/nginx
-COPY wristband/wristband_nginx.conf /etc/nginx/conf.d/
-COPY wristband/uwsgi.ini /etc/uwsgi/
-#RUN  ln -s /etc/nginx/sites-available/wristband /etc/nginx/sites-enabled/
-COPY wristband/supervisord.conf /etc/
+### local testing:
+ENTRYPOINT python3 scral_startup.py -p local
 
-RUN ls -la /monica_scral/*
-RUN ls -la /monica_scral/*/*
-
-CMD ["/usr/bin/supervisord"]
+### For using Enviromental variable use just:
+# ENTRYPOINT python3 scral_startup.py

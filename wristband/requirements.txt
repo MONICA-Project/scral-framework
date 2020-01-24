@@ -4,5 +4,3 @@ requests
 configparser
 Flask==1.0.2
 cherrypy
-uWSGI==2.0.17.1
-supervisor-stdout
