@@ -1,7 +1,7 @@
 {
   "mqtt": {
     "pub_broker": "localhost",
-    "pub_broker_port": 1884,
+    "pub_broker_port": 1883,
     "pub_broker_keepalive": 60
   },
   "REST": {

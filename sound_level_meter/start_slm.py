@@ -1,11 +1,13 @@
-###################################################################################################
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#############################################################################
 #      _____ __________  ___    __                                          #
 #     / ___// ____/ __ \/   |  / /                                          #
 #     \__ \/ /   / /_/ / /| | / /                                           #
-#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer  #
-#   /____/\____/_/ |_/_/  |_/_____/   v.2.0 - enhanced by Python 3          #
+#    ___/ / /___/ _, _/ ___ |/ /___                                         #
+#   /____/\____/_/ |_/_/  |_/_____/   Smart City Resource Adaptation Layer  #
 #                                                                           #
-# LINKS Foundation, (c) 2019                                                #
+# LINKS Foundation, (c) 2017-2020                                           #
 # developed by Jacopo Foglietti & Luca Mannella                             #
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
@@ -37,7 +39,7 @@ from scral_ogc import OGCObservedProperty
 import scral_core as scral
 from scral_core import util, rest_util
 from scral_core.constants import DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, END_MESSAGE, SUCCESS_RETURN_STRING, \
-    ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, PILOT_KEY, \
+    ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, GOST_PREFIX_KEY, \
     ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, DEVICE_NOT_REGISTERED, D_CONFIG_KEY, D_CUSTOM_MODE, D_OGC_USER, \
     D_OGC_PWD, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD
 
@@ -79,7 +81,7 @@ def main():
             args[D_OGC_PWD] = OGC_SERVER_PASSWORD
 
         ogc_config, filename_connection, catalog_name = util.scral_ogc_startup(SCRALSoundLevelMeter, args)
-        scral_module = SCRALSoundLevelMeter(ogc_config, filename_connection, args[PILOT_KEY],
+        scral_module = SCRALSoundLevelMeter(ogc_config, filename_connection, args[GOST_PREFIX_KEY],
                                             URL_SLM_LOGIN, CREDENTIALS, catalog_name, SLM_LOGIN_PREFIX)
 
     scral_module.runtime(flask_instance, ENABLE_CHERRYPY)

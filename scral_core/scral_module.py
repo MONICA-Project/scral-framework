@@ -1,11 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #############################################################################
 #      _____ __________  ___    __                                          #
 #     / ___// ____/ __ \/   |  / /                                          #
 #     \__ \/ /   / /_/ / /| | / /                                           #
-#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer  #
-#   /____/\____/_/ |_/_/  |_/_____/   v.2.0 - enhanced by Python 3          #
+#    ___/ / /___/ _, _/ ___ |/ /___                                         #
+#   /____/\____/_/ |_/_/  |_/_____/   Smart City Resource Adaptation Layer  #
 #                                                                           #
-# LINKS Foundation, (c) 2019                                                #
+# LINKS Foundation, (c) 2017-2020                                           #
 # developed by Jacopo Foglietti & Luca Mannella                             #
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
@@ -46,8 +48,7 @@ from scral_core.constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, DEFAULT_UP
     REGISTERED_DEVICES_KEY, LAST_UPDATE_KEY, ACTUAL_COUNTER_KEY, UPDATE_INTERVAL_KEY, ACTIVE_DEVICES_KEY, VERBOSE_KEY, \
     ERROR_MISSING_CONNECTION_FILE, ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_WRONG_PILOT_NAME, \
     CATALOG_FOLDER, CATALOG_FILENAME, D_CUSTOM_MODE, D_CONFIG_KEY, ERROR_MISSING_ENV_VARIABLE, D_PUB_BROKER_URI_KEY, \
-    D_PUB_BROKER_PORT_KEY, BROKER_DEFAULT_PORT, D_PUB_BROKER_KEEPALIVE_KEY, DEFAULT_CONFIG, D_GOST_MQTT_PREFIX_KEY, \
-    DEFAULT_GOST_PREFIX
+    D_PUB_BROKER_PORT_KEY, BROKER_DEFAULT_PORT, D_PUB_BROKER_KEEPALIVE_KEY, D_GOST_MQTT_PREFIX_KEY, DEFAULT_GOST_PREFIX
 
 from scral_core.ogc_configuration import OGCConfiguration
 from scral_core import util, mqtt_util, rest_util
@@ -70,9 +71,10 @@ class SCRALModule(object):
         """ The startup method initializes an OGCConfiguration using some arguments.
             The OGCConfiguration have to be passed to the SCRALModule initializer.
 
-        :param args: Some command line arguments, every module can extend this parameter, SCRALModule wants at least:
-                     { "verbose": bool, "connection_file": str, "ogc_file": str, "connection_file": str,
-                     "connection_path": str , "config_path": str }
+        :param args: Some arguments, every module can extend this parameter, SCRALModule wants at least:
+                     { VERBOSE_KEY: bool, CONFIG_PATH_KEY: str, OGC_FILE_KEY: str }
+
+                     CONNECTION_FILE_KEY: str, "connection_path": str , "config_path": str }
         :param ogc_server_username: [OPT] The username of the OGC Server to use for OGC configuration.
         :param ogc_server_password: [OPT] The password related to the username.
         :return: An instance of OGCConfiguration.
@@ -194,7 +196,8 @@ class SCRALModule(object):
                 pilot_mqtt_topic_prefix = DEFAULT_GOST_PREFIX
         else:
             # Retrieving pilot name --- 'local' is the default configuration value
-            pilot_mqtt_topic_prefix = mqtt_util.get_publish_mqtt_topic(pilot)
+            pilot_mqtt_topic_prefix = DEFAULT_GOST_PREFIX
+            # mqtt_util.get_publish_mqtt_topic(pilot)
             if not pilot_mqtt_topic_prefix:
                 logging.critical('Wrong pilot name: "' + pilot + '"!')
                 exit(ERROR_WRONG_PILOT_NAME)
@@ -370,9 +373,7 @@ class SCRALModule(object):
         if not info:
             return False
         elif info.rc == mqtt.MQTT_ERR_SUCCESS:
-            # time_format = 'YYYY-MM-DDTHH:mm:ss.SZ'
-
-            now = arrow.utcnow()
+            now = arrow.utcnow()  # time_format = 'YYYY-MM-DDTHH:mm:ss.SZ'
             logging.info("Message successfully sent at: " + str(now))
             dict_payload = json.loads(payload)
             try:
@@ -381,14 +382,12 @@ class SCRALModule(object):
                 logging.debug("Time elapsed since PhenomenonTime: %.3f seconds." % diff.total_seconds())
             except KeyError:
                 pass
-
             try:
                 result_time = dict_payload["resultTime"]
                 diff = now - arrow.get(result_time)
                 logging.debug("Time elapsed since ResultTime: %.3f seconds." % diff.total_seconds())
             except KeyError:
                 pass
-
             return True
         else:
             logging.error("Something wrong during MQTT publish. Error code retrieved: {0}".format(str(info.rc)))
@@ -477,7 +476,6 @@ class SCRALModule(object):
         mqtt_result = self.mqtt_publish(topic=topic, payload=observation_payload, to_print=False)
         self._update_active_devices_counter()
         return mqtt_result
-
 
 # def ogc_datastream_registration(self, ogc_devices_server_url: str, certificate_path: Optional[str] = None):
     #     """ It manages the registration of the data inside OGC server. """

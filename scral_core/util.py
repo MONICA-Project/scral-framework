@@ -4,10 +4,10 @@
 #      _____ __________  ___    __                                          #
 #     / ___// ____/ __ \/   |  / /                                          #
 #     \__ \/ /   / /_/ / /| | / /                                           #
-#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer  #
-#   /____/\____/_/ |_/_/  |_/_____/   v.2.0 - enhanced by Python 3          #
+#    ___/ / /___/ _, _/ ___ |/ /___                                         #
+#   /____/\____/_/ |_/_/  |_/_____/   Smart City Resource Adaptation Layer  #
 #                                                                           #
-# LINKS Foundation, (c) 2019                                                #
+# LINKS Foundation, (c) 2017-2020                                           #
 # developed by Jacopo Foglietti & Luca Mannella                             #
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
@@ -29,7 +29,7 @@ from typing import Union, Optional, Dict
 from arrow.arrow import Arrow
 
 from scral_core.constants import CREDITS, DEFAULT_CONFIG, DEFAULT_LOG_FORMATTER, DEFAULT_URL, DEFAULT_MODULE_NAME, \
-    MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, PILOT_KEY, OPT_LIST, \
+    MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, GOST_PREFIX_KEY, OPT_LIST, \
     CONNECTION_PATH_KEY, CONNECTION_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
     FILENAME_CONFIG, FILENAME_COMMAND_FILE, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, \
     D_CONFIG_KEY, D_CUSTOM_MODE, DEFAULT_REST_PORT, VERBOSE_KEY, OGC_FILE_KEY, ERROR_MISSING_ENV_VARIABLE, D_OGC_USER, \
@@ -211,7 +211,7 @@ def scral_ogc_startup(scral_module_class: "SCRALModule".__class__, args: dict) -
     try:
         catalog_name = args[CATALOG_NAME_KEY]
     except KeyError:
-        catalog_name = args[PILOT_KEY] + "_" + str(scral_module_class.__name__) + "_resource-catalog.json"
+        catalog_name = args[GOST_PREFIX_KEY] + "_" + str(scral_module_class.__name__) + "_resource-catalog.json"
         logging.warning("No " + CATALOG_NAME_KEY + " specified. Default name was used '" + catalog_name + "'")
 
     return ogc_config, filename_connection, catalog_name
@@ -246,7 +246,7 @@ def initialize_module(description: str, abs_path: str, scral_module_class: "SCRA
             args[D_OGC_PWD] = OGC_SERVER_PASSWORD
 
         ogc_config, filename_connection, catalog_name = scral_ogc_startup(scral_module_class, args)
-        module = scral_module_class(ogc_config, filename_connection, args[PILOT_KEY], catalog_name)
+        module = scral_module_class(ogc_config, filename_connection, args[GOST_PREFIX_KEY], catalog_name)
 
     return module, args, doc
 
@@ -263,7 +263,7 @@ def startup_module_custom(scral_module_class: "SCRALModule".__class__, abs_path:
 
     pilot_name = os.environ[D_CONFIG_KEY]
     logging.info("CONFIG: " + D_CUSTOM_MODE + "\n Environment variables will be used.")
-    catalog_name = str(SCRALModule.__name__) + "_resource-catalog.json"
+    catalog_name = str(scral_module_class.__name__) + "_resource-catalog.json"
     return ogc_config, args, doc, pilot_name, catalog_name
 
 

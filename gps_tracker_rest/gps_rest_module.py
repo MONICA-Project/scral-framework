@@ -2,10 +2,10 @@
 #      _____ __________  ___    __                                          #
 #     / ___// ____/ __ \/   |  / /                                          #
 #     \__ \/ /   / /_/ / /| | / /                                           #
-#    ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer  #
-#   /____/\____/_/ |_/_/  |_/_____/   v.2.0 - enhanced by Python 3          #
+#    ___/ / /___/ _, _/ ___ |/ /___                                         #
+#   /____/\____/_/ |_/_/  |_/_____/   Smart City Resource Adaptation Layer  #
 #                                                                           #
-# LINKS Foundation, (c) 2019                                                #
+# LINKS Foundation, (c) 2017-2020                                           #
 # developed by Jacopo Foglietti & Luca Mannella                             #
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
