@@ -20,7 +20,7 @@ URL_CLOUD = "https://api.smartdatanet.it/api"
 URL_TENANT = "https://api.smartdatanet.it/metadataapi/api/v02/search?tenant=cittato_rumore"
 
 # Exposed URI
-URI_DEFAULT = "/scral/v1.0/sdn-gw"
+URI_DEFAULT = "/scral/v1.0/phono-gw"
 URI_ACTIVE_DEVICES = URI_DEFAULT + "/active-devices"
 
 ACTIVE_DEVICES = ["ds_S_01_1928", "ds_S_02_1926", "ds_S_03_1927", "ds_S_05_1932", "ds_S_06_1931", "ds_S_07_1933"]

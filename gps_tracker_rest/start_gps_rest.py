@@ -121,7 +121,7 @@ def put_observation(observed_property: str, payload: dict) -> Response:
     if not scral_module:
         return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
-    gps_tag_id = payload["tagId"]
+    gps_tag_id = payload[TAG_ID_KEY]
     result = scral_module.ogc_observation_registration(observed_property, payload)
     if result is True:
         return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)

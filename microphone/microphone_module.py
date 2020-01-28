@@ -26,9 +26,8 @@ from microphone.constants import NAME_KEY, SEQUENCES_KEY
 class SCRALMicrophone(SCRALRestModule):
     """ Resource manager for integration of Phonometers. """
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
-                 catalog_name: str = CATALOG_FILENAME):
-        super().__init__(ogc_config, connection_file, pilot, catalog_name)
+    def __init__(self, ogc_config: OGCConfiguration, config_filename: str, catalog_name: str = CATALOG_FILENAME):
+        super().__init__(ogc_config, config_filename, catalog_name)
         self._active_microphones = {}
 
     def _start_thread_pool(self, microphone_thread, locking: bool = False):

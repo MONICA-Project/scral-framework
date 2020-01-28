@@ -48,18 +48,16 @@ class SCRALRestModule(SCRALModule):
         Runtime method will start the web server and it is a blocking function.
     """
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
-                 catalog_name: str = CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, config_filename: str, catalog_name: str = CATALOG_FILENAME):
         """ Load OGC configuration model, initialize MQTT Broker for publishing Observations and prepare Flask.
 
         :param ogc_config: The reference of the OGC configuration.
-        :param connection_file: A file containing connection information.
-        :param pilot: The MQTT topic prefix on which information will be published.
+        :param config_filename: A file containing connection information.
         :param catalog_name: The name of the resource catalog. If not specified a default one will be used.
         """
-        super().__init__(ogc_config, connection_file, pilot, catalog_name)
+        super().__init__(ogc_config, config_filename, catalog_name)
 
-        if not connection_file:
+        if not config_filename:
             if D_CONFIG_KEY in os.environ.keys():
                 if os.environ[D_CONFIG_KEY] == D_CUSTOM_MODE:
                     try:
@@ -75,16 +73,16 @@ class SCRALRestModule(SCRALModule):
                                         + str(DEFAULT_LISTENING_PORT))
                         self._listening_port = DEFAULT_LISTENING_PORT
                 else:
-                    logging.critical("No connection file for pilot: " + str(pilot))
+                    logging.critical("No connection file for preference_folder: " + str(config_filename))
                     exit(ERROR_MISSING_CONNECTION_FILE)
             else:
                 logging.critical("Missing connection file or environmental variable!")
                 exit(ERROR_MISSING_ENV_VARIABLE)
         else:
             # Retrieving endpoint information for listening to REST requests
-            connection_config_file = util.load_from_file(connection_file)
-            self._listening_address = connection_config_file[REST_KEY][LISTENING_ADD_KEY][ADDRESS_KEY]
-            self._listening_port = int(connection_config_file[REST_KEY][LISTENING_ADD_KEY][PORT_KEY])
+            config_file = util.load_from_file(config_filename)
+            self._listening_address = config_file[REST_KEY][LISTENING_ADD_KEY][ADDRESS_KEY]
+            self._listening_port = int(config_file[REST_KEY][LISTENING_ADD_KEY][PORT_KEY])
 
     # noinspection PyMethodOverriding
     def runtime(self, flask_instance: Flask, mode: int = ENABLE_FLASK):

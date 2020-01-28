@@ -30,7 +30,7 @@ from arrow.arrow import Arrow
 
 from scral_core.constants import CREDITS, DEFAULT_CONFIG, DEFAULT_LOG_FORMATTER, DEFAULT_URL, DEFAULT_MODULE_NAME, \
     MODULE_NAME_KEY, ENDPOINT_PORT_KEY, ENDPOINT_URL_KEY, GOST_PREFIX_KEY, OPT_LIST, \
-    CONNECTION_PATH_KEY, CONNECTION_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
+    PREFERENCE_PATH_KEY, PREFERENCE_FILE_KEY, CATALOG_NAME_KEY, CONFIG_PATH_KEY, \
     FILENAME_CONFIG, FILENAME_COMMAND_FILE, OGC_SERVER_USERNAME, OGC_SERVER_PASSWORD, \
     D_CONFIG_KEY, D_CUSTOM_MODE, DEFAULT_REST_PORT, VERBOSE_KEY, OGC_FILE_KEY, ERROR_MISSING_ENV_VARIABLE, D_OGC_USER, \
     D_OGC_PWD
@@ -80,12 +80,13 @@ def parse_small_command_line(description: str) -> argparse.Namespace:
     :param description: The module description that you want to show in -h option.
     :return: an object with all the parsed parameters.
     """
-    example_text = "example: start_module.py -p MOVIDA"
+    example_text = "example: start_module.py -p local"
 
     parser = argparse.ArgumentParser(prog='SCRAL', epilog=example_text,
                                      description=description,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-p', '--pilot', default=DEFAULT_CONFIG, type=str, help='the name of the desired pilot')
+    parser.add_argument('-p', '--preference', default=DEFAULT_CONFIG, type=str,
+                        help='the name of the desired preference_folder')
     args = parser.parse_args()
 
     return args
@@ -104,9 +105,10 @@ def parse_command_line(description: str) -> argparse.Namespace:
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help='enable verbose mode')
     parser.add_argument('-o', '--ogc', dest='ogc_file', type=str, help='the path of the OGC configuration file')
-    parser.add_argument('-c', '--conn', dest='connection_file', type=str,
+    parser.add_argument('-c', '--conn', dest='config_filename', type=str,
                         help='the path of the connection configuration')
-    parser.add_argument('-p', '--pilot', default=DEFAULT_CONFIG, type=str, help='the name of the desired pilot')
+    parser.add_argument('-p', '--preference_folder', default=DEFAULT_CONFIG, type=str,
+                        help='the name of the desired preference_folder')
     args = parser.parse_args()
 
     return args
@@ -137,18 +139,19 @@ def init_doc(args: dict) -> dict:
     return doc
 
 
-def init_variables(pilot_name: str, abs_path: str) -> (dict, Dict[str, str]):
-    pilot_config_folder = pilot_name+"/"
+def init_variables(folder_name: str, abs_path: str) -> (dict, Dict[str, str]):
+    preference_folder = folder_name + "/"
 
     # Preparing all the necessary configuration paths
-    config_path = os.path.join(abs_path, FILENAME_CONFIG)
-    connection_path = os.path.join(config_path, pilot_config_folder)
-    command_line_file = os.path.join(connection_path + FILENAME_COMMAND_FILE)
+    ogc_config_path = os.path.join(abs_path, FILENAME_CONFIG)
+    preference_path = os.path.join(ogc_config_path, preference_folder)
+    preference_file = os.path.join(preference_path + FILENAME_COMMAND_FILE)
 
     # Taking and setting application parameters
-    args = load_from_file(command_line_file)
-    args[CONFIG_PATH_KEY] = config_path
-    args[CONNECTION_PATH_KEY] = connection_path
+    args = load_from_file(preference_file)
+    args[CONFIG_PATH_KEY] = ogc_config_path
+    args[PREFERENCE_PATH_KEY] = preference_path
+    args[PREFERENCE_FILE_KEY] = FILENAME_COMMAND_FILE
 
     # Initialize documentation variable
     doc = init_doc(args)
@@ -207,14 +210,14 @@ def scral_ogc_startup(scral_module_class: "SCRALModule".__class__, args: dict) -
         password = OGC_SERVER_PASSWORD
     ogc_config = scral_module_class.startup(args, username, password)
 
-    filename_connection = os.path.join(args[CONNECTION_PATH_KEY] + args[CONNECTION_FILE_KEY])
+    filename_config = os.path.join(args[PREFERENCE_PATH_KEY] + args[PREFERENCE_FILE_KEY])
     try:
         catalog_name = args[CATALOG_NAME_KEY]
     except KeyError:
         catalog_name = args[GOST_PREFIX_KEY] + "_" + str(scral_module_class.__name__) + "_resource-catalog.json"
         logging.warning("No " + CATALOG_NAME_KEY + " specified. Default name was used '" + catalog_name + "'")
 
-    return ogc_config, filename_connection, catalog_name
+    return ogc_config, filename_config, catalog_name
 
 
 def initialize_module(description: str, abs_path: str, scral_module_class: "SCRALModule".__class__)\
@@ -222,22 +225,22 @@ def initialize_module(description: str, abs_path: str, scral_module_class: "SCRA
 
     # if CONFIG is set to "custom":
     if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE.lower():
-        logging.debug("Custom mode")
-        ogc_config, args, doc, pilot_name, catalog_name = startup_module_custom(scral_module_class, abs_path)
-        module = scral_module_class(ogc_config, None, pilot_name, catalog_name)
+        print("Custom mode")
+        ogc_config, args, doc, folder_name, catalog_name = startup_module_custom(scral_module_class, abs_path)
+        module = scral_module_class(ogc_config, None, folder_name, catalog_name)
     # if CONFIG not set up to "custom":
     else:
-        # if CONFIG is set to a "pilot_name":
+        # if CONFIG is set to a "folder_name":
         if D_CONFIG_KEY in os.environ.keys():
-            pilot_name = os.environ[D_CONFIG_KEY].lower()
-            logging.info("Configuration environment variable recognized\nCONFIG: " + pilot_name)
+            folder_name = os.environ[D_CONFIG_KEY].lower()
+            print("Configuration environment variable recognized\nCONFIG: " + folder_name)
         # if CONFIG not set up:
         else:
-            logging.debug("Command line + config file mode")
+            print("Command line + preference file mode")
             cmd_line = parse_small_command_line(description)
-            pilot_name = cmd_line.pilot.lower()
+            folder_name = cmd_line.preference.lower()
 
-        args, doc = init_variables(pilot_name, abs_path)
+        args, doc = init_variables(folder_name, abs_path)
         try:
             args[D_OGC_USER] = os.environ[D_OGC_USER]
             args[D_OGC_PWD] = os.environ[D_OGC_PWD]
@@ -245,8 +248,8 @@ def initialize_module(description: str, abs_path: str, scral_module_class: "SCRA
             args[D_OGC_USER] = OGC_SERVER_USERNAME
             args[D_OGC_PWD] = OGC_SERVER_PASSWORD
 
-        ogc_config, filename_connection, catalog_name = scral_ogc_startup(scral_module_class, args)
-        module = scral_module_class(ogc_config, filename_connection, args[GOST_PREFIX_KEY], catalog_name)
+        ogc_config, filename_config, catalog_name = scral_ogc_startup(scral_module_class, args)
+        module = scral_module_class(ogc_config, filename_config, catalog_name)
 
     return module, args, doc
 
@@ -261,10 +264,10 @@ def startup_module_custom(scral_module_class: "SCRALModule".__class__, abs_path:
         password = OGC_SERVER_PASSWORD
     ogc_config = scral_module_class.startup(args, username, password)
 
-    pilot_name = os.environ[D_CONFIG_KEY]
+    preference_folder = os.environ[D_CONFIG_KEY]
     logging.info("CONFIG: " + D_CUSTOM_MODE + "\n Environment variables will be used.")
     catalog_name = str(scral_module_class.__name__) + "_resource-catalog.json"
-    return ogc_config, args, doc, pilot_name, catalog_name
+    return ogc_config, args, doc, preference_folder, catalog_name
 
 
 def load_from_file(filename: str) -> dict:

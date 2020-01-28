@@ -60,19 +60,19 @@ def main():
     abs_path = os.path.abspath(os.path.dirname(__file__))
 
     if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE.lower():
-        ogc_config, DOC, pilot_name, catalog_name = util.startup_module_custom(SCRALSoundLevelMeter, abs_path)
+        ogc_config, DOC, preference_folder, catalog_name = util.startup_module_custom(SCRALSoundLevelMeter, abs_path)
         scral_module = SCRALSoundLevelMeter(
-            ogc_config, None, pilot_name, URL_SLM_LOGIN, CREDENTIALS, catalog_name, SLM_LOGIN_PREFIX)
+            ogc_config, None, preference_folder, URL_SLM_LOGIN, CREDENTIALS, catalog_name, SLM_LOGIN_PREFIX)
     else:
         if D_CONFIG_KEY in os.environ.keys():
-            pilot_name = os.environ[D_CONFIG_KEY].lower()
-            print(D_CONFIG_KEY+": " + pilot_name)
+            preference_folder = os.environ[D_CONFIG_KEY].lower()
+            print(D_CONFIG_KEY+": " + preference_folder)
         else:
-            print("Backward mode: command line parameters are required.")
+            print("Developer mode: command line parameters are required.")
             cmd_line = util.parse_small_command_line(module_description)
-            pilot_name = cmd_line.pilot.lower()
+            preference_folder = cmd_line.preference.lower()
 
-        args, DOC = util.init_variables(pilot_name, abs_path)
+        args, DOC = util.init_variables(preference_folder, abs_path)
         try:
             args[D_OGC_USER] = os.environ[D_OGC_USER]
             args[D_OGC_PWD] = os.environ[D_OGC_PWD]
@@ -80,9 +80,10 @@ def main():
             args[D_OGC_USER] = OGC_SERVER_USERNAME
             args[D_OGC_PWD] = OGC_SERVER_PASSWORD
 
-        ogc_config, filename_connection, catalog_name = util.scral_ogc_startup(SCRALSoundLevelMeter, args)
-        scral_module = SCRALSoundLevelMeter(ogc_config, filename_connection, args[GOST_PREFIX_KEY],
-                                            URL_SLM_LOGIN, CREDENTIALS, catalog_name, SLM_LOGIN_PREFIX)
+        ogc_config, filename_config, catalog_name = util.scral_ogc_startup(SCRALSoundLevelMeter, args)
+        scral_module = SCRALSoundLevelMeter(ogc_config=ogc_config, config_filename=filename_config,
+                                            url_login=URL_SLM_LOGIN, credentials=CREDENTIALS,
+                                            catalog_name=catalog_name, token_prefix=SLM_LOGIN_PREFIX)
 
     scral_module.runtime(flask_instance, ENABLE_CHERRYPY)
 

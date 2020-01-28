@@ -1,0 +1,24 @@
+{
+  "module_name": "SCRAL GPS Tracker Polling instance",
+  "endpoint_url": "localhost",
+  "endpoint_port": 8000,
+
+  "ogc_file": "ogc_config_gps.conf",
+  "gost_mqtt_prefix": "GOST/",
+
+  "catalog_name": "local_gps-poll.json",
+  "verbose": true,
+
+  "mqtt": {
+      "pub_broker": "localhost",
+      "pub_broker_port": 1883,
+      "pub_broker_keepalive": 60,
+
+      "sub_broker": "iot.hamburg.de",
+      "sub_broker_port": 1883,
+      "sub_broker_keepalive": 60
+  },
+  "REST": {
+      "ogc_server_address": "http://localhost:8080/v1.0"
+  }
+}

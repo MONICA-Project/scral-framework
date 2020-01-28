@@ -42,15 +42,14 @@ from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, MIN5_IN_
 class SCRALSoundLevelMeter(SCRALMicrophone):
     """ Resource manager for integration of the SLM-GW (by usage of B&K's IoT Sound Level Meters). """
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
+    def __init__(self, ogc_config: OGCConfiguration, config_filename: str,
                  url_login: str, credentials, catalog_name: str = CATALOG_FILENAME,
                  token_prefix: Optional[str] = "", token_suffix: Optional[str] = ""):
         """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
 
-        :param connection_file: A file containing connection information.
-        :param pilot: The MQTT topic prefix on which information will be published.
+        :param config_filename: A file containing connection information.
         """
-        super().__init__(ogc_config, connection_file, pilot, catalog_name)
+        super().__init__(ogc_config, config_filename, catalog_name)
 
         self._publish_mutex = Lock()
         self._observation_cnt_mutex = Lock()
@@ -64,10 +63,10 @@ class SCRALSoundLevelMeter(SCRALMicrophone):
         self._cloud_token = ""
         self.update_cloud_token()
 
-        connection_config_file = util.load_from_file(connection_file)
-        self._site_name = connection_config_file[CLOUD_KEY][SITE_NAME_KEY]
-        self._tenant_id = connection_config_file[CLOUD_KEY][TENANT_ID_KEY]
-        self._site_id = connection_config_file[CLOUD_KEY][SITE_ID_KEY]
+        config_file = util.load_from_file(config_filename)
+        self._site_name = config_file[CLOUD_KEY][SITE_NAME_KEY]
+        self._tenant_id = config_file[CLOUD_KEY][TENANT_ID_KEY]
+        self._site_id = config_file[CLOUD_KEY][SITE_ID_KEY]
 
     def get_cloud_token(self) -> str:
         return self._cloud_token

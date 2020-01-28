@@ -1,5 +1,15 @@
 {
-  "mqtt": {
+  "module_name": "SCRAL Security Fusion Node",
+  "endpoint_port": 8000,
+  "endpoint_url": "localhost",
+
+  "ogc_file": "ogc_config_sfn.conf",
+  "gost_mqtt_prefix": "GOST/",
+
+  "catalog_name": "local_sfn.json",
+  "verbose": true,
+
+    "mqtt": {
     "pub_broker": "localhost",
     "pub_broker_port": 1883,
     "pub_broker_keepalive": 60

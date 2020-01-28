@@ -47,8 +47,10 @@ pare che qualche registrazione possa fallire se nel frattempo il catalogo viene 
 
 
 ### Cose nuove ###
-- Possiamo avere un unico file di configurazione?
 - Changelog update!
 - Possiamo togliere lo SCRAL startup? Serve solo per il dockerfile?
+
+### Cose fatte
+- Possiamo avere un unico file di configurazione? Sì
 - Cambiare il banner in giro
 - Mettere il GOST MQTT Prefix tra le variabili del file di configurazione

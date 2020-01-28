@@ -41,15 +41,12 @@ from phonometer.constants import URL_TENANT, ACTIVE_DEVICES, FILTER_SDN_1, URL_C
 class SCRALPhonometer(SCRALMicrophone):
     """ Resource manager for integration of Phonometers. """
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
-                 catalog_name: str = CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, config_filename: str, catalog_name: str = CATALOG_FILENAME):
         """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
 
-        :param connection_file: A file containing connection information.
-        :param pilot: The MQTT topic prefix on which information will be published.
+        :param config_filename: A file containing connection information.
         """
-        super().__init__(ogc_config, connection_file, pilot, catalog_name)
-
+        super().__init__(ogc_config, config_filename, catalog_name)
         self._publish_mutex = Lock()
 
     def runtime(self, flask_instance: Flask, mode: int = ENABLE_CHERRYPY):

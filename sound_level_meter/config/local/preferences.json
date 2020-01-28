@@ -1,4 +1,14 @@
 {
+  "module_name": "SCRAL Sound Level Meter",
+  "endpoint_url": "localhost",
+  "endpoint_port": 8000,
+
+  "ogc_file": "ogc_config_slm.conf",
+  "gost_mqtt_prefix": "GOST/",
+
+  "catalog_name": "local_slm.json",
+  "verbose": true,
+
   "mqtt": {
     "pub_broker": "localhost",
     "pub_broker_port": 1883,

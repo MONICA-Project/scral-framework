@@ -37,16 +37,13 @@ from gps_tracker_poll.constants import BROKER_HAMBURG_CLIENT_ID, OGC_HAMBURG_THI
 class SCRALGPSPoll(SCRALGPS):
     """ Resource manager for integration of the GPS-TRACKER-GW (by usage of LoRa devices). """
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
-                 catalog_name: str = CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, catalog_name: str = CATALOG_FILENAME):
         """ Initialize MQTT Brokers for listening and publishing
 
         :param connection_file: A file containing connection information.
-        :param pilot: The pilot name,
-                      it will be used for generate the MQTT topic prefix on which information will be published.
         """
 
-        super().__init__(ogc_config, connection_file, pilot, catalog_name)
+        super().__init__(ogc_config, connection_file, catalog_name)
 
         # Creating an MQTT Subscriber
         self._mqtt_subscriber = mqtt.Client(BROKER_HAMBURG_CLIENT_ID)

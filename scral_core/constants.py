@@ -61,8 +61,11 @@ DEFAULT_MQTT_QOS = 1
 
 # MQTT connector & resource manager
 MQTT_KEY = "mqtt"
+MQTT_PUB_BROKER_KEY = "pub_broker"
 MQTT_SUB_BROKER_KEY = "sub_broker"
+MQTT_PUB_BROKER_PORT_KEY = "pub_broker_port"
 MQTT_SUB_BROKER_PORT_KEY = "sub_broker_port"
+MQTT_PUB_BROKER_KEEP_KEY = "pub_broker_keepalive"
 MQTT_SUB_BROKER_KEEP_KEY = "sub_broker_keepalive"
 
 # Debug, graphic and similar
@@ -78,10 +81,11 @@ ERROR_MISSING_OGC_FILE = 22
 ERROR_WRONG_PILOT_NAME = 33
 ERROR_NO_SERVER_CONNECTION = 44
 ERROR_MISSING_ENV_VARIABLE = 55
+ERROR_MISSING_ALL = 66
 
 # CONFIGURATION FILES
 FILENAME_CONFIG = "config/"
-FILENAME_COMMAND_FILE = "cli_file.json"
+FILENAME_COMMAND_FILE = "preferences.json"
 
 # log
 DEFAULT_LOG_FORMATTER = "%(asctime)s.%(msecs)04d %(name)-7s %(levelname)s: %(message)s"
@@ -99,10 +103,9 @@ PORT_KEY = "port"
 
 # Arguments
 VERBOSE_KEY = "verbose"
-PILOT_KEY = "pilot"
-GOST_PREFIX_KEY = "gost_prefix"
-CONNECTION_PATH_KEY = "connection_path"
-CONNECTION_FILE_KEY = "connection_file"
+GOST_PREFIX_KEY = "gost_mqtt_prefix"
+PREFERENCE_PATH_KEY = "preference_path"
+PREFERENCE_FILE_KEY = "preference_filename"
 CATALOG_NAME_KEY = "catalog_name"
 CONFIG_PATH_KEY = "config_path"
 OGC_FILE_KEY = "ogc_file"

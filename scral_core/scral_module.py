@@ -44,11 +44,12 @@ import arrow
 import paho.mqtt.client as mqtt
 
 from scral_core.constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, DEFAULT_UPDATE_INTERVAL, MQTT_CLIENT_PREFIX, \
-    CONNECTION_FILE_KEY, CONNECTION_PATH_KEY, CONFIG_PATH_KEY, OGC_FILE_KEY, REST_KEY, OGC_SERVER_ADD_KEY, COUNTER_KEY, \
+    CONFIG_PATH_KEY, OGC_FILE_KEY, REST_KEY, OGC_SERVER_ADD_KEY, COUNTER_KEY, MQTT_KEY, \
     REGISTERED_DEVICES_KEY, LAST_UPDATE_KEY, ACTUAL_COUNTER_KEY, UPDATE_INTERVAL_KEY, ACTIVE_DEVICES_KEY, VERBOSE_KEY, \
-    ERROR_MISSING_CONNECTION_FILE, ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_WRONG_PILOT_NAME, \
+    ERROR_MISSING_OGC_FILE, ERROR_NO_SERVER_CONNECTION, ERROR_MISSING_ALL, \
     CATALOG_FOLDER, CATALOG_FILENAME, D_CUSTOM_MODE, D_CONFIG_KEY, ERROR_MISSING_ENV_VARIABLE, D_PUB_BROKER_URI_KEY, \
-    D_PUB_BROKER_PORT_KEY, BROKER_DEFAULT_PORT, D_PUB_BROKER_KEEPALIVE_KEY, D_GOST_MQTT_PREFIX_KEY, DEFAULT_GOST_PREFIX
+    D_PUB_BROKER_PORT_KEY, BROKER_DEFAULT_PORT, D_PUB_BROKER_KEEPALIVE_KEY, D_GOST_MQTT_PREFIX_KEY, DEFAULT_GOST_PREFIX, \
+    MQTT_PUB_BROKER_KEY, MQTT_PUB_BROKER_PORT_KEY, MQTT_PUB_BROKER_KEEP_KEY, GOST_PREFIX_KEY
 
 from scral_core.ogc_configuration import OGCConfiguration
 from scral_core import util, mqtt_util, rest_util
@@ -74,7 +75,7 @@ class SCRALModule(object):
         :param args: Some arguments, every module can extend this parameter, SCRALModule wants at least:
                      { VERBOSE_KEY: bool, CONFIG_PATH_KEY: str, OGC_FILE_KEY: str }
 
-                     CONNECTION_FILE_KEY: str, "connection_path": str , "config_path": str }
+                     PREFERENCE_FILE_KEY: str, "connection_path": str , "config_path": str }
         :param ogc_server_username: [OPT] The username of the OGC Server to use for OGC configuration.
         :param ogc_server_password: [OPT] The password related to the username.
         :return: An instance of OGCConfiguration.
@@ -97,33 +98,22 @@ class SCRALModule(object):
             logging.critical("OGC configuration file is missing!")
             exit(ERROR_MISSING_OGC_FILE)
         else:
-            logging.info("OGC file: " + args[OGC_FILE_KEY])
-            logging.debug("OGC file stored in: " + args[CONFIG_PATH_KEY])
+            logging.info('OGC file: "' + args[OGC_FILE_KEY] + '"')
+            logging.debug('OGC file stored in: "' + args[CONFIG_PATH_KEY] + '"')
 
-        # 3) Is there a connection file?
         ogc_server_address = None
-        # 3a) Custom mode
+        # 3) are we using custom mode?
         if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE:
-            logging.info("Custom mode, no connection file required.")
+            logging.info("Custom mode, no preference file required.")
 
             if OGC_SERVER_ADD_KEY.upper() not in os.environ.keys():
                 logging.critical(OGC_SERVER_ADD_KEY.upper() + " is missing!")
                 exit(ERROR_MISSING_ENV_VARIABLE)
             else:
                 ogc_server_address = os.environ[OGC_SERVER_ADD_KEY.upper()]
-        # 3b) No connection file
-        elif not args[CONNECTION_FILE_KEY]:  # has the connection_file been set?
-            logging.critical("Connection file is missing!")
-            exit(ERROR_MISSING_CONNECTION_FILE)
-        # 3c) Connection file properly set
+        # Taking OGC address from preference file
         else:
-            logging.info("Connection file: " + args[CONNECTION_FILE_KEY])
-            logging.debug("Connection file stored in: " + args[CONNECTION_PATH_KEY])
-
-            # Storing the OGC server addresses
-            filename_connection = args[CONNECTION_PATH_KEY] + args[CONNECTION_FILE_KEY]
-            connection_config_file = util.load_from_file(filename_connection)
-            ogc_server_address = connection_config_file[REST_KEY][OGC_SERVER_ADD_KEY]
+            ogc_server_address = args[REST_KEY][OGC_SERVER_ADD_KEY]
 
         # 4) Testing OGC server connectivity
         if not rest_util.test_connectivity(ogc_server_address, ogc_server_username, ogc_server_password):
@@ -136,14 +126,12 @@ class SCRALModule(object):
         ogc_config.discovery(verbose)
         return ogc_config
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, pilot: str,
-                 catalog_name: str = CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, catalog_name: str = CATALOG_FILENAME):
         """ Initialize the SCRALModule:
             Preparing the catalog, instantiating the MQTT Client and stores all relevant connection information.
 
         :param ogc_config: An instance of an OGCConfiguration.
         :param connection_file: The path of the connection file, it has to contain the address of the MQTT broker.
-        :param pilot: The prefix of the MQTT topic used to publish information.
         """
 
         # 1 Storing the OGC configuration
@@ -158,18 +146,9 @@ class SCRALModule(object):
             logging.info("No resource catalog <" + catalog_name + "> available.")
             self._resource_catalog = {}
 
-        # 3 Load connection configuration file
-        if connection_file:
-            connection_config_file = util.load_from_file(connection_file)
-            self._pub_broker_address = connection_config_file["mqtt"]["pub_broker"]
-            self._pub_broker_port = connection_config_file["mqtt"]["pub_broker_port"]
-            try:
-                self._pub_broker_keepalive = connection_config_file["mqtt"]["pub_broker_keepalive"]
-            except KeyError:
-                logging.warning(
-                    "No broker keepalive specified, will be used the default one: " + str(DEFAULT_KEEPALIVE) + " s")
-                self._pub_broker_keepalive = DEFAULT_KEEPALIVE
-        else:
+        # 3 Load connection configuration fields...
+        if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE:
+            # 3a) ...from environmental variables.
             try:
                 self._pub_broker_address = os.environ[D_PUB_BROKER_URI_KEY]
             except KeyError:
@@ -186,30 +165,38 @@ class SCRALModule(object):
                 logging.warning(
                     "No broker keepalive specified, will be used the default one: " + str(DEFAULT_KEEPALIVE) + " s")
                 self._pub_broker_keepalive = DEFAULT_KEEPALIVE
-
-        # 4 Creating an MQTT Publisher
-        if pilot == D_CUSTOM_MODE:
             try:
                 pilot_mqtt_topic_prefix = os.environ[D_GOST_MQTT_PREFIX_KEY]
             except KeyError:
+                logging.warning('No MQTT topic prefix configured, using default one: "'+DEFAULT_GOST_PREFIX+'"')
+                pilot_mqtt_topic_prefix = DEFAULT_GOST_PREFIX
+
+        elif connection_file:
+            # 3b) ...from connection file.
+            connection_config_file = util.load_from_file(connection_file)
+            self._pub_broker_address = connection_config_file[MQTT_KEY][MQTT_PUB_BROKER_KEY]
+            self._pub_broker_port = connection_config_file[MQTT_KEY][MQTT_PUB_BROKER_PORT_KEY]
+            try:
+                self._pub_broker_keepalive = connection_config_file[MQTT_KEY][MQTT_PUB_BROKER_KEEP_KEY]
+            except KeyError:
+                logging.warning(
+                    "No broker keepalive specified, will be used the default one: " + str(DEFAULT_KEEPALIVE) + " s")
+                self._pub_broker_keepalive = DEFAULT_KEEPALIVE
+
+            pilot_mqtt_topic_prefix = connection_config_file[GOST_PREFIX_KEY]
+            if not pilot_mqtt_topic_prefix:
                 logging.warning('No MQTT topic prefix configured, default one will be used: "'+DEFAULT_GOST_PREFIX+'"')
                 pilot_mqtt_topic_prefix = DEFAULT_GOST_PREFIX
-        else:
-            # Retrieving pilot name --- 'local' is the default configuration value
-            pilot_mqtt_topic_prefix = DEFAULT_GOST_PREFIX
-            # mqtt_util.get_publish_mqtt_topic(pilot)
-            if not pilot_mqtt_topic_prefix:
-                logging.critical('Wrong pilot name: "' + pilot + '"!')
-                exit(ERROR_WRONG_PILOT_NAME)
 
+        else:
+            logging.critical("No environmental variables or connection file configured!")
+            exit(ERROR_MISSING_ALL)
+
+        # 4 Creating an MQTT Publisher
         logging.debug("MQTT publishing topic prefix: " + pilot_mqtt_topic_prefix)
         self._topic_prefix = pilot_mqtt_topic_prefix
 
-        if catalog_name != CATALOG_FILENAME:
-            client_id = MQTT_CLIENT_PREFIX + "-" + str(self.__class__.__name__)  # catalog_name).replace(".json", "")
-        else:
-            client_id = MQTT_CLIENT_PREFIX
-        client_id = client_id + "-" + str(random.randint(1, sys.maxsize))
+        client_id = MQTT_CLIENT_PREFIX + "-" + str(self.__class__.__name__) + "-" + str(random.randint(1, sys.maxsize))
         self._mqtt_publisher = mqtt.Client(client_id=client_id)
 
         self._mqtt_publisher.on_connect = mqtt_util.on_connect
@@ -225,7 +212,7 @@ class SCRALModule(object):
         self._active_devices = {ACTUAL_COUNTER_KEY: 0, LAST_UPDATE_KEY: arrow.utcnow()}
         update_interval = None
         warning_msg = " not configured, default value will be used: " + str(DEFAULT_UPDATE_INTERVAL) + "s"
-        if pilot is D_CUSTOM_MODE:
+        if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE:
             try:
                 update_interval = int(os.environ[UPDATE_INTERVAL_KEY.upper()])
             except KeyError:
