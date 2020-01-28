@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 This part will contain project for future releases.
 
+- Create a SCRAL endpoint for patching fields of registered devices.
+
+## [3.0] - 2020-01-28
+This is the first open source SCRAL version.
+In this version we removed some modules not particular meaningful and we slightly changed the way in which SCRAL retrives configuration variables.
+
+### Added
+- Active Devices endpoints enabled also in phonometer module.
+- all classes contained inside "scral_ogc" package have now a __str__ method.
+- together with "entity_discovery" a method "entity_override" was introduced in scral_ogc package.
+- A template of a REST SCRAL Module
+
+### Changed
+- in "/active-devices" REST endpoint: "registered_devices" is no more a stand alone field, is now a field of "active_devices" data structure.
+- "result" field of payload sent from "phonometer" module is now the same of "SLM" module.
+- "cli_file.json" is now "preference.json"
+- Now is it possible to set the MQTT GOST prefix in the preference.json file (instead of pilot name)
+
+### Removed
+- Some modules are removed before of the open source release due to useless complexity: blimp, env_sensor_onem2m, noise_app, wb mqtt, wb dumb and wb nginx.
+- All the references to pilots configurations are removed.
+- Removed the Docker-compose file contained in every module.
+- It is no more necessary to a have a "connection_file", all the configuration variables are stored in "preference.json"
+
 ## [2.5] - 2019-12-03
 This update introduces a new integration module: the noise-application manager.
 This module is considered as an external platform, so it should be deployed on ports 88xx.
