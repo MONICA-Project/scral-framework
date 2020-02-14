@@ -25,20 +25,19 @@ from typing import Optional
 
 from flask import Flask, request, jsonify, make_response, Response
 
-from scral_ogc import OGCDatastream
-
-from scral_core.constants import END_MESSAGE, DEFAULT_REST_CONFIG, ENABLE_FLASK, SUCCESS_RETURN_STRING, \
-    ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, \
-    ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, WRONG_REQUEST, NO_MQTT_PUBLICATION, ENABLE_CHERRYPY
+from scral_core.constants import END_MESSAGE, DEFAULT_REST_CONFIG, ENABLE_CHERRYPY, SUCCESS_RETURN_STRING, \
+                                 ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY, \
+                                 ERROR_RETURN_STRING, INTERNAL_SERVER_ERROR, WRONG_REQUEST, NO_MQTT_PUBLICATION
 import scral_core as scral
 from scral_core import util, rest_util
 
 from wristband.constants import TAG_ID_KEY, ID1_ASSOCIATION_KEY, ID2_ASSOCIATION_KEY, \
                                 PROPERTY_BUTTON_NAME, PROPERTY_LOCALIZATION_NAME, SENSOR_ASSOCIATION_NAME, \
-                                URI_DEFAULT, URI_ACTIVE_DEVICES, URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, \
-                                URI_WRISTBAND_REGISTRATION, URI_WRISTBAND_ASSOCIATION
+                                URI_DEFAULT, URI_ACTIVE_DEVICES
 from wristband.wristband_module import SCRALWristband
 
+from wristband_rest.constants import URI_WRISTBAND_BUTTON, URI_WRISTBAND_LOCALIZATION, \
+                                     URI_WRISTBAND, URI_WRISTBAND_ASSOCIATION
 
 flask_instance = Flask(__name__)
 scral_module: Optional[SCRALWristband] = None
@@ -46,7 +45,7 @@ DOC = DEFAULT_REST_CONFIG
 
 
 def main():
-    module_description = "Wristband integration instance"
+    module_description = "Wristband REST integration instance"
     abs_path = os.path.abspath(os.path.dirname(__file__))
 
     global scral_module, DOC
@@ -54,7 +53,7 @@ def main():
     scral_module.runtime(flask_instance, ENABLE_CHERRYPY)
 
 
-@flask_instance.route(URI_WRISTBAND_REGISTRATION, methods=["POST", "DELETE"])
+@flask_instance.route(URI_WRISTBAND, methods=["POST", "DELETE"])
 def wristband_request() -> Response:
     logging.debug(wristband_request.__name__ + " method called from: " + request.remote_addr)
 
@@ -100,10 +99,15 @@ def new_wristband_association_request() -> Response:
 
     vds = scral_module.get_ogc_config().get_virtual_datastream(SENSOR_ASSOCIATION_NAME)
     if not vds:
+        logging.critical('No Virtual DATASTREAM registered for Virtual SENSOR: "' + SENSOR_ASSOCIATION_NAME + '"')
         return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
-    response = put_service_observation(vds, request.json)
-    return response
+    result = scral_module.ogc_service_observation_registration(vds, request.json)
+    if result is True:
+        return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
+    else:
+        logging.error("Impossible to publish on MQTT server.")
+        return make_response(jsonify({ERROR_RETURN_STRING: NO_MQTT_PUBLICATION}), 502)
 
 
 @flask_instance.route(URI_WRISTBAND_LOCALIZATION, methods=["PUT"])
@@ -140,20 +144,6 @@ def put_observation(observed_property: str, payload: json) -> Response:
         return make_response(jsonify({ERROR_RETURN_STRING: NO_MQTT_PUBLICATION}), 502)
 
 
-def put_service_observation(datastream: OGCDatastream, payload: json) -> Response:
-    if not payload:
-        return make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
-    if not scral_module:
-        return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
-
-    result = scral_module.ogc_service_observation_registration(datastream, payload)
-    if result is True:
-        return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)
-    else:
-        logging.error("Impossible to publish on MQTT server.")
-        return make_response(jsonify({ERROR_RETURN_STRING: NO_MQTT_PUBLICATION}), 502)
-
-
 @flask_instance.route(URI_ACTIVE_DEVICES, methods=["GET"])
 def get_active_devices() -> Response:
     """ This endpoint gives access to the resource catalog.
@@ -170,14 +160,14 @@ def test_module() -> str:
     """ Checking if SCRAL is running.
     :return: A str containing some information about possible endpoints.
     """
-    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr+" \n")
+    logging.debug(test_module.__name__ + " method called from: "+request.remote_addr)
 
     to_ret = util.to_html_documentation(
                                     module_name=DOC[MODULE_NAME_KEY],
                                     link=DOC[ENDPOINT_URL_KEY] + ":" + str(DOC[ENDPOINT_PORT_KEY]),
                                     gets=(URI_ACTIVE_DEVICES,),
-                                    posts=(URI_WRISTBAND_REGISTRATION, ),
-                                    deletes=(URI_WRISTBAND_REGISTRATION, ),
+                                    posts=(URI_WRISTBAND, ),
+                                    deletes=(URI_WRISTBAND, ),
                                     puts=(URI_WRISTBAND_ASSOCIATION, URI_WRISTBAND_LOCALIZATION, URI_WRISTBAND_BUTTON)
     )
     return to_ret

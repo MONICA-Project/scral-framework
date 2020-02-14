@@ -14,6 +14,8 @@
 #############################################################################
 import json
 import logging
+from typing import Union
+
 import arrow
 
 from scral_ogc import OGCObservation, OGCDatastream
@@ -75,7 +77,7 @@ class SCRALWristband(SCRALRestModule):
 
         return True
 
-    def ogc_observation_registration(self, obs_property: str, payload: dict) -> bool:
+    def ogc_observation_registration(self, obs_property: str, payload: dict) -> Union[bool, None]:
         wristband_id = payload["tagId"]
         if wristband_id not in self._resource_catalog:
             logging.warning("Wristband '"+wristband_id+"' not yet registered, it will be automatically registered.")

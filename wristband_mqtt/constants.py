@@ -13,26 +13,18 @@
 #                                                                           #
 #############################################################################
 """
-    SCRAL Module
-    This module is the starting point for developing a SCRAL module.
-    In particular the class SCRALModule have to be extended and the runtime method have to be overwritten/overloaded.
+    SCRAL - constants
+    This file contains useful constants for this module.
 """
 
-import logging
-import sys
+# MQTT
+CLIENT_ID = "Wb-MQTT-Listener"
+LISTENING_DEFAULT_QOS = 2
 
-VERSION = "v3.1.0"
-BANNER = """
-        _____ __________  ___    __                                         
-       / ___// ____/ __ \/   |  / /                                         
-       \__ \/ /   / /_/ / /| | / /                                          
-      ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer 
-     /____/\____/_/ |_/_/  |_/_____/   %s - suggested at least Python 3.6            
+# MQTT (Sub)Topics
+DEFAULT_SUBSCRIPTION_WB = "Wristband"
+ASSOCIATION_SUBTOPIC = "Association"
+BUTTON_SUBTOPIC = "Button"
+LOCALIZATION_SUBTOPIC = "Localization"
 
-     (c) 2017-2020, LINKS Foundation
-     developed by Jacopo Foglietti & Luca Mannella
 
-"""
-
-if sys.flags.optimize == 0:
-    logging.debug("All debug checks are active, performances may be impaired")

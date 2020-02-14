@@ -17,6 +17,16 @@ This part will contain project for future releases.
 
 - Create a SCRAL endpoint for patching fields of registered devices.
 
+## [3.1] - 2020-02-14
+The MQTT wristband module was reintroduced.
+
+### Added
+- MQTT wristband module
+
+### Changed
+- The previous "wristband" module was split to improve modularity. You should consider it now as a general module.
+The previous functionality are now offered by "wristband_rest" module.
+
 ## [3.0] - 2020-01-28
 This is the first open source SCRAL version.
 In this version we removed some modules not particular meaningful and we slightly changed the way in which SCRAL retrives configuration variables.

@@ -12,12 +12,13 @@ COPY scral_startup.py /monica_scral
 COPY scral_ogc /monica_scral/scral_ogc
 COPY scral_core /monica_scral/scral_core
 COPY wristband /monica_scral/wristband
+COPY wristband_mqtt /monica_scral/wristband_mqtt
 
 RUN mkdir /monica_scral/catalogs
 VOLUME /monica_scral/catalogs
 ENV OGC_FILE "ogc_config_wristband.conf"
 
-RUN pip3 install --no-cache-dir -r wristband/requirements_debug.txt
+RUN pip3 install --no-cache-dir -r wristband_mqtt/requirements.txt
 RUN pip3 install -e wristband
 
 # Enabling bash and utilities
@@ -26,7 +27,7 @@ RUN apk add nano
 RUN apk add jq
 
 ### local testing:
-ENTRYPOINT python3 scral_startup.py -p local
+# ENTRYPOINT python3 scral_startup.py -p local
 
 ### For using Enviromental variable use just:
-# ENTRYPOINT python3 scral_startup.py
+ENTRYPOINT python3 scral_startup.py

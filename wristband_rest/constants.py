@@ -13,26 +13,12 @@
 #                                                                           #
 #############################################################################
 """
-    SCRAL Module
-    This module is the starting point for developing a SCRAL module.
-    In particular the class SCRALModule have to be extended and the runtime method have to be overwritten/overloaded.
+    SCRAL - constants
+    This file contains useful constants for this module.
 """
+from wristband.constants import URI_DEFAULT, URI_WRISTBAND
 
-import logging
-import sys
-
-VERSION = "v3.1.0"
-BANNER = """
-        _____ __________  ___    __                                         
-       / ___// ____/ __ \/   |  / /                                         
-       \__ \/ /   / /_/ / /| | / /                                          
-      ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer 
-     /____/\____/_/ |_/_/  |_/_____/   %s - suggested at least Python 3.6            
-
-     (c) 2017-2020, LINKS Foundation
-     developed by Jacopo Foglietti & Luca Mannella
-
-"""
-
-if sys.flags.optimize == 0:
-    logging.debug("All debug checks are active, performances may be impaired")
+# URI
+URI_WRISTBAND_ASSOCIATION = URI_DEFAULT + "/friend-connect"
+URI_WRISTBAND_LOCALIZATION = URI_WRISTBAND + "/localization"
+URI_WRISTBAND_BUTTON = URI_WRISTBAND + "/button"
