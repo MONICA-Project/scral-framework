@@ -26,6 +26,7 @@ PHASE RUNTIME: INTEGRATION
 #############################################################################
 import os
 import logging
+from typing import Optional
 
 from flask import Flask, make_response, jsonify, Response
 import cherrypy
@@ -48,7 +49,8 @@ class SCRALRestModule(SCRALModule):
         Runtime method will start the web server and it is a blocking function.
     """
 
-    def __init__(self, ogc_config: OGCConfiguration, config_filename: str, catalog_name: str = CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, config_filename: Optional[str],
+                 catalog_name: str = CATALOG_FILENAME):
         """ Load OGC configuration model, initialize MQTT Broker for publishing Observations and prepare Flask.
 
         :param ogc_config: The reference of the OGC configuration.

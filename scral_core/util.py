@@ -227,7 +227,7 @@ def initialize_module(description: str, abs_path: str, scral_module_class: "SCRA
     if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE.lower():
         print("Custom mode")
         ogc_config, args, doc, folder_name, catalog_name = startup_module_custom(scral_module_class, abs_path)
-        module = scral_module_class(ogc_config, None, folder_name, catalog_name)
+        module = scral_module_class(ogc_config, None, catalog_name)
     # if CONFIG not set up to "custom":
     else:
         # if CONFIG is set to a "folder_name":

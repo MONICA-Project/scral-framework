@@ -23,10 +23,10 @@ SCRAL was tested mainly with Python 3.6 so it is suggested to install at least t
         _____ __________  ___    __                                     
        / ___// ____/ __ \/   |  / /                                     
        \__ \/ /   / /_/ / /| | / /                                      
-      ___/ / /___/ _, _/ ___ |/ /___   Smart City Resource Adaptation Layer                                 
-     /____/\____/_/ |_/_/  |_/_____/   v2.0 - enhanced by Python 3
+      ___/ / /___/ _, _/ ___ |/ /___                                    
+     /____/\____/_/ |_/_/  |_/_____/   Smart City Resource Adaptation Layer
 
-     (c) 2019, LINKS Foundation
+     (c) 2017-2020, LINKS Foundation
      developed by Jacopo Foglietti & Luca Mannella
 
 

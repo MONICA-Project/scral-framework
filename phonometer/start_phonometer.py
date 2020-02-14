@@ -36,7 +36,7 @@ from scral_core import util
 from scral_core.constants import END_MESSAGE, DEFAULT_REST_CONFIG, ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY
 
 from phonometer.constants import URI_DEFAULT, URI_ACTIVE_DEVICES
-from phonometer_module import SCRALPhonometer
+from phonometer.phonometer_module import SCRALPhonometer
 
 flask_instance = Flask(__name__)
 scral_module: Optional[SCRALPhonometer] = None

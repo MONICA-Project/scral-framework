@@ -27,7 +27,7 @@ RUN apk add nano
 RUN apk add jq
 
 ### local testing:
-ENTRYPOINT python3 scral_startup.py -p local
+# ENTRYPOINT python3 scral_startup.py -p local
 
 ### For using Enviromental variable use just:
-# ENTRYPOINT python3 scral_startup.py
+ENTRYPOINT python3 scral_startup.py
