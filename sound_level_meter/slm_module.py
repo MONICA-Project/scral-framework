@@ -12,6 +12,8 @@
 # SCRAL is distributed under a BSD-style license -- See file LICENSE.md     #
 #                                                                           #
 #############################################################################
+import os
+import sys
 import time
 from threading import Thread, Lock
 from datetime import timedelta
@@ -28,7 +30,7 @@ from urllib3.exceptions import NewConnectionError, MaxRetryError
 
 from scral_ogc import OGCDatastream, OGCObservedProperty
 
-from scral_core.constants import REST_HEADERS, CATALOG_FILENAME, ENABLE_CHERRYPY, COORD
+from scral_core.constants import REST_HEADERS, CATALOG_FILENAME, ENABLE_CHERRYPY, COORD, ERROR_MISSING_ENV_VARIABLE
 from scral_core import util, rest_util
 from scral_core.ogc_configuration import OGCConfiguration
 
@@ -63,10 +65,20 @@ class SCRALSoundLevelMeter(SCRALMicrophone):
         self._cloud_token = ""
         self.update_cloud_token()
 
-        config_file = util.load_from_file(config_filename)
-        self._site_name = config_file[CLOUD_KEY][SITE_NAME_KEY]
-        self._tenant_id = config_file[CLOUD_KEY][TENANT_ID_KEY]
-        self._site_id = config_file[CLOUD_KEY][SITE_ID_KEY]
+        if config_filename:
+            config_file = util.load_from_file(config_filename)
+            self._site_name = config_file[CLOUD_KEY][SITE_NAME_KEY]
+            self._tenant_id = config_file[CLOUD_KEY][TENANT_ID_KEY]
+            self._site_id = config_file[CLOUD_KEY][SITE_ID_KEY]
+        else:
+            try:
+                self._site_name = os.environ[SITE_NAME_KEY.upper()]
+                self._tenant_id = os.environ[TENANT_ID_KEY.upper()]
+                self._site_id = os.environ[SITE_ID_KEY.upper()]
+            except KeyError:
+                logging.critical("An environmental variable between: "+SITE_NAME_KEY.upper()+", "+TENANT_ID_KEY.upper()
+                                 + " or "+SITE_ID_KEY+" is missing")
+                sys.exit(ERROR_MISSING_ENV_VARIABLE)
 
     def get_cloud_token(self) -> str:
         return self._cloud_token

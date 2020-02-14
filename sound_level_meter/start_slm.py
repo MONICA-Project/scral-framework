@@ -60,9 +60,10 @@ def main():
     abs_path = os.path.abspath(os.path.dirname(__file__))
 
     if D_CONFIG_KEY in os.environ.keys() and os.environ[D_CONFIG_KEY].lower() == D_CUSTOM_MODE.lower():
-        ogc_config, DOC, preference_folder, catalog_name = util.startup_module_custom(SCRALSoundLevelMeter, abs_path)
+        ogc_config, args, DOC, preference_folder, catalog_name = \
+            util.startup_module_custom(SCRALSoundLevelMeter, abs_path)
         scral_module = SCRALSoundLevelMeter(
-            ogc_config, None, preference_folder, URL_SLM_LOGIN, CREDENTIALS, catalog_name, SLM_LOGIN_PREFIX)
+            ogc_config, None, URL_SLM_LOGIN, CREDENTIALS, catalog_name, SLM_LOGIN_PREFIX)
     else:
         if D_CONFIG_KEY in os.environ.keys():
             preference_folder = os.environ[D_CONFIG_KEY].lower()
