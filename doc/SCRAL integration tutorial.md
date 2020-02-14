@@ -5,6 +5,7 @@ title: SCRAL integration tutorial <!--- This is required for the page to come in
 <span style="font-size:2em;">SCRAL integration tutorial</span>
 <!-- Using Span is a hack to avoid the title to come again in TOC.-->
 
+<img src="https://github.com/MONICA-Project/monica-project.github.io/raw/master/assets/img/SCRAL-Logo-V1.1.png" alt="SCRAL logo" width="350"/> <br>
 This tutorial will help you to understand how to start using SCRAL and how to develop your own SCRAL module.
 
 <!--
@@ -12,6 +13,7 @@ This tutorial will help you to understand how to start using SCRAL and how to de
 1. [Prerequisites](#Prerequisites)
 2. [SCRAL quickstart with docker-compose](#SCRAL-quickstart-with-docker-compose)
 3. [Run SCRAL Python code](#Run-SCRAL-Python-code)
+4. [Implement a new SCRAL module](#Implement-a-new-SCRAL-module)
 -->
 
 * TOC (Do not remove. This is required to show Table of contents)
@@ -20,10 +22,12 @@ This tutorial will help you to understand how to start using SCRAL and how to de
 
 ## Prerequisites
 
+### Docker
 To start working with SCRAL is necessary to have Docker installed on your machine.
 To install the proper version for your operating system, have a look to the [Docker documentation page](https://docs.docker.com/).
 
-SCRAL depends on GOST, a Golang (Go) implementation of the Sensing profile of the OGC SensorThings API.
+### GOST
+SCRAL depends on GOST, a [Go](https://golang.org/) implementation of the Sensing OGC [SensorThings API](http://developers.sensorup.com/docs).
 To learn more about OGC and GOST visit the [GOST GitHub page](https://github.com/gost/server) or the MONICA tutorial about 
 [OGC Historical Data Retrieval & Visualizations](https://monica-project.github.io/sections/gost_retrieval.html).
 
@@ -43,7 +47,7 @@ To have a first start the complete environment (GOST+SCRAL), we suggest starting
 ### Before Starting
 For running a SCRAL docker-compose, it is necessary that few environmental variables are set.
 •	To enable the usage of the other environmental variables is necessary to have variable "CONFIG" sets to value "custom".
-•	To start a SCRAL module is necessary to specify the name of the docker image to load (e.g.: monicaproject/scral:wristband)
+•	To start a SCRAL module is necessary to specify the name of the docker image to load (e.g.: monicaproject/scral:glasses)
 
 ```docker-compose
 scral:
@@ -58,16 +62,20 @@ scral:
 
 ### Testing SCRAL capabilities
 When SCRAL is up and running, it can manage data flow mainly through REST or MQTT messages.
-You can interact with SCRAL using the APIs available [here](www.example.org)
-[comment]: # (generate and publish Swagger SCRAL API)
+You can interact with SCRAL using the APIs available [here](www.example.org).
+<!-- generate and publish Swagger SCRAL API -->
 
-Each SCRAL module with a REST endpoint exposes also a landing page useful both for testing the reachability of the endpoint and for having a quick overview of the available SCRAL API (e.g.: http://localhost:8000/scral/v1.0/gps-tracker-gw)
+Each SCRAL module with a REST endpoint exposes also a landing page useful both for testing reachability of the endpoint 
+and for having a quick overview of the available SCRAL API
+(e.g.: for gps_tracker_rest the URL is http://localhost:8000/scral/v1.0/gps-tracker-gw).
 
 
 ## Run SCRAL Python code
 SCRAL open source code is available inside [MONICA project repository](https://github.com/MONICA-Project/scral-framework).
 It is possible to fork (or simply download) the repository and start working directly on the source code.
-As already mentioned, it is necessary to have already started a GOST instance to make SCRAL properly work. To do that, it is possible to download a docker-compose file from [GOST repository](https://github.com/gost/docker-compose) or to start the file "docker-compose-gost.yml" contained inside the "docker-compose" folder of SCRAL repository through the command:
+As already mentioned, it is necessary to have already started a GOST instance to make SCRAL properly work.
+To do that, it is possible to download a docker-compose file from [GOST repository](https://github.com/gost/docker-compose)
+or to start the file "docker-compose-gost.yml" contained inside the "docker-compose" folder of SCRAL repository through the command:
 ```bash
 $ docker-compose -f docker-compose-gost.yml up -d
 ```
@@ -87,7 +95,14 @@ For example, if you want to start the smart glasses module and you want to store
 ```bash
 python smart_glasses/start_smart_glasses.py -p test
 ```
-Note: if the environmental variable CONFIG exists and it is set to "custom" the configuration file is not read. 
+Note: if the environmental variable CONFIG exists is set to "custom" the configuration file is not read.
 
-## How to implement a new module
-[...] work in progress [...]
+
+## Implement a new SCRAL module
+The following picture present the high level architecture of the SCRAL framework.
+<img src="https://github.com/MONICA-Project/monica-project.github.io/raw/master/assets/img/SCRAL_architecture.png" alt="SCRAL high level architecture" width="350"/> <br>
+
+To create a new SCRAL module, you can start from the "template_rest" folder and modify it according to your needs.
+This folder contains a generic "ready-to-use" SCRAL module that expose a REST <em>resource manager</em> and an MQTT <em>connector</em>.
+
+[... still work in progress ...]
