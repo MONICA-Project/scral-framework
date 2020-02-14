@@ -63,6 +63,14 @@ services:
             # LISTENING_PORT: 8000
             VERBOSE: 1
             # UPDATE_INTERVAL: 60
+
+            # only for GPS_tracker_poll
+            SUB_BROKER: "iot.hamburg.de"
+
+            # only for SLM:
+            # SITENAME: "Movida"
+            # TENANTID: "f159a3d1-cde1-405e-bc46-754609125585"
+            # SITEID: "54c9dd30-f915-42b7-b00c-c07c891fb0ce"
     mqtt-listener:
       image: scral/quickstart:mqtt_subscriber
       depends_on:
