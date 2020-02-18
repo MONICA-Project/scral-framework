@@ -68,6 +68,7 @@ services:
 
             ### only for module with MQTT resource manager
             # SUB_BROKER_URI: "iot.hamburg.de"
+            SUB_BROKER_URI: mosquitto
 
             ### only for SLM:
             # SITENAME: "Movida"

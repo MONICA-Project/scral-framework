@@ -28,7 +28,9 @@ from scral_ogc import OGCObservation, OGCDatastream
 from scral_core.ogc_configuration import OGCConfiguration
 from scral_core import util, mqtt_util
 from scral_core.constants import DEFAULT_KEEPALIVE, DEFAULT_MQTT_QOS, OGC_ID_KEY, CATALOG_FILENAME, \
-    MQTT_KEY, MQTT_SUB_BROKER_KEY, MQTT_SUB_BROKER_PORT_KEY, MQTT_SUB_BROKER_KEEP_KEY, ERROR_MISSING_ENV_VARIABLE
+                                 BROKER_DEFAULT_PORT, \
+                                 MQTT_KEY, MQTT_SUB_BROKER_KEY, MQTT_SUB_BROKER_PORT_KEY, MQTT_SUB_BROKER_KEEP_KEY, \
+                                 ERROR_MISSING_ENV_VARIABLE, ERROR_MISSING_PARAMETER
 
 from gps_tracker.constants import LOCALIZATION
 from gps_tracker.gps_module import SCRALGPS
@@ -56,38 +58,47 @@ class SCRALGPSPoll(SCRALGPS):
         # Loading broker info from connection file
         if connection_file:
             connection_config_file = util.load_from_file(connection_file)
-            self._sub_broker_address = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEY]
-            self._sub_broker_port = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_PORT_KEY]
             try:
-                self._sub_broker_keepalive = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEEP_KEY]
+                self._sub_broker_address = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEY]
+            except KeyError as ex:
+                logging.critical('Missing parameter: "'+str(ex)+'" in configuration file.')
+                sys.exit(ERROR_MISSING_PARAMETER)
+            try:
+                self._sub_broker_port = int(connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_PORT_KEY])
+            except KeyError as ex:
+                logging.warning('No parameter "'+str(ex)+'" specified, default value used: '+str(BROKER_DEFAULT_PORT))
+                self._sub_broker_port = BROKER_DEFAULT_PORT
+            try:
+                self._sub_broker_keepalive = int(connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEEP_KEY])
             except KeyError:
                 logging.warning(
-                    "No subscribing broker keepalive specified, will be used the default one: "+str(DEFAULT_KEEPALIVE)+" s")
+                    "No subscribing broker keepalive specified, default one used: "+str(DEFAULT_KEEPALIVE)+" s")
                 self._sub_broker_keepalive = DEFAULT_KEEPALIVE
 
+        # Loading broker info from environmental variables
         else:
-            # Loading broker info from environmental variables
             try:
                 self._sub_broker_address = os.environ[MQTT_SUB_BROKER_KEY.upper()]
-            except KeyError:
-                logging.critical("Missing environmental variable: "+MQTT_SUB_BROKER_KEY.upper())
+            except KeyError as ex:
+                logging.critical('Missing environmental variable: "'+str(ex)+'"')
                 sys.exit(ERROR_MISSING_ENV_VARIABLE)
+            try:
+                self._sub_broker_port = int(os.environ[MQTT_SUB_BROKER_PORT_KEY.upper()])
+            except KeyError as ex:
+                logging.warning('Missing Enviromental variable: "' + str(ex) + '" default value used: '
+                                + str(BROKER_DEFAULT_PORT))
+                self._pub_broker_port = BROKER_DEFAULT_PORT
 
             try:
-                self._sub_broker_port = os.environ[MQTT_SUB_BROKER_PORT_KEY.upper()]
-            except KeyError:
-                logging.critical("Missing environmental variable: "+MQTT_SUB_BROKER_PORT_KEY.upper()
-                                 + "Using same port of publisher.")
-                self._sub_broker_port = self._pub_broker_port
-            try:
-                self._sub_broker_keepalive = os.environ[MQTT_SUB_BROKER_KEEP_KEY.upper()]
+                self._sub_broker_keepalive = int(os.environ[MQTT_SUB_BROKER_KEEP_KEY.upper()])
             except KeyError:
                 logging.warning("No subscribing broker keepalive specified, will be used the default one: "
                                 + str(DEFAULT_KEEPALIVE) + " s")
                 self._sub_broker_keepalive = DEFAULT_KEEPALIVE
 
         # broker connection test
-        logging.info("Connecting to broker: %s:%s for listening" % (self._sub_broker_address, self._sub_broker_port))
+        logging.info("Try to connect to broker: %s:%s for LISTENING..."
+                     % (self._sub_broker_address, self._sub_broker_port))
         logging.debug("Client id is: '" + BROKER_HAMBURG_CLIENT_ID + "'")
         self._mqtt_subscriber.connect(self._sub_broker_address,  self._sub_broker_port, self._sub_broker_keepalive)
 

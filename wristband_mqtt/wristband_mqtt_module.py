@@ -12,10 +12,13 @@
 #############################################################################
 import json
 import logging
+import os
+import sys
 
 import paho.mqtt.client as mqtt
 
-from scral_core.constants import CATALOG_FILENAME, \
+from scral_core.constants import CATALOG_FILENAME, DEFAULT_KEEPALIVE, BROKER_DEFAULT_PORT, \
+                                 ERROR_MISSING_PARAMETER, ERROR_MISSING_ENV_VARIABLE, \
                                  MQTT_KEY, MQTT_SUB_BROKER_KEY, MQTT_SUB_BROKER_PORT_KEY, MQTT_SUB_BROKER_KEEP_KEY
 from scral_core import mqtt_util, util
 from scral_core.ogc_configuration import OGCConfiguration
@@ -31,34 +34,66 @@ MESSAGE_RECEIVED: int = 0
 
 class SCRALMQTTWristband(SCRALWristband):
 
-    def __init__(self, ogc_config: OGCConfiguration, connection_file: str, catalog_name: str = CATALOG_FILENAME):
+    def __init__(self, ogc_config: OGCConfiguration, config_filename: str, catalog_name: str = CATALOG_FILENAME):
         """ Initialize MQTT Brokers for listening and publishing
 
-        :param connection_file: A file containing connection information.
+        :param config_filename: A file containing connection information.
         :param catalog_name: The name of the resource catalog.
         """
 
-        super().__init__(ogc_config, connection_file, catalog_name)
+        super().__init__(ogc_config, config_filename, catalog_name)
 
         # Creating an MQTT Subscriber
         self._mqtt_subscriber = mqtt.Client(CLIENT_ID)
-
-        # Retrieving MQTT connection info from connection_file
-        connection_config_file = util.load_from_file(connection_file)
-        self._sub_broker_address = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEY]
-        self._sub_broker_port = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_PORT_KEY]
-        self._sub_keepalive = connection_config_file[MQTT_KEY][MQTT_SUB_BROKER_KEEP_KEY]
-
-        # Associate callback functions
         self._mqtt_subscriber.on_connect = mqtt_util.on_connect
         self._mqtt_subscriber.on_disconnect = mqtt_util.automatic_reconnection
         self._mqtt_subscriber.on_message = self.on_message_received
+
+        # Retrieving MQTT subscribing info from config_filename
+        if config_filename:
+            config_file = util.load_from_file(config_filename)
+            try:
+                self._sub_broker_address = config_file[MQTT_KEY][MQTT_SUB_BROKER_KEY]
+            except KeyError as ex:
+                logging.critical('Missing parameter: '+str(ex)+' in configuration file.')
+                sys.exit(ERROR_MISSING_PARAMETER)
+            try:
+                self._sub_broker_port = int(config_file[MQTT_KEY][MQTT_SUB_BROKER_PORT_KEY])
+            except KeyError as ex:
+                logging.warning('Missing parameter: '+str(ex)+'.Default value used: '+str(BROKER_DEFAULT_PORT))
+                self._sub_broker_port = BROKER_DEFAULT_PORT
+            try:
+                self._sub_broker_keepalive = int(config_file[MQTT_KEY][MQTT_SUB_BROKER_KEEP_KEY])
+            except KeyError:
+                logging.warning(
+                    "No subscribing broker keepalive specified, default one used: "+str(DEFAULT_KEEPALIVE)+" s")
+                self._sub_broker_keepalive = DEFAULT_KEEPALIVE
+
+        # Retrieving MQTT publishing info from environmental variables
+        else:
+            try:
+                self._sub_broker_address = os.environ[MQTT_SUB_BROKER_KEY.upper()]
+            except KeyError as ex:
+                logging.critical('Missing environmental variable: ' + str(ex))
+                sys.exit(ERROR_MISSING_ENV_VARIABLE)
+            try:
+                self._sub_broker_port = int(os.environ[MQTT_SUB_BROKER_PORT_KEY.upper()])
+            except KeyError as ex:
+                logging.warning('Missing environmental variable: ' + str(ex) +
+                                '.Default value used: ' + str(BROKER_DEFAULT_PORT))
+                self._sub_broker_port = BROKER_DEFAULT_PORT
+            try:
+                self._sub_broker_keepalive = int(os.environ[MQTT_SUB_BROKER_KEEP_KEY.upper()])
+            except KeyError:
+                logging.warning("No subscribing broker keepalive specified, will be used the default one: "
+                                + str(DEFAULT_KEEPALIVE) + " s")
+                self._sub_broker_keepalive = DEFAULT_KEEPALIVE
 
         #  MQTT Subscriber setting configuration
         logging.info("Try to connect to broker: %s:%s for LISTENING..."
                      % (self._sub_broker_address, self._sub_broker_port))
         logging.debug("MQTT Client ID is: " + str(self._mqtt_subscriber._client_id))
-        self._mqtt_subscriber.connect(self._sub_broker_address, self._sub_broker_port, self._sub_keepalive)
+        self._mqtt_subscriber.connect(self._sub_broker_address, self._sub_broker_port, self._sub_broker_keepalive)
 
     def mqtt_subscriptions(self, device: str):
         topic = self._topic_prefix+"SCRAL/"+device+"/Localization"
