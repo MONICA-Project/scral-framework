@@ -47,7 +47,9 @@ services:
             - dashboard
             - mosquitto
         environment:
+            ### Necessary to enable other env variables
             CONFIG: "custom"
+
             # MODULE_NAME: "SCRAL"
             # ENDPOINT_URL: "localhost"
             # ENDPOINT_PORT: 8000
@@ -64,10 +66,10 @@ services:
             VERBOSE: 1
             # UPDATE_INTERVAL: 60
 
-            # only for GPS_tracker_poll
-            SUB_BROKER: "iot.hamburg.de"
+            ### only for module with MQTT resource manager
+            # SUB_BROKER_URI: "iot.hamburg.de"
 
-            # only for SLM:
+            ### only for SLM:
             # SITENAME: "Movida"
             # TENANTID: "f159a3d1-cde1-405e-bc46-754609125585"
             # SITEID: "54c9dd30-f915-42b7-b00c-c07c891fb0ce"

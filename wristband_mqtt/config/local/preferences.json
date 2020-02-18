@@ -11,11 +11,11 @@
   "verbose": true,
 
   "mqtt": {
-    "pub_broker": "localhost",
+    "pub_broker_uri": "localhost",
     "pub_broker_port": 1883,
     "pub_broker_keepalive": 60,
 
-    "sub_broker": "localhost",
+    "sub_broker_uri": "localhost",
     "sub_broker_port": 1883,
     "sub_broker_keepalive": 60
   },

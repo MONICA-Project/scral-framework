@@ -9,8 +9,8 @@
   "catalog_name": "local_sfn.json",
   "verbose": true,
 
-    "mqtt": {
-    "pub_broker": "localhost",
+  "mqtt": {
+    "pub_broker_uri": "localhost",
     "pub_broker_port": 1883,
     "pub_broker_keepalive": 60
   },

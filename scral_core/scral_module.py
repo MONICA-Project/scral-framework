@@ -151,8 +151,8 @@ class SCRALModule(object):
             # 3a) ...from environmental variables.
             try:
                 self._pub_broker_address = os.environ[D_PUB_BROKER_URI_KEY]
-            except KeyError:
-                logging.error("Missing environment variable: "+D_PUB_BROKER_URI_KEY)
+            except KeyError as ex:
+                logging.error('Missing environment variable: "'+str(ex)+'"')
                 exit(ERROR_MISSING_ENV_VARIABLE)
             try:
                 self._pub_broker_port = int(os.environ[D_PUB_BROKER_PORT_KEY])
