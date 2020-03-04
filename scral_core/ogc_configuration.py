@@ -14,6 +14,7 @@
 #############################################################################
 import json
 import logging
+import time
 from typing import List, Dict, Union
 
 import requests
@@ -52,6 +53,7 @@ class OGCConfiguration:
         x = parser['LOCATION']['COORDINATES_X']
         y = parser['LOCATION']['COORDINATES_Y']
         self._ogc_location = OGCLocation(name, description, float(x), float(y))
+        time.sleep(2)
 
         # THING
         name = parser['THING']['NAME']  # only one THING for each configuration file

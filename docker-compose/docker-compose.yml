@@ -45,6 +45,7 @@ services:
             - "8000:8000"
         depends_on:
             - dashboard
+            - gost
             - mosquitto
         environment:
             ### Necessary to enable other env variables
@@ -74,10 +75,10 @@ services:
             # SITENAME: "Movida"
             # TENANTID: "f159a3d1-cde1-405e-bc46-754609125585"
             # SITEID: "54c9dd30-f915-42b7-b00c-c07c891fb0ce"
-    mqtt-listener:
-      image: scral/quickstart:mqtt_subscriber
-      depends_on:
-          - mosquitto
+#    mqtt-listener:
+#      image: scral/quickstart:mqtt_subscriber
+#      depends_on:
+#          - mosquitto
 
 volumes:
     postgis: {}
