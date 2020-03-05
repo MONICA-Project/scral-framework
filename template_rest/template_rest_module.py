@@ -18,12 +18,12 @@ from typing import Union
 
 import arrow
 
-from ogc_configuration import OGCConfiguration
 from scral_ogc import OGCObservation
 from scral_ogc.ogc_datastream import OGCDatastream
 
 from scral_core import util
 from scral_core.constants import CATALOG_FILENAME
+from scral_core.ogc_configuration import OGCConfiguration
 from scral_core.rest_module import SCRALRestModule
 
 from template_rest.constants import DEVICE_ID_KEY

@@ -93,22 +93,15 @@ def delete_device() -> Response:
     response = scral_module.delete_device(device_id)
     return response
 
+
 @flask_instance.route(URI_DEVICE_OBSERVATION, methods=["PUT"])
 def new_device_localization() -> Response:
     """ This function is used to store a new OBSERVATION in the OGC Server.
 
-    :param observed_property: The type of property
-    :param payload: The payload of the observation
     :return: An HTTP request.
     """
     logging.debug(new_device_localization.__name__ + " method called from: "+request.remote_addr)
 
-    """ This function is used to store a new OBSERVATION in the OGC Server.
-
-    :param observed_property: The type of property
-    :param payload: The payload of the observation
-    :return: An HTTP request.
-    """
     ok, status = rest_util.tests_and_checks(DOC[MODULE_NAME_KEY], scral_module, request)
     if not ok:
         return status

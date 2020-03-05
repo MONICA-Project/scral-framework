@@ -68,10 +68,10 @@ SCRAL requires:
     - [CherryPy](https://cherrypy.org/)
  - Python packages:
     - [Eclipse Paho](https://pypi.org/project/paho-mqtt/1.5) 1.5
-    - [Flask](https://pypi.org/project/Flask/1.0.2) 1.1.1
-    - [CherryPy](https://pypi.org/project/CherryPy/18.1.0) 18.5.0
+    - [Flask](https://pypi.org/project/Flask/1.0.2) 1.0.2
+    - [CherryPy](https://pypi.org/project/CherryPy/18.1.0) 18.1.0
     - [arrow](https://pypi.org/project/arrow/0.14.2) 0.14.2
-    - [requests](https://pypi.org/project/requests/2.22) 2.22.0
+    - [requests](https://pypi.org/project/requests/2.22.0) 2.22.0
     - [configparser](https://pypi.org/project/configparser/3.7.1) 3.7.1
  - Docker (to be containerized or to be used "as is")
 
