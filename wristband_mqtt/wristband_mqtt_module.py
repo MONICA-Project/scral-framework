@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import sys
+import time
 
 import paho.mqtt.client as mqtt
 
@@ -26,7 +27,7 @@ from scral_core.ogc_configuration import OGCConfiguration
 from wristband.constants import PROPERTY_LOCALIZATION_NAME, PROPERTY_BUTTON_NAME, TAG_ID_KEY, SENSOR_ASSOCIATION_NAME
 from wristband.wristband_module import SCRALWristband
 
-from wristband_mqtt.constants import CLIENT_ID, BUTTON_SUBTOPIC, \
+from wristband_mqtt.constants import CLIENT_ID, BUTTON_SUBTOPIC, DEFAULT_SUBSCRIPTION_WB, \
                                      ASSOCIATION_SUBTOPIC, LOCALIZATION_SUBTOPIC, LISTENING_DEFAULT_QOS
 
 MESSAGE_RECEIVED: int = 0
@@ -45,8 +46,9 @@ class SCRALMQTTWristband(SCRALWristband):
 
         # Creating an MQTT Subscriber
         self._mqtt_subscriber = mqtt.Client(CLIENT_ID)
+        self._mqtt_subscriber.connected_flag = False  # create connection flag in client
         self._mqtt_subscriber.on_connect = mqtt_util.on_connect
-        self._mqtt_subscriber.on_disconnect = mqtt_util.automatic_reconnection
+        self._mqtt_subscriber.on_disconnect = self.automatic_reconnection
         self._mqtt_subscriber.on_message = self.on_message_received
 
         # Retrieving MQTT subscribing info from config_filename
@@ -94,12 +96,17 @@ class SCRALMQTTWristband(SCRALWristband):
                      % (self._sub_broker_address, self._sub_broker_port))
         logging.debug("MQTT Client ID is: " + str(self._mqtt_subscriber._client_id))
         self._mqtt_subscriber.connect(self._sub_broker_address, self._sub_broker_port, self._sub_broker_keepalive)
+        # Two connection to the same broker are apparently problematic...
+        # while not self._mqtt_subscriber.connected_flag:  # wait in loop
+        #     logging.debug("Waiting...")
+        #     time.sleep(1)
 
     def mqtt_subscriptions(self, device: str):
         topic = self._topic_prefix+"SCRAL/"+device+"/Localization"
 
         logging.info("Subscribing to MQTT topic: " + topic)
         self._mqtt_subscriber.subscribe(topic, LISTENING_DEFAULT_QOS)
+        logging.info("Start listening...")
         self._mqtt_subscriber.loop_start()
 
         # ToDo: Here we can add dynamic discovery phase in the future as did in gps_tracker_poll
@@ -136,3 +143,15 @@ class SCRALMQTTWristband(SCRALWristband):
 
         if not result:
             logging.error("Error sending an MQTT message.\n"+topic+"\n"+payload)
+
+    def automatic_reconnection(self, client, userdata, rc):
+        time.sleep(10)
+        logging.error("Broker connection lost! Try to re-connecting to '" + str(client._host) + "'...")
+        client.reconnect()
+        time.sleep(5)
+        counter = 1
+        while not client.connected_flag:  # wait in loop
+            logging.debug("Waiting "+str(counter)+"s...")
+            time.sleep(1)
+        logging.info("Re-subscribing to topics again...")
+        self.mqtt_subscriptions(DEFAULT_SUBSCRIPTION_WB)
