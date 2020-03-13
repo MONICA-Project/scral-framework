@@ -1,0 +1,23 @@
+{
+  "module_name": "SCRAL Phonometer REST",
+  "endpoint_url": "localhost",
+
+  "ogc_file": "ogc_config_phonometer.conf",
+  "gost_mqtt_prefix": "GOST/",
+
+  "catalog_name": "local_phonometer_REST.json",
+  "verbose": true,
+
+  "mqtt": {
+    "pub_broker_uri": "localhost",
+    "pub_broker_port": 1883,
+    "pub_broker_keepalive": 60
+  },
+  "REST": {
+    "ogc_server_address": "http://localhost:8080/v1.0",
+    "listening_address": {
+      "address": "0.0.0.0",
+      "port": "8000"
+    }
+  }
+}
