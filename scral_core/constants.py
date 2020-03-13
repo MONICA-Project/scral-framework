@@ -42,7 +42,8 @@ DUPLICATE_REQUEST = "Duplicate request"
 INVALID_DATASTREAM = "Invalid DATASTREAM"
 NO_DATASTREAM_ID = "Missing DATASTREAM ID"
 DEVICE_NOT_REGISTERED = "Device not registered"
-NO_MQTT_PUBLICATION = "Impossible to publish on MQTT broker."
+NO_MQTT_PUBLICATION = "Impossible to publish on MQTT broker"
+METHOD_NOT_ALLOWED = "HTTP method not allowed"
 
 # Username and password necessary for accessing OGC server
 OGC_SERVER_USERNAME = "scral"
@@ -84,6 +85,9 @@ ERROR_MISSING_ENV_VARIABLE = 55
 ERROR_MISSING_ALL = 66
 ERROR_MISSING_PARAMETER = 77
 
+ERROR_CLIENT = 400
+ERROR_SERVER = 500
+
 # CONFIGURATION FILES
 FILENAME_CONFIG = "config/"
 FILENAME_COMMAND_FILE = "preferences.json"
@@ -113,9 +117,12 @@ OGC_FILE_KEY = "ogc_file"
 OGC_SERVER_ADD_KEY = "ogc_server_address"
 
 # Code keys constants
+GOST_RESULT_KEY = "value"
+
+# OGC KEYS
 OGC_ID_KEY = "@iot.id"
 OGC_DEVICE_NAME_KEY = "name"
-GOST_RESULT_KEY = "value"
+OGC_OBSERVED_AREA_KEY = "observedArea"
 
 # Active Devices
 REGISTERED_DEVICES_KEY = "registered_devices"

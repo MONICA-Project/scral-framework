@@ -49,7 +49,7 @@ services:
             - mosquitto
         environment:
             ### Necessary to enable other env variables
-            CONFIG: "custom"
+            CONFIG: custom
 
             # MODULE_NAME: "SCRAL"
             # ENDPOINT_URL: "localhost"

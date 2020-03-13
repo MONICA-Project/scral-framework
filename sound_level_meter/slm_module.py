@@ -205,7 +205,7 @@ class SCRALSoundLevelMeter(SCRALMicrophone):
                 self._resource_catalog[device_id][DEVICE_NAME_KEY] = device_name
                 # Iterate over ObservedProperties
                 for ogc_property in self._ogc_config.get_observed_properties():
-                    self._new_datastream(ogc_property, device_id, device_name, device_coordinates, device_description)
+                    self._new_datastream_slm(ogc_property, device_id, device_name, device_coordinates, device_description)
 
         self.update_file_catalog()
         logging.info("\n\n--- End of OGC DATASTREAMs registration. "
@@ -232,13 +232,13 @@ class SCRALSoundLevelMeter(SCRALMicrophone):
             device_name = self._active_microphones[device_id]["name"]
             device_description = self._active_microphones[device_id]["description"]
 
-            datastream_id = self._new_datastream(
+            datastream_id = self._new_datastream_slm(
                 ogc_obs_property, device_id, device_name, device_coordinates, device_description)
 
         return datastream_id
 
-    def _new_datastream(self, ogc_property: OGCObservedProperty, device_id: str, device_name: str,
-                        device_coordinates: COORD, device_description: str) -> int:
+    def _new_datastream_slm(self, ogc_property: OGCObservedProperty, device_id: str, device_name: str,
+                            device_coordinates: COORD, device_description: str) -> int:
         """ This method creates a new DATASTREAM. It is a private method, externally you should call "new_datastream".
 
         :param ogc_property: The OBSERVED PROPERTY.

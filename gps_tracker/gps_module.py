@@ -54,8 +54,8 @@ class SCRALGPS(SCRALModule):
 
             datastream_name = thing_name + "/" + sensor_name + "/" + property_name + "/" + device_id
             ds = OGCDatastream(name=datastream_name, description=description, ogc_property_id=property_id,
-                                       ogc_sensor_id=sensor_id, ogc_thing_id=thing_id, x=0.0, y=0.0,
-                                       unit_of_measurement=util.build_ogc_unit_of_measure(unit_of_measure))
+                               ogc_sensor_id=sensor_id, ogc_thing_id=thing_id, x=0.0, y=0.0,
+                               unit_of_measurement=util.build_ogc_unit_of_measure(unit_of_measure))
             datastream_id = self._ogc_config.entity_discovery(
                                 ds, self._ogc_config.URL_DATASTREAMS, self._ogc_config.FILTER_NAME)
 
