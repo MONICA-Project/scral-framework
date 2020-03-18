@@ -35,6 +35,7 @@ import scral_core as scral
 from scral_core import util
 from scral_core.constants import END_MESSAGE, DEFAULT_REST_CONFIG, ENDPOINT_URL_KEY, ENDPOINT_PORT_KEY, MODULE_NAME_KEY
 
+from microphone.constants import NAME_KEY
 from phonometer.constants import URI_DEFAULT, URI_ACTIVE_DEVICES
 from phonometer_rest.constants import URI_ADD_PHONOMETER, URI_OBSERVATION, URI_REMOVE_DEVICE
 from phonometer_rest.phonometer_module import SCRALPhonometerREST
@@ -59,9 +60,10 @@ def register_phonometer() -> Response:
     return response
 
 
-@flask_instance.route(URI_REMOVE_DEVICE+"(<string:phonometer_id>)", methods=["DELETE"])
-def delete_phonometer(phonometer_id: str) -> Response:
-    response = scral_module.delete_device(phonometer_id)
+@flask_instance.route(URI_REMOVE_DEVICE, methods=["DELETE"])
+def delete_phonometer() -> Response:
+    device_id = request.json[NAME_KEY]
+    response = scral_module.delete_device(device_id)
     return response
 
 
