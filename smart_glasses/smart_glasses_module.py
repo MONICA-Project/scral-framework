@@ -17,6 +17,7 @@ import logging
 from typing import Union
 
 import arrow
+from smart_glasses.constants import TAG_ID_KEY, TIMESTAMP_KEY
 
 from scral_ogc import OGCObservation
 from scral_ogc.ogc_datastream import OGCDatastream
@@ -67,11 +68,11 @@ class SCRALSmartGlasses(SCRALRestModule):
         return True
 
     def ogc_observation_registration(self, obs_property: str, payload: dict) -> Union[None, bool]:
-        glasses_id = payload["tagId"]
+        glasses_id = payload[TAG_ID_KEY]
         if glasses_id not in self._resource_catalog:
             return None
 
-        phenomenon_time = payload.pop("timestamp")  # Retrieving and removing the phenomenon time
+        phenomenon_time = payload.pop(TIMESTAMP_KEY)  # Retrieving and removing the phenomenon time
         observation_time = str(arrow.utcnow())
         observation_result = payload
 

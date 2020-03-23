@@ -61,7 +61,11 @@ def wristband_request() -> Response:
     if not ok:
         return status
 
-    wristband_id = request.json[TAG_ID_KEY]
+    try:
+        wristband_id = request.json[TAG_ID_KEY]
+    except KeyError as ke:
+        logging.error("Inside request missing field: " + str(ke))
+        return make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
 
     if request.method == "POST":  # Device Registration
         rc = scral_module.get_resource_catalog()
@@ -132,7 +136,12 @@ def put_observation(observed_property: str, payload: json) -> Response:
     if not scral_module:
         return make_response(jsonify({ERROR_RETURN_STRING: INTERNAL_SERVER_ERROR}), 500)
 
-    wristband_id = payload[TAG_ID_KEY]
+    try:
+        wristband_id = payload[TAG_ID_KEY]
+    except KeyError as ke:
+        logging.error("Inside request missing field: " + str(ke))
+        return make_response(jsonify({ERROR_RETURN_STRING: WRONG_REQUEST}), 400)
+
     result = scral_module.ogc_observation_registration(observed_property, payload)
     if result is True:
         return make_response(jsonify({SUCCESS_RETURN_STRING: "Ok"}), 201)

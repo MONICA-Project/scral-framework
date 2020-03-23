@@ -130,4 +130,4 @@ class SCRALPhonometerREST(SCRALMicrophone):
             WRONG_MEASURES: wrong_measures,
             WRONG_PHONOMETERS: wrong_phonometers
         }
-        return make_response(jsonify(body), 201)
+        return make_response(jsonify(body), 200)

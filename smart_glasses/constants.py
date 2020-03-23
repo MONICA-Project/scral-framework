@@ -36,3 +36,4 @@ PROPERTY_INCIDENT_NAME = "Incident-Reporting"
 # KEYS
 TAG_ID_KEY = "tagId"
 TYPE_KEY = "type"
+TIMESTAMP_KEY = "timestamp"

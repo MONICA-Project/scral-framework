@@ -17,6 +17,7 @@ import logging
 from typing import Union
 
 import arrow
+from wristband.constants import TAG_ID_KEY, TIME_KEY
 
 from scral_ogc import OGCObservation, OGCDatastream
 from scral_core.rest_module import SCRALRestModule
@@ -78,7 +79,7 @@ class SCRALWristband(SCRALRestModule):
         return True
 
     def ogc_observation_registration(self, obs_property: str, payload: dict) -> Union[bool, None]:
-        wristband_id = payload["tagId"]
+        wristband_id = payload[TAG_ID_KEY]
         if wristband_id not in self._resource_catalog:
             logging.warning("Wristband '"+wristband_id+"' not yet registered, it will be automatically registered.")
             ok = self.ogc_datastream_registration(wristband_id, payload)
@@ -86,7 +87,7 @@ class SCRALWristband(SCRALRestModule):
                 logging.error("Registration of wristband: '"+wristband_id+"' failed!")
                 return None
 
-        phenomenon_time = payload.pop("timestamp", False)  # Retrieving and removing the phenomenon time
+        phenomenon_time = payload.pop(TIME_KEY, False)  # Retrieving and removing the phenomenon time
         if not phenomenon_time:
             phenomenon_time = str(arrow.utcnow())
         observation_time = str(arrow.utcnow())
@@ -106,7 +107,7 @@ class SCRALWristband(SCRALRestModule):
         return mqtt_result
 
     def ogc_service_observation_registration(self, datastream: OGCDatastream, payload: dict) -> bool:
-        phenomenon_time = payload.pop("timestamp", False)  # Retrieving and removing the phenomenon time
+        phenomenon_time = payload.pop(TIME_KEY, False)  # Retrieving and removing the phenomenon time
         if not phenomenon_time:
             phenomenon_time = str(arrow.utcnow())
         observation_time = str(arrow.utcnow())
