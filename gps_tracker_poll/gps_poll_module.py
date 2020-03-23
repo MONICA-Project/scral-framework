@@ -87,7 +87,7 @@ class SCRALGPSPoll(SCRALGPS):
             except KeyError as ex:
                 logging.warning('Missing Enviromental variable: "' + str(ex) + '" default value used: '
                                 + str(BROKER_DEFAULT_PORT))
-                self._pub_broker_port = BROKER_DEFAULT_PORT
+                self._sub_broker_port = BROKER_DEFAULT_PORT
 
             try:
                 self._sub_broker_keepalive = int(os.environ[MQTT_SUB_BROKER_KEEP_KEY.upper()])
@@ -97,7 +97,7 @@ class SCRALGPSPoll(SCRALGPS):
                 self._sub_broker_keepalive = DEFAULT_KEEPALIVE
 
         # broker connection test
-        logging.info("Try to connect to broker: %s:%s for LISTENING..."
+        logging.info("Try to connect to broker: %s:%d for LISTENING..."
                      % (self._sub_broker_address, self._sub_broker_port))
         logging.debug("Client id is: '" + BROKER_HAMBURG_CLIENT_ID + "'")
         self._mqtt_subscriber.connect(self._sub_broker_address,  self._sub_broker_port, self._sub_broker_keepalive)

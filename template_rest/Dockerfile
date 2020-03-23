@@ -11,14 +11,14 @@ EXPOSE 8000
 COPY scral_startup.py /monica_scral
 COPY scral_ogc /monica_scral/scral_ogc
 COPY scral_core /monica_scral/scral_core
-COPY template_module /monica_scral/template_module
+COPY template_rest /monica_scral/template_rest
 
 RUN mkdir /monica_scral/catalogs
 VOLUME /monica_scral/catalogs
 ENV OGC_FILE "ogc_config_template.conf"
 
-RUN pip3 install --no-cache-dir -r template_module/requirements.txt
-RUN pip3 install -e template_module
+RUN pip3 install --no-cache-dir -r template_rest/requirements.txt
+RUN pip3 install -e template_rest
 
 # Enabling bash and utilities
 RUN apk add --update bash
