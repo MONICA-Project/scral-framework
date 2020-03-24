@@ -17,7 +17,7 @@ import sys
 import time
 from threading import Thread, Lock
 from datetime import timedelta
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Union
 
 import arrow
 import requests
@@ -45,8 +45,8 @@ from sound_level_meter.constants import UPDATE_INTERVAL, URL_SLM_CLOUD, MIN5_IN_
 class SCRALSoundLevelMeter(SCRALMicrophone):
     """ Resource manager for integration of the SLM-GW (by usage of B&K's IoT Sound Level Meters). """
 
-    def __init__(self, ogc_config: OGCConfiguration, config_filename: str,
-                 url_login: str, credentials, catalog_name: str = CATALOG_FILENAME,
+    def __init__(self, ogc_config: OGCConfiguration, config_filename: Union[str, None],
+                 url_login: str, credentials: dict, catalog_name: str = CATALOG_FILENAME,
                  token_prefix: Optional[str] = "", token_suffix: Optional[str] = ""):
         """ Load OGC configuration model and initialize MQTT Broker for publishing Observations
 
@@ -82,8 +82,6 @@ class SCRALSoundLevelMeter(SCRALMicrophone):
                 self._site_id = os.environ[SITE_ID_KEY.upper()]
             except KeyError as ex:
                 logging.critical('Missing environmental variable: "'+str(ex)+'"')
-                # logging("An environmental variable between: "+SITE_NAME_KEY.upper()+", "+TENANT_ID_KEY.upper()
-                #                  + " or "+SITE_ID_KEY+" is missing")
                 sys.exit(ERROR_MISSING_ENV_VARIABLE)
 
     def get_cloud_token(self) -> str:

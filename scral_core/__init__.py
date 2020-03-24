@@ -21,7 +21,7 @@
 import logging
 import sys
 
-VERSION = "v3.3.3"
+VERSION = "v3.3.4"
 BANNER = """
         _____ __________  ___    __                                         
        / ___// ____/ __ \/   |  / /                                         

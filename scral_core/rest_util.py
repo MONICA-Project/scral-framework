@@ -88,7 +88,7 @@ def get_server_access_token(url: str, credentials, headers,
         access_token = auth.json()['accessToken']
         cloud_token['Authorization'] = token_prefix + str(access_token) + token_suffix
     else:
-        raise ValueError("Credentials " + credentials + " have been denied by the server.")
+        raise ValueError("Credentials " + str(credentials) + " have been denied by the server.")
 
     logging.info("Access token successfully authorized!")
     return cloud_token
