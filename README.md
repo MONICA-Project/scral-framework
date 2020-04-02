@@ -5,17 +5,15 @@
 
 ![Logo](images/SCRAL-Logo-V1.1.png)
 
-<!-- Short description of the project -->
-
 The Smart City Resource Adaptation Layer (*SCRAL*) is a framework used in MONICA european project to manage several
 different kinds of IoT devices.
 
 
 ## Getting Started
-<!-- Instruction to make the project up and running. -->
+This file was written to explain how you can run a SCRAL module already developed or how to develop your own.
 
-SCRAL could be started as a Python 3 application but we suggest you to start using it downloading one of the *quickstart*
-Docker containers that you can find on this [Docker Hub repository](https://hub.docker.com/r/monicaproject/scral).
+If you would like to start a ready-to-use SCRAL Docker Container, you can have a look to the *quickstart* containers
+that you can find on this [Docker Hub repository](https://hub.docker.com/r/monicaproject/scral).
 SCRAL was tested mainly with Python 3.6 so it is suggested to install at least that version.
 
 ### How to use SCRAL
@@ -35,7 +33,7 @@ usage: SCRAL [-h] -p PILOT
 arguments:
   -h, --help
         show this help message and exit
-  -p PILOT, --pilot PILOT
+  -p PREFERENCES_FOLDER, --preferences PREFERENCES_FOLDER
         the name of the configuration folder
 
 example: start_module.py -p MOVIDA  
@@ -44,42 +42,52 @@ example: start_module.py -p MOVIDA
 Have a look to config folder to find more details about SCRAL configuration parameter.
 
 ### Examples
-ex 1
-```
-./scral.py -h
-```
+To better understand the MONICA environment and the SCRAL framework, you can have a look to the tutorials contained 
+on the official [MONICA website](https://monica-project.github.io/). In particular, to start using SCRAL it is suggested
+to follow [this tutorial](https://monica-project.github.io/sections/scral-deploy.html), meanwhile to start developing
+your own SCRAL module, you can read [this other tutorial](https://monica-project.github.io/sections/scral-develop.html).
 
 ## Deployment
-<!-- Deployment/Installation instructions. If this is software library, change this section to "Usage" and give usage examples -->
-
 To deploy a new SCRAL image, modify to your needs one of the dockerfile already contained in each module folder.
 
 ### Docker
-To start using SCRAL is strongly suggest to take a Docker image *"as is"* and to configure properly the environmental variables. <br>
-An update list of the configurable variable is available in the [Docker hub repository](https://hub.docker.com/r/monicaproject/scral).
+To start using SCRAL is strongly suggest to take a Docker image *"as is"* and to configure properly the environmental
+variables. <br> An update list of the configurable variable is available in the
+[Docker hub repository](https://hub.docker.com/r/monicaproject/scral).
 
-## Development
+## Prerequisites
 
-### Prerequisite
-SCRAL requires:
- - Python 3 (Python 3.6 or above suggested)
- - Frameworks:
-    - [Flask](http://flask.palletsprojects.com)
-    - [CherryPy](https://cherrypy.org/)
- - Python packages:
-    - [Eclipse Paho](https://pypi.org/project/paho-mqtt/1.5) 1.5
-    - [Flask](https://pypi.org/project/Flask/1.0.2) 1.0.2
-    - [CherryPy](https://pypi.org/project/CherryPy/18.1.0) 18.1.0
-    - [arrow](https://pypi.org/project/arrow/0.14.2) 0.14.2
-    - [requests](https://pypi.org/project/requests/2.22.0) 2.22.0
-    - [configparser](https://pypi.org/project/configparser/3.7.1) 3.7.1
- - Docker (to be containerized or to be used "as is")
+### Download or Fork SCRAL repository.
+The SCRAL source code is available in [MONICA project repository](https://github.com/MONICA-Project/scral-framework).
+It is possible to fork (or simply download) the repository and start working directly on the source code.
 
-#### Python packages
-To install the required python3 packages:
+### Docker
+To start working with SCRAL is necessary to have Docker installed on your machine.
+To install the proper version for your operating system, have a look to the 
+[Docker documentation page](https://docs.docker.com/).
+
+### GOST
+SCRAL depends on the GOST server, a [Go](https://golang.org/) implementation of the Sensing OGC
+[SensorThings API](http://developers.sensorup.com/docs).
+To learn more about OGC and GOST visit the [GOST GitHub page](https://github.com/gost/server) or the MONICA tutorial
+about [OGC Historical Data Retrieval & Visualizations](https://monica-project.github.io/sections/gost_retrieval.html).
+
+To start GOST, you need the docker-compose file that you can download from
+[GOST repository](https://github.com/gost/docker-compose) or the file "docker-compose-gost.yml" contained inside the
+"docker-compose" folder of SCRAL repository.
+Once you have the file, from the directory in which the file is stored, you can execute the following command:
+```bash
+$ docker-compose -f docker-compose-gost.yml up -d
 ```
-pip3 install -r requirements.txt
-```
+
+### Python Packages
+To work properly SCRAL requires the following Python packages (with the recommended versions):
+ - [Eclipse Paho](https://pypi.org/project/paho-mqtt/1.5) 1.5
+ - [Flask](https://pypi.org/project/Flask/1.0.2) 1.0.2
+ - [CherryPy](https://pypi.org/project/CherryPy/18.1.0) 18.1.0
+ - [arrow](https://pypi.org/project/arrow/0.14.2) 0.14.2 (arrow 0.15 not supported)
+ - [requests](https://pypi.org/project/requests/2.22.0) 2.22.0
+ - [configparser](https://pypi.org/project/configparser/3.7.1) 3.7.1
 
 ### Test
 SCRAL does not have at the moment a test suite.<br>
