@@ -4,6 +4,7 @@
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
 	echo "Error: wrong usage!"
 	echo "Usage: $0 <module_name> <docker_file> [repository]"
+	echo "Default repository is: monicaproject"
 	read -n 1 -s -r -p "Process completed, press any key to continue..."
 	exit 255
 fi
@@ -12,7 +13,7 @@ MODULE_NAME=$1
 DOCKER_FILE=$2
 
 if [[ $# -eq 2 ]]; then  # No repository, using the SCRAL one
-  REPOSITORY_NAME="scral/$MODULE_NAME"
+  REPOSITORY_NAME="monicaproject/$MODULE_NAME"
 else  # Using repository given as command line parameter
   REPO=$3
   REPOSITORY_NAME="$REPO/$MODULE_NAME"
