@@ -47,6 +47,12 @@ on the official [MONICA website](https://monica-project.github.io/). In particul
 to follow [this tutorial](https://monica-project.github.io/sections/scral-deploy.html), meanwhile to start developing
 your own SCRAL module, you can read [this other tutorial](https://monica-project.github.io/sections/scral-develop.html).
 
+As you can see in the UML Class diagram, when you start developing a new SCRAL module,
+it is usually necessary to develop at least two methods, the first one for the registration of new datastreams,
+and the second one for the management of the Observation.
+If you will not extend the SCRALRestModule, it will be mandatory also to write your own "runtime" method.
+![UML Diagram](doc/SCRALClassDiagramSimple.png)
+
 ## Deployment
 To deploy a new SCRAL image, modify to your needs one of the dockerfile already contained in each module folder.
 
